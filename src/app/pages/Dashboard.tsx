@@ -1,0 +1,182 @@
+
+import React from 'react';
+import { useAuth } from '../context/AuthContext';
+import { Briefcase, Calendar, MessageSquare, User, PlusCircle, Settings, FileText, Bell } from 'lucide-react';
+import { Link } from 'react-router';
+
+export function Dashboard() {
+  const { user, role, logout } = useAuth();
+
+  if (!user) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
+        <h2 className="text-2xl font-bold mb-4">Please log in to view your dashboard</h2>
+        <Link to="/login" className="px-6 py-2 bg-yellow-500 text-slate-900 rounded-md font-bold hover:bg-yellow-400">
+          Login
+        </Link>
+      </div>
+    );
+  }
+
+  const isStudent = role === 'student';
+  const isAlumni = role === 'alumni' || role === 'graduate';
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900">Welcome back, {user.name}!</h1>
+          <p className="text-slate-600 mt-2 capitalize">{role} Dashboard • {user.degree}</p>
+        </div>
+        <div className="flex space-x-4 mt-4 md:mt-0">
+          <button className="p-2 bg-white border border-slate-200 rounded-full hover:bg-slate-50 transition-colors relative">
+            <Bell className="h-5 w-5 text-slate-600" />
+            <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full border border-white"></span>
+          </button>
+          <button className="p-2 bg-white border border-slate-200 rounded-full hover:bg-slate-50 transition-colors">
+            <Settings className="h-5 w-5 text-slate-600" />
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Main Content Area */}
+        <div className="lg:col-span-2 space-y-8">
+          
+          {/* Stats / Quick Actions */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
+              <div className="flex items-center space-x-3 mb-2">
+                <div className="bg-blue-100 p-2 rounded-lg text-blue-600">
+                  <MessageSquare className="h-5 w-5" />
+                </div>
+                <h3 className="font-semibold text-slate-900">Messages</h3>
+              </div>
+              <p className="text-2xl font-bold text-slate-900">3</p>
+              <p className="text-xs text-slate-500">Unread conversations</p>
+            </div>
+            
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
+              <div className="flex items-center space-x-3 mb-2">
+                <div className="bg-green-100 p-2 rounded-lg text-green-600">
+                  <Calendar className="h-5 w-5" />
+                </div>
+                <h3 className="font-semibold text-slate-900">Events</h3>
+              </div>
+              <p className="text-2xl font-bold text-slate-900">2</p>
+              <p className="text-xs text-slate-500">Upcoming this week</p>
+            </div>
+
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
+               <div className="flex items-center space-x-3 mb-2">
+                <div className="bg-purple-100 p-2 rounded-lg text-purple-600">
+                  <Briefcase className="h-5 w-5" />
+                </div>
+                <h3 className="font-semibold text-slate-900">{isStudent ? 'Applications' : 'Job Posts'}</h3>
+              </div>
+              <p className="text-2xl font-bold text-slate-900">{isStudent ? '5' : '1'}</p>
+              <p className="text-xs text-slate-500">{isStudent ? 'Active applications' : 'Active listings'}</p>
+            </div>
+          </div>
+
+          {/* Role Specific Content */}
+          {isStudent ? (
+            <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+                <h3 className="font-bold text-slate-900">Recommended Mentors</h3>
+                <Link to="/network" className="text-sm text-yellow-600 hover:text-yellow-700 font-medium">View All</Link>
+              </div>
+              <div className="divide-y divide-slate-100">
+                {[1, 2].map((i) => (
+                  <div key={i} className="p-6 flex items-start space-x-4 hover:bg-slate-50 transition-colors">
+                    <img src={`https://images.unsplash.com/photo-${i === 1 ? '1573496359142-b8d87734a5a2' : '1560250097-0b9358e10395'}?ixlib=rb-1.2.1&auto=format&fit=crop&w=150&q=80`} alt="Mentor" className="w-12 h-12 rounded-full object-cover" />
+                    <div className="flex-grow">
+                      <h4 className="font-semibold text-slate-900">{i === 1 ? 'Dr. Elena Rodriguez' : 'Mark Thompson'}</h4>
+                      <p className="text-sm text-slate-500">{i === 1 ? 'Senior Data Scientist at Google' : 'Product Lead at Spotify'}</p>
+                      <p className="text-xs text-slate-400 mt-1">Specializes in AI & Machine Learning</p>
+                    </div>
+                    <button className="px-3 py-1 border border-slate-300 rounded text-sm font-medium hover:bg-white hover:border-yellow-500 hover:text-yellow-600 transition-colors">
+                      Connect
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+             <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+                <h3 className="font-bold text-slate-900">Mentorship Requests</h3>
+                <span className="bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full font-bold">2 New</span>
+              </div>
+              <div className="divide-y divide-slate-100">
+                 {[1, 2].map((i) => (
+                  <div key={i} className="p-6 flex items-start space-x-4 hover:bg-slate-50 transition-colors">
+                    <img src={`https://images.unsplash.com/photo-${i === 1 ? '1535713875002-d1d0cf377fde' : '1599566150163-29194dcaad36'}?ixlib=rb-1.2.1&auto=format&fit=crop&w=150&q=80`} alt="Student" className="w-12 h-12 rounded-full object-cover" />
+                    <div className="flex-grow">
+                      <h4 className="font-semibold text-slate-900">{i === 1 ? 'Alex Johnson' : 'Samantha Lee'}</h4>
+                      <p className="text-sm text-slate-500">{i === 1 ? 'CS Student, Class of 2024' : 'Marketing Major, Class of 2025'}</p>
+                      <p className="text-sm text-slate-600 mt-2 italic">"I'd love to learn more about your transition from engineering to product management..."</p>
+                    </div>
+                    <div className="flex space-x-2">
+                       <button className="px-3 py-1 bg-yellow-500 text-slate-900 rounded text-sm font-medium hover:bg-yellow-400 transition-colors">
+                        Accept
+                      </button>
+                       <button className="px-3 py-1 border border-slate-300 rounded text-sm font-medium hover:bg-slate-50 transition-colors">
+                        Decline
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+        </div>
+
+        {/* Sidebar */}
+        <div className="space-y-8">
+           <div className="bg-slate-900 text-white p-6 rounded-lg shadow-lg relative overflow-hidden">
+             <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-yellow-500/20 rounded-full blur-2xl"></div>
+             <h3 className="font-bold text-lg mb-2 relative z-10">Complete Your Profile</h3>
+             <div className="w-full bg-slate-800 h-2 rounded-full mb-4 relative z-10">
+               <div className="bg-yellow-500 h-2 rounded-full w-3/4"></div>
+             </div>
+             <p className="text-sm text-slate-300 mb-4 relative z-10">You're 75% there! Add your past work experience to reach 100%.</p>
+             <button className="w-full py-2 bg-yellow-500 text-slate-900 font-bold rounded hover:bg-yellow-400 transition-colors relative z-10">
+               Update Profile
+             </button>
+           </div>
+
+           <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+             <h3 className="font-bold text-slate-900 mb-4">Upcoming Events</h3>
+             <div className="space-y-4">
+               <div className="flex space-x-3">
+                 <div className="bg-slate-100 px-3 py-2 rounded text-center min-w-[3.5rem]">
+                   <span className="block text-xs text-slate-500 font-bold uppercase">Oct</span>
+                   <span className="block text-xl font-bold text-slate-900">25</span>
+                 </div>
+                 <div>
+                   <h4 className="font-semibold text-slate-900 text-sm">Tech Career Workshop</h4>
+                   <p className="text-xs text-slate-500">2:00 PM • Online</p>
+                 </div>
+               </div>
+                <div className="flex space-x-3">
+                 <div className="bg-slate-100 px-3 py-2 rounded text-center min-w-[3.5rem]">
+                   <span className="block text-xs text-slate-500 font-bold uppercase">Nov</span>
+                   <span className="block text-xl font-bold text-slate-900">20</span>
+                 </div>
+                 <div>
+                   <h4 className="font-semibold text-slate-900 text-sm">Annual Alumni Gala</h4>
+                   <p className="text-xs text-slate-500">6:00 PM • Grand Hotel</p>
+                 </div>
+               </div>
+             </div>
+             <Link to="/events" className="block text-center text-sm text-yellow-600 font-medium mt-4 hover:underline">
+               View Calendar
+             </Link>
+           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
