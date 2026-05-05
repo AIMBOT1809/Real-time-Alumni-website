@@ -15,6 +15,16 @@ export interface UserProfile {
   phone?: string;
   bio?: string;
   skills: string[];
+  about?: string;
+  collegeName?: string;
+  rollNumber?: string;
+  year?: string;
+  department?: string;
+  linkedin?: string;
+  github?: string;
+  portfolio?: string;
+  resume?: string;
+  links?: { title: string; url: string }[];
 }
 
 export const CURRENT_USER: UserProfile = {
