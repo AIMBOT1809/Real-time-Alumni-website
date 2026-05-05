@@ -1,14 +1,15 @@
 
 import React, { useState } from 'react';
 import { Search, MapPin, Briefcase, GraduationCap, Filter } from 'lucide-react';
-import { ALUMNI_DATA } from '../data/mock';
+import { useAuth } from '../context/AuthContext';
 import { motion } from 'motion/react';
 
 export function AlumniNetwork() {
+  const { alumni, isFollowing, follow, unfollow } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRole, setSelectedRole] = useState<string>('all');
 
-  const filteredAlumni = ALUMNI_DATA.filter(alumni => {
+  const filteredAlumni = alumni.filter(alumni => {
     const matchesSearch = 
       alumni.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       alumni.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -18,6 +19,14 @@ export function AlumniNetwork() {
     
     return matchesSearch && matchesRole;
   });
+
+  const handleFollowToggle = (alumniId: string) => {
+    if (isFollowing(alumniId)) {
+      unfollow(alumniId);
+    } else {
+      follow(alumniId);
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -95,8 +104,15 @@ export function AlumniNetwork() {
                 ))}
               </div>
               
-              <button className="w-full py-2 border border-yellow-500 text-yellow-600 font-medium rounded-md hover:bg-yellow-50 transition-colors">
-                Connect
+              <button 
+                onClick={() => handleFollowToggle(alumni.id)}
+                className={`w-full py-2 font-medium rounded-md transition-colors ${
+                  isFollowing(alumni.id)
+                    ? 'border border-slate-300 text-slate-700 hover:bg-slate-50'
+                    : 'border border-yellow-500 text-yellow-600 hover:bg-yellow-50'
+                }`}
+              >
+                {isFollowing(alumni.id) ? 'Following' : 'Follow'}
               </button>
             </div>
           </motion.div>

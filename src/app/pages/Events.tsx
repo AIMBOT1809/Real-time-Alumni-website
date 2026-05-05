@@ -1,18 +1,19 @@
 
 import React, { useState } from 'react';
 import { Calendar, MapPin, Clock, Users, ArrowRight } from 'lucide-react';
-import { EVENTS_DATA } from '../data/mock';
+import { useAuth } from '../context/AuthContext';
 import { motion } from 'motion/react';
 
 export function Events() {
+  const { events } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<string>('all');
 
-  const filteredEvents = EVENTS_DATA.filter(event => {
+  const filteredEvents = events.filter(event => {
     const matchesSearch = 
       event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       event.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      event.organizer.toLowerCase().includes(searchTerm.toLowerCase());
+      event.alumniId.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesType = selectedType === 'all' || event.type === selectedType;
     

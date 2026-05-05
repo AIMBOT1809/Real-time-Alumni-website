@@ -19,7 +19,7 @@ export function Home() {
         </div>
         
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">Welcome to Alumni</h1>
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">Welcome to Alumni Connect</h1>
           <p className="text-xl md:text-2xl text-slate-200 max-w-4xl mx-auto mb-8">
             A professional platform connecting Students, Alumni, and Faculty for career growth, mentorship, networking, and opportunities.
           </p>
@@ -46,7 +46,7 @@ export function Home() {
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-slate-900 sm:text-4xl">Why Join Allumini?</h2>
+            <h2 className="text-3xl font-bold text-slate-900 sm:text-4xl">Why Join Alumni?</h2>
             <p className="mt-4 text-xl text-slate-600">Everything you need to accelerate your career and stay connected.</p>
           </div>
 
@@ -102,7 +102,7 @@ export function Home() {
             <div>
               <h2 className="text-3xl font-bold text-slate-900 mb-6">Grow Your Professional Network</h2>
               <p className="text-lg text-slate-600 mb-6">
-                Whether you're a student looking for guidance or an alumnus looking to give back, Allumini provides the platform to make meaningful connections.
+                Whether you're a student looking for guidance or an alumnus looking to give back, Alumni provides the platform to make meaningful connections.
               </p>
               <ul className="space-y-4 mb-8">
                 <li className="flex items-start">

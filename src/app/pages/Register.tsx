@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { supabase } from '../../supabaseClient';
 import { Link, useNavigate } from 'react-router';
 import { GraduationCap, Users, Briefcase } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import type { UserProfile } from '../data/mock';
 
 type Role = 'student' | 'alumni' | 'faculty' | null;
 
@@ -14,13 +16,82 @@ export function Register() {
     setSelectedRole(role);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // Handle registration logic here
-    if (selectedRole) {
-      login(selectedRole);
-      navigate('/dashboard');
+    const password = "12345678"
+    if (!selectedRole) return;
+
+    const getInputValue = (id: string) => {
+      const element = document.getElementById(id) as HTMLInputElement | HTMLSelectElement | null;
+      return element?.value.trim() || '';
+    };
+
+    const firstName = getInputValue('firstName');
+    const middleName = getInputValue('middleName');
+    const lastName = getInputValue('lastName');
+    const name = [firstName, middleName, lastName].filter(Boolean).join(' ').trim() || 'New User';
+    const email = getInputValue('email');
+    const phone = getInputValue('phone');
+    const company = getInputValue('company') || undefined;
+    const position = getInputValue('role') || undefined;
+    const department = getInputValue('department') || undefined;
+    const collegeName = getInputValue('collegeName') || undefined;
+    const graduationYear = Number(getInputValue('year')) || new Date().getFullYear();
+    const degree = selectedRole === 'student'
+      ? `${department || 'Student'} Student`
+      : selectedRole === 'faculty'
+      ? `${department || 'Faculty'} Faculty`
+      : 'Alumni Professional';
+    const avatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=FDE68A&color=111827&size=256`;
+
+    const newUser: UserProfile = {
+      id: `u-${Date.now()}`,
+      name,
+      role: selectedRole,
+      avatar,
+      graduationYear,
+      degree,
+      company: selectedRole === 'alumni' ? company : selectedRole === 'faculty' ? collegeName : undefined,
+      position: selectedRole === 'alumni' ? position : selectedRole === 'faculty' ? department : undefined,
+      bio: `${selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1)} registered user`,
+      skills: [],
+      email,
+      phone,
+    };
+    /*
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+  email: email,
+  password: password
+});
+
+if (authError) {
+  alert(authError.message);
+  return;
+}
+  */
+const { error: insertError } = await supabase
+  .from("students")
+  .insert([
+    {
+      first_name: firstName,
+      middle_name: middleName,
+      last_name: lastName,
+      email: email,
+      phone: phone,
+      college_name: collegeName,
+      department: department,
+      year: graduationYear.toString()
     }
+  ]);
+
+if (insertError) {
+  alert(insertError.message);
+  console.log(insertError);
+  return;
+}
+
+    login(newUser);
+    navigate('/dashboard');
   };
 
   // Role Selection View
@@ -33,7 +104,7 @@ export function Register() {
               <GraduationCap className="h-10 w-10" />
             </div>
             <h2 className="text-4xl font-bold text-white mb-4">
-              Join the Allumini Network
+              Join the Alumni Network
             </h2>
             <p className="text-xl text-slate-300">
               Select your role to get started
@@ -50,43 +121,52 @@ export function Register() {
             {/* Student Card */}
             <button
               onClick={() => handleRoleSelection('student')}
-              className="bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl transition-all transform hover:scale-105 text-center group"
+              className="relative bg-blue-500/10 backdrop-blur-xl p-8 rounded-2xl border-2 border-blue-400/50 shadow-xl hover:shadow-2xl hover:shadow-blue-500/40 transition-all duration-300 transform hover:scale-[1.03] text-center group overflow-hidden"
             >
-              <div className="mx-auto h-16 w-16 bg-yellow-100 rounded-full flex items-center justify-center mb-4 group-hover:bg-yellow-200 transition-colors">
-                <GraduationCap className="h-8 w-8 text-yellow-700" />
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/15 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div className="relative z-10">
+                <div className="mx-auto h-16 w-16 bg-blue-500/20 rounded-full flex items-center justify-center mb-4 group-hover:bg-blue-500/30 transition-colors border border-blue-400/30 group-hover:border-blue-400/60">
+                  <GraduationCap className="h-8 w-8 text-blue-300 group-hover:text-blue-200" />
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-2">Student</h3>
+                <p className="text-slate-200">
+                  Current university student looking for mentorship and opportunities
+                </p>
               </div>
-              <h3 className="text-2xl font-bold text-slate-900 mb-2">Student</h3>
-              <p className="text-slate-600">
-                Current university student looking for mentorship and opportunities
-              </p>
             </button>
 
             {/* Alumni Card */}
             <button
               onClick={() => handleRoleSelection('alumni')}
-              className="bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl transition-all transform hover:scale-105 text-center group"
+              className="relative bg-orange-500/10 backdrop-blur-xl p-8 rounded-2xl border-2 border-orange-400/50 shadow-xl hover:shadow-2xl hover:shadow-orange-500/40 transition-all duration-300 transform hover:scale-[1.03] text-center group overflow-hidden"
             >
-              <div className="mx-auto h-16 w-16 bg-yellow-100 rounded-full flex items-center justify-center mb-4 group-hover:bg-yellow-200 transition-colors">
-                <Briefcase className="h-8 w-8 text-yellow-700" />
+              <div className="absolute inset-0 bg-gradient-to-br from-orange-500/15 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div className="relative z-10">
+                <div className="mx-auto h-16 w-16 bg-orange-500/20 rounded-full flex items-center justify-center mb-4 group-hover:bg-orange-500/30 transition-colors border border-orange-400/30 group-hover:border-orange-400/60">
+                  <Briefcase className="h-8 w-8 text-orange-300 group-hover:text-orange-200" />
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-2">Alumni</h3>
+                <p className="text-slate-200">
+                  Graduate ready to mentor and connect with the network
+                </p>
               </div>
-              <h3 className="text-2xl font-bold text-slate-900 mb-2">Alumni</h3>
-              <p className="text-slate-600">
-                Graduate ready to mentor and connect with the network
-              </p>
             </button>
 
             {/* Faculty Card */}
             <button
               onClick={() => handleRoleSelection('faculty')}
-              className="bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl transition-all transform hover:scale-105 text-center group"
+              className="relative bg-green-500/10 backdrop-blur-xl p-8 rounded-2xl border-2 border-green-400/50 shadow-xl hover:shadow-2xl hover:shadow-green-500/40 transition-all duration-300 transform hover:scale-[1.03] text-center group overflow-hidden"
             >
-              <div className="mx-auto h-16 w-16 bg-yellow-100 rounded-full flex items-center justify-center mb-4 group-hover:bg-yellow-200 transition-colors">
-                <Users className="h-8 w-8 text-yellow-700" />
+              <div className="absolute inset-0 bg-gradient-to-br from-green-500/15 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div className="relative z-10">
+                <div className="mx-auto h-16 w-16 bg-green-500/20 rounded-full flex items-center justify-center mb-4 group-hover:bg-green-500/30 transition-colors border border-green-400/30 group-hover:border-green-400/60">
+                  <Users className="h-8 w-8 text-green-300 group-hover:text-green-200" />
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-2">Faculty</h3>
+                <p className="text-slate-200">
+                  Faculty member supporting student and alumni growth
+                </p>
               </div>
-              <h3 className="text-2xl font-bold text-slate-900 mb-2">Faculty</h3>
-              <p className="text-slate-600">
-                Faculty member supporting student and alumni growth
-              </p>
             </button>
           </div>
         </div>
@@ -121,6 +201,7 @@ export function Register() {
                   </label>
                   <input
                     id="firstName"
+                    name="firstName"
                     type="text"
                     required
                     className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
@@ -206,6 +287,7 @@ export function Register() {
                   </label>
                   <input
                     id="department"
+                    name="department"
                     type="text"
                     required
                     className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
@@ -217,6 +299,7 @@ export function Register() {
                   </label>
                   <select
                     id="year"
+                    name="year"
                     required
                     className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
                   >
@@ -241,6 +324,7 @@ export function Register() {
                 </label>
                 <input
                   id="cgpa"
+                  name="cgpa"
                   type="number"
                   step="0.01"
                   min="0"
@@ -424,6 +508,7 @@ export function Register() {
                 </label>
                 <input
                   id="company"
+                  name="company"
                   type="text"
                   required
                   className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
@@ -436,6 +521,7 @@ export function Register() {
                 </label>
                 <input
                   id="role"
+                  name="role"
                   type="text"
                   required
                   className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
@@ -448,6 +534,7 @@ export function Register() {
                 </label>
                 <input
                   id="experience"
+                  name="experience"
                   type="number"
                   min="0"
                   required
@@ -653,6 +740,7 @@ export function Register() {
                 </label>
                 <input
                   id="linkedin"
+                  name="linkedin"
                   type="url"
                   placeholder="https://linkedin.com/in/yourprofile"
                   className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"

@@ -1,23 +1,41 @@
 
 import React, { useState } from 'react';
 import { Search, MapPin, Briefcase, DollarSign, Calendar } from 'lucide-react';
-import { JOBS_DATA } from '../data/mock';
+import { useAuth } from '../context/AuthContext';
 import { motion } from 'motion/react';
 
 export function Opportunities() {
+  const { jobs, role, addJob, user, following } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<string>('all');
 
-  const filteredJobs = JOBS_DATA.filter(job => {
-    const matchesSearch = 
+  // Filter jobs to only show from followed alumni
+  const followedJobs = jobs?.filter(job => job.alumniId && following?.includes(job.alumniId)) || [];
+
+  // Apply search and type filters
+  const filteredJobs = followedJobs.filter(job => {
+    const matchesSearch = searchTerm === '' ||
       job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
       job.description.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     const matchesType = selectedType === 'all' || job.type === selectedType;
-    
+
     return matchesSearch && matchesType;
   });
+
+  const handlePostJob = () => {
+    if (user && (role === 'alumni' || role === 'graduate')) {
+      addJob({
+        title: 'Sample Job Posting',
+        company: 'Sample Company',
+        type: 'Full-time',
+        location: 'Remote',
+        alumniId: user.id,
+        description: 'This is a sample job posting created by an alumni.',
+      });
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -26,9 +44,14 @@ export function Opportunities() {
           <h1 className="text-3xl font-bold text-slate-900">Career Opportunities</h1>
           <p className="text-slate-600 mt-2">Find your next internship or full-time role from our alumni network.</p>
         </div>
-        <button className="mt-4 md:mt-0 bg-yellow-500 text-slate-900 font-bold py-2 px-6 rounded-md hover:bg-yellow-400 transition-colors shadow-sm">
-          Post a Job
-        </button>
+        {(role === 'alumni' || role === 'graduate') && (
+          <button 
+            onClick={handlePostJob}
+            className="mt-4 md:mt-0 bg-yellow-500 text-slate-900 font-bold py-2 px-6 rounded-md hover:bg-yellow-400 transition-colors shadow-sm"
+          >
+            Post a Job
+          </button>
+        )}
       </div>
 
       <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-200 mb-8 flex flex-col md:flex-row gap-4">
@@ -92,8 +115,8 @@ export function Opportunities() {
         {filteredJobs.length === 0 && (
           <div className="text-center py-12 bg-slate-50 rounded-lg border border-dashed border-slate-300">
             <Briefcase className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-slate-900">No jobs found</h3>
-            <p className="text-slate-500">Try adjusting your search or filters.</p>
+            <h3 className="text-lg font-medium text-slate-900">No opportunities available</h3>
+            <p className="text-slate-500">Follow more alumni to see their job postings.</p>
           </div>
         )}
       </div>

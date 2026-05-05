@@ -37,7 +37,7 @@ export function Layout() {
             <div className="bg-yellow-500 p-1.5 rounded-md text-slate-900">
               <GraduationCap size={24} />
             </div>
-            <span className="text-white">Alumni</span>
+            <span className="text-white">Alumni Connect</span>
           </Link>
 
           {/* Desktop Nav */}

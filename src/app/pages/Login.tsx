@@ -12,7 +12,21 @@ export function Login() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // For demo purposes, log in as student
+
+    const storedUser = localStorage.getItem('allumini_user');
+    if (storedUser) {
+      try {
+        const parsed = JSON.parse(storedUser);
+        if (parsed?.email === email) {
+          login(parsed);
+          navigate('/dashboard');
+          return;
+        }
+      } catch {
+        localStorage.removeItem('allumini_user');
+      }
+    }
+
     login('student');
     navigate('/dashboard');
   };
@@ -28,7 +42,7 @@ export function Login() {
             Login
           </h2>
           <p className="text-slate-300">
-            Welcome back to Allumini Network
+            Welcome back to Alumni Network
           </p>
           <p className="mt-4 text-sm text-slate-400">
             Don't have an account?{' '}

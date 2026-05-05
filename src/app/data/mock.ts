@@ -11,6 +11,8 @@ export interface UserProfile {
   degree: string;
   company?: string;
   position?: string;
+  email?: string;
+  phone?: string;
   bio?: string;
   skills: string[];
 }
@@ -95,7 +97,7 @@ export interface Job {
   company: string;
   type: 'Full-time' | 'Internship' | 'Contract';
   location: string;
-  postedBy: string; // Alumni ID
+  alumniId: string; // Alumni who posted this job
   postedDate: string;
   description: string;
 }
@@ -107,7 +109,7 @@ export const JOBS_DATA: Job[] = [
     company: 'TechFlow Inc.',
     type: 'Internship',
     location: 'Remote',
-    postedBy: 'a1',
+    alumniId: 'a1',
     postedDate: '2024-03-01',
     description: 'Looking for a motivated intern to help build our new dashboard.',
   },
@@ -117,7 +119,7 @@ export const JOBS_DATA: Job[] = [
     company: 'Global Finance',
     type: 'Full-time',
     location: 'New York, NY',
-    postedBy: 'a2',
+    alumniId: 'a2',
     postedDate: '2024-02-28',
     description: 'Join our product team to lead fintech innovation.',
   },
@@ -127,7 +129,7 @@ export const JOBS_DATA: Job[] = [
     company: 'Creative Agency',
     type: 'Full-time',
     location: 'Austin, TX',
-    postedBy: 'a3',
+    alumniId: 'a3',
     postedDate: '2024-03-05',
     description: 'Great opportunity for recent grads interested in digital marketing.',
   }
@@ -140,7 +142,7 @@ export interface Event {
   time: string;
   location: string;
   type: 'Networking' | 'Workshop' | 'Webinar';
-  organizer: string;
+  alumniId: string; // Alumni who created this event
   image: string;
 }
 
@@ -152,7 +154,7 @@ export const EVENTS_DATA: Event[] = [
     time: '6:00 PM',
     location: 'Grand Hall, University Center',
     type: 'Networking',
-    organizer: 'University Alumni Association',
+    alumniId: 'a1',
     image: 'https://images.unsplash.com/photo-1511578314322-379afb476865?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
   },
   {
@@ -162,7 +164,7 @@ export const EVENTS_DATA: Event[] = [
     time: '2:00 PM',
     location: 'Online (Zoom)',
     type: 'Workshop',
-    organizer: 'Engineering Dept',
+    alumniId: 'a4',
     image: 'https://images.unsplash.com/photo-1544531696-60c35eb65921?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
   },
   {
@@ -172,14 +174,13 @@ export const EVENTS_DATA: Event[] = [
     time: '4:00 PM',
     location: 'Student Center, Room 204',
     type: 'Workshop',
-    organizer: 'Career Services',
-    image: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
+    alumniId: 'f1',
   }
 ];
 
 export interface Post {
   id: string;
-  author: UserProfile;
+  alumniId: string; // Alumni who created this post
   content: string;
   timestamp: string;
   type: 'general' | 'opportunity' | 'event';
@@ -191,7 +192,7 @@ export interface Post {
 export const POSTS_DATA: Post[] = [
   {
     id: 'p1',
-    author: ALUMNI_DATA[0],
+    alumniId: 'a1',
     content: 'Excited to announce that TechFlow Inc. is hiring! We\'re looking for talented Frontend Developers to join our team. If you\'re passionate about React and TypeScript, check out our careers page.',
     timestamp: '2 hours ago',
     type: 'opportunity',
@@ -200,7 +201,7 @@ export const POSTS_DATA: Post[] = [
   },
   {
     id: 'p2',
-    author: ALUMNI_DATA[1],
+    alumniId: 'a2',
     content: 'Just wrapped up an amazing product strategy workshop with the team. Remember: user feedback is gold. Always listen to your customers!',
     timestamp: '5 hours ago',
     type: 'general',
@@ -210,7 +211,7 @@ export const POSTS_DATA: Post[] = [
   },
   {
     id: 'p3',
-    author: ALUMNI_DATA[2],
+    alumniId: 'a3',
     content: 'Looking for mentorship? I\'m happy to connect with students interested in marketing and content creation. Drop me a message!',
     timestamp: '1 day ago',
     type: 'general',
@@ -219,7 +220,7 @@ export const POSTS_DATA: Post[] = [
   },
   {
     id: 'p4',
-    author: ALUMNI_DATA[3],
+    alumniId: 'a4',
     content: 'Attending the Tech Career Workshop next week? I\'ll be speaking about transitioning from engineering to leadership. Hope to see you there!',
     timestamp: '2 days ago',
     type: 'event',
@@ -229,7 +230,7 @@ export const POSTS_DATA: Post[] = [
   },
   {
     id: 'p5',
-    author: ALUMNI_DATA[0],
+    alumniId: 'a1',
     content: 'Throwback to the Annual Alumni Mixer last year! Can\'t believe it\'s already time for another one. Who else is excited for April?',
     timestamp: '3 days ago',
     type: 'event',

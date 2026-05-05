@@ -5,7 +5,7 @@ import { Briefcase, Calendar, MessageSquare, User, PlusCircle, Settings, FileTex
 import { Link } from 'react-router';
 
 export function Dashboard() {
-  const { user, role, logout } = useAuth();
+  const { user, role, logout, following, posts, jobs, events, isFollowing } = useAuth();
 
   if (!user) {
     return (
@@ -21,12 +21,21 @@ export function Dashboard() {
   const isStudent = role === 'student';
   const isAlumni = role === 'alumni' || role === 'graduate';
 
+  // Filter data based on who the user follows
+  const followedPosts = posts.filter(post => following.includes(post.alumniId));
+  const followedJobs = jobs.filter(job => following.includes(job.alumniId));
+  const followedEvents = events.filter(event => following.includes(event.alumniId));
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Welcome back, {user.name}!</h1>
-          <p className="text-slate-600 mt-2 capitalize">{role} Dashboard • {user.degree}</p>
+          <h1 className="text-3xl font-bold text-slate-900">
+            Welcome back{user?.name ? `, ${user.name}` : ''}!
+          </h1>
+          <p className="text-slate-600 mt-2 capitalize">
+            {role || ''} Dashboard • {user?.degree || ''}
+          </p>
         </div>
         <div className="flex space-x-4 mt-4 md:mt-0">
           <button className="p-2 bg-white border border-slate-200 rounded-full hover:bg-slate-50 transition-colors relative">
@@ -52,8 +61,8 @@ export function Dashboard() {
                 </div>
                 <h3 className="font-semibold text-slate-900">Messages</h3>
               </div>
-              <p className="text-2xl font-bold text-slate-900">3</p>
-              <p className="text-xs text-slate-500">Unread conversations</p>
+              <p className="text-2xl font-bold text-slate-900">{followedPosts.length}</p>
+              <p className="text-xs text-slate-500">Posts from followed alumni</p>
             </div>
             
             <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
@@ -63,8 +72,8 @@ export function Dashboard() {
                 </div>
                 <h3 className="font-semibold text-slate-900">Events</h3>
               </div>
-              <p className="text-2xl font-bold text-slate-900">2</p>
-              <p className="text-xs text-slate-500">Upcoming this week</p>
+              <p className="text-2xl font-bold text-slate-900">{followedEvents.length}</p>
+              <p className="text-xs text-slate-500">Events from followed alumni</p>
             </div>
 
             <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
@@ -74,8 +83,8 @@ export function Dashboard() {
                 </div>
                 <h3 className="font-semibold text-slate-900">{isStudent ? 'Applications' : 'Job Posts'}</h3>
               </div>
-              <p className="text-2xl font-bold text-slate-900">{isStudent ? '5' : '1'}</p>
-              <p className="text-xs text-slate-500">{isStudent ? 'Active applications' : 'Active listings'}</p>
+              <p className="text-2xl font-bold text-slate-900">{followedJobs.length}</p>
+              <p className="text-xs text-slate-500">Job posts from followed alumni</p>
             </div>
           </div>
 
@@ -113,8 +122,12 @@ export function Dashboard() {
                   <div key={i} className="p-6 flex items-start space-x-4 hover:bg-slate-50 transition-colors">
                     <img src={`https://images.unsplash.com/photo-${i === 1 ? '1535713875002-d1d0cf377fde' : '1599566150163-29194dcaad36'}?ixlib=rb-1.2.1&auto=format&fit=crop&w=150&q=80`} alt="Student" className="w-12 h-12 rounded-full object-cover" />
                     <div className="flex-grow">
-                      <h4 className="font-semibold text-slate-900">{i === 1 ? 'Alex Johnson' : 'Samantha Lee'}</h4>
-                      <p className="text-sm text-slate-500">{i === 1 ? 'CS Student, Class of 2024' : 'Marketing Major, Class of 2025'}</p>
+                      <h4 className="font-semibold text-slate-900">
+                        {i === 1 ? user.name : 'Samantha Lee'}
+                      </h4>
+                      <p className="text-sm text-slate-500">
+                        {i === 1 ? `${user.degree || 'Student'}, Class of ${user.graduationYear || new Date().getFullYear()}` : 'Marketing Major, Class of 2025'}
+                      </p>
                       <p className="text-sm text-slate-600 mt-2 italic">"I'd love to learn more about your transition from engineering to product management..."</p>
                     </div>
                     <div className="flex space-x-2">
@@ -150,26 +163,25 @@ export function Dashboard() {
            <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
              <h3 className="font-bold text-slate-900 mb-4">Upcoming Events</h3>
              <div className="space-y-4">
-               <div className="flex space-x-3">
-                 <div className="bg-slate-100 px-3 py-2 rounded text-center min-w-[3.5rem]">
-                   <span className="block text-xs text-slate-500 font-bold uppercase">Oct</span>
-                   <span className="block text-xl font-bold text-slate-900">25</span>
+               {followedEvents.slice(0, 2).map((event) => (
+                 <div key={event.id} className="flex space-x-3">
+                   <div className="bg-slate-100 px-3 py-2 rounded text-center min-w-[3.5rem]">
+                     <span className="block text-xs text-slate-500 font-bold uppercase">
+                       {new Date(event.date).toLocaleDateString('en-US', { month: 'short' })}
+                     </span>
+                     <span className="block text-xl font-bold text-slate-900">
+                       {new Date(event.date).getDate()}
+                     </span>
+                   </div>
+                   <div>
+                     <h4 className="font-semibold text-slate-900 text-sm">{event.title}</h4>
+                     <p className="text-xs text-slate-500">{event.time} • {event.location}</p>
+                   </div>
                  </div>
-                 <div>
-                   <h4 className="font-semibold text-slate-900 text-sm">Tech Career Workshop</h4>
-                   <p className="text-xs text-slate-500">2:00 PM • Online</p>
-                 </div>
-               </div>
-                <div className="flex space-x-3">
-                 <div className="bg-slate-100 px-3 py-2 rounded text-center min-w-[3.5rem]">
-                   <span className="block text-xs text-slate-500 font-bold uppercase">Nov</span>
-                   <span className="block text-xl font-bold text-slate-900">20</span>
-                 </div>
-                 <div>
-                   <h4 className="font-semibold text-slate-900 text-sm">Annual Alumni Gala</h4>
-                   <p className="text-xs text-slate-500">6:00 PM • Grand Hotel</p>
-                 </div>
-               </div>
+               ))}
+               {followedEvents.length === 0 && (
+                 <p className="text-sm text-slate-500 text-center py-4">No upcoming events from followed alumni</p>
+               )}
              </div>
              <Link to="/events" className="block text-center text-sm text-yellow-600 font-medium mt-4 hover:underline">
                View Calendar

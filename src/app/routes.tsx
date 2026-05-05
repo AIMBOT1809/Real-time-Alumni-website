@@ -9,6 +9,8 @@ import { Dashboard } from "./pages/Dashboard";
 import { MainDashboard } from "./pages/MainDashboard";
 import { Login } from "./pages/Login";
 import { Register } from "./pages/Register";
+import { Chat } from "./pages/Chat";
+import { Notifications } from "./pages/Notifications";
 
 export const router = createBrowserRouter([
   {
@@ -23,6 +25,8 @@ export const router = createBrowserRouter([
       { path: "dashboard", Component: MainDashboard },
       { path: "login", Component: Login },
       { path: "register", Component: Register },
+      { path: "chat", Component: Chat },
+      { path: "notifications", Component: Notifications },
     ],
   },
 ]);
