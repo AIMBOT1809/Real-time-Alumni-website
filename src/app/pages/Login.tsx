@@ -23,6 +23,7 @@ if (error) {
   return;
 }
 
+login(data.user);
 navigate('/dashboard');
   };
 

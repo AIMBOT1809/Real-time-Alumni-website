@@ -23,18 +23,20 @@ export function MainDashboard() {
   const navigate = useNavigate();
   const [activeMenu, setActiveMenu] = useState('home');
   const [eventView, setEventView] = useState('upcoming');
-  useEffect(()=>{
-    if (!user) {
-      navigate('/login');
-    }
-  }, [user]);
-  if(!user) return null;
+  useEffect(() => {
+  if (!user) {
+    navigate('/login');
+  }
+}, [user]);
+
+if (!user) return null;
+ 
 /*
   if (!user) {
     navigate('/login');
     return null;
   }
-    */
+*/    
 
   const canPost = role === 'faculty' || role === 'alumni';
 
