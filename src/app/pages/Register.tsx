@@ -47,7 +47,7 @@ export function Register() {
       alert('Passwords do not match');
       return;
     }
-
+/*
     const { error: authError } = await supabase.auth.signUp({
       email,
       password,
@@ -57,6 +57,7 @@ export function Register() {
       alert(authError.message);
       return;
     }
+      */
     const phone = getInputValue('phone');
     const company = getInputValue('company') || undefined;
     const position = getInputValue('role') || undefined;
@@ -84,7 +85,7 @@ export function Register() {
       email,
       phone,
     };
-    /*
+    
     const { data: authData, error: authError } = await supabase.auth.signUp({
   email: email,
   password: password
@@ -94,11 +95,14 @@ if (authError) {
   alert(authError.message);
   return;
 }
-  */
+
+const userId = authData.user?.id;
+  
 const { error: insertError } = await supabase
   .from("students")
   .insert([
     {
+      id:userId,
       first_name: firstName,
       middle_name: middleName,
       last_name: lastName,

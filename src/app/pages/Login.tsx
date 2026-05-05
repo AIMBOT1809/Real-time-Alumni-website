@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router';
 import { useAuth } from '../context/AuthContext';
 import { GraduationCap } from 'lucide-react';
+import { supabase } from '../../supabaseClient';
 
 export function Login() {
   const { login } = useAuth();
@@ -10,27 +11,22 @@ export function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const storedUser = localStorage.getItem('allumini_user');
-    if (storedUser) {
-      try {
-        const parsed = JSON.parse(storedUser);
-        if (parsed?.email === email) {
-          login(parsed);
-          navigate('/dashboard');
-          return;
-        }
-      } catch {
-        localStorage.removeItem('allumini_user');
-      }
-    }
+    const { data, error } = await supabase.auth.signInWithPassword({
+  email: email,
+  password: password
+});
+if (error) {
+  alert(error.message);
+  return;
+}
 
-    login('student');
-    navigate('/dashboard');
+navigate('/dashboard');
   };
 
+  
   return (
     <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-slate-900 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full">
