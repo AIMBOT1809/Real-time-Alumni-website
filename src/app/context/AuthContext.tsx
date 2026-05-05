@@ -1,9 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { User } from '@supabase/supabase-js';
 import { UserProfile, Role, Post, Job, Event, ALUMNI_DATA, POSTS_DATA, JOBS_DATA, EVENTS_DATA } from '../data/mock';
 
 interface AuthContextType {
   user: UserProfile | null;
-  login: (payload: Role | UserProfile) => void;
+  login: (payload: Role | UserProfile | User) => void;
   logout: () => void;
   isAuthenticated: boolean;
   role: Role | null;
@@ -92,8 +93,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const login = (payload: Role | UserProfile) => {
+  const login = (payload: Role | UserProfile | User) => {
     if (typeof payload === 'string') {
+      // Handle Role
       const savedUser = localStorage.getItem('allumini_user');
       if (savedUser) {
         try {
@@ -127,9 +129,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    setUser(payload);
-    localStorage.setItem('allumini_user', JSON.stringify(payload));
-    localStorage.setItem('allumini_role', payload.role);
+    // Check if it's a Supabase User
+    if ('email' in payload && 'id' in payload && !('role' in payload)) {
+      // Convert Supabase User to UserProfile
+      const userProfile: UserProfile = {
+        id: payload.id,
+        name: payload.user_metadata?.name || payload.email?.split('@')[0] || 'User',
+        role: 'alumni', // Default role for Supabase users
+        avatar: payload.user_metadata?.avatar_url || 'https://ui-avatars.com/api/?name=User&background=FDE68A&color=111827&size=256',
+        graduationYear: new Date().getFullYear(),
+        degree: '',
+        skills: [],
+        email: payload.email,
+      };
+      setUser(userProfile);
+      localStorage.setItem('allumini_user', JSON.stringify(userProfile));
+      localStorage.setItem('allumini_role', userProfile.role);
+      return;
+    }
+
+    // Handle UserProfile
+    if ('role' in payload && typeof payload.role === 'string') {
+      setUser(payload as UserProfile);
+      localStorage.setItem('allumini_user', JSON.stringify(payload));
+      localStorage.setItem('allumini_role', payload.role);
+      return;
+    }
+
+    // If it's a Supabase User that wasn't caught above, convert it
+    if ('email' in payload && 'id' in payload) {
+      const userProfile: UserProfile = {
+        id: payload.id,
+        name: payload.user_metadata?.name || payload.email?.split('@')[0] || 'User',
+        role: 'alumni',
+        avatar: payload.user_metadata?.avatar_url || 'https://ui-avatars.com/api/?name=User&background=FDE68A&color=111827&size=256',
+        graduationYear: new Date().getFullYear(),
+        degree: '',
+        skills: [],
+        email: payload.email,
+      };
+      setUser(userProfile);
+      localStorage.setItem('allumini_user', JSON.stringify(userProfile));
+      localStorage.setItem('allumini_role', userProfile.role);
+    }
   };
 
   const follow = (alumniId: string) => {

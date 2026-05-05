@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { 
   Search, 
@@ -31,70 +31,12 @@ export function MainDashboard() {
   const navigate = useNavigate();
   const [activeMenu, setActiveMenu] = useState('home');
   const [eventView, setEventView] = useState('upcoming');
-  const [isEditing, setIsEditing] = useState(false);
-  const [newSkill, setNewSkill] = useState('');
-  const [newLinkTitle, setNewLinkTitle] = useState('');
-  const [newLinkUrl, setNewLinkUrl] = useState('');
-  const avatarInputRef = useRef<HTMLInputElement>(null);
-  const [profileData, setProfileData] = useState({
-    avatar: user?.avatar || '',
-    collegeName: user?.collegeName || '',
-    rollNumber: user?.rollNumber || '',
-    year: user?.year || '',
-    department: user?.department || '',
-    about: user?.about || '',
-    linkedin: user?.linkedin || '',
-    resume: user?.resume || '',
-    skills: user?.skills || [],
-    links: user?.links || []
-  });
-  const [formData, setFormData] = useState({
-    avatar: user?.avatar || '',
-    collegeName: user?.collegeName || '',
-    rollNumber: user?.rollNumber || '',
-    year: user?.year || '',
-    department: user?.department || '',
-    about: user?.about || '',
-    linkedin: user?.linkedin || '',
-    resume: user?.resume || '',
-    skills: user?.skills || [],
-    links: user?.links || []
-  });
-
-  useEffect(() => {
-    const userData = {
-      avatar: user?.avatar || '',
-      collegeName: user?.collegeName || '',
-      rollNumber: user?.rollNumber || '',
-      year: user?.year || '',
-      department: user?.department || '',
-      about: user?.about || '',
-      linkedin: user?.linkedin || '',
-      resume: user?.resume || '',
-      skills: user?.skills || [],
-      links: user?.links || []
-    };
-    setProfileData(userData);
-    setFormData(userData);
-  }, [user]);
-
-  const fullName = (user as any)?.fullName || user?.name || 'User';
-  const hasProfileDetails = Boolean(
-    profileData.collegeName ||
-    profileData.rollNumber ||
-    profileData.year ||
-    profileData.department ||
-    profileData.about ||
-    profileData.skills.length ||
-    profileData.linkedin ||
-    profileData.links.length ||
-    profileData.resume
-  );
 
   if (!user) {
     navigate('/login');
     return null;
   }
+*/    
 
   const canPost = role === 'faculty' || role === 'alumni';
 
