@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { supabase } from '../../supabaseClient';
 import { Link, useNavigate } from 'react-router';
-import { GraduationCap, Users, Briefcase } from 'lucide-react';
+import { GraduationCap, Users, Briefcase, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import type { UserProfile } from '../data/mock';
 
@@ -9,6 +9,8 @@ type Role = 'student' | 'alumni' | 'faculty' | null;
 
 export function Register() {
   const [selectedRole, setSelectedRole] = useState<Role>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -16,9 +18,11 @@ export function Register() {
     setSelectedRole(role);
   };
 
+  const togglePassword = () => setShowPassword((prev) => !prev);
+  const toggleConfirmPassword = () => setShowConfirmPassword((prev) => !prev);
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const password = "12345678"
     if (!selectedRole) return;
 
     const getInputValue = (id: string) => {
@@ -31,6 +35,28 @@ export function Register() {
     const lastName = getInputValue('lastName');
     const name = [firstName, middleName, lastName].filter(Boolean).join(' ').trim() || 'New User';
     const email = getInputValue('email');
+    const password = getInputValue('password');
+    const confirmPassword = getInputValue('confirmPassword');
+
+    if (!password) {
+      alert('Password cannot be empty');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      alert('Passwords do not match');
+      return;
+    }
+
+    const { error: authError } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+
+    if (authError) {
+      alert(authError.message);
+      return;
+    }
     const phone = getInputValue('phone');
     const company = getInputValue('company') || undefined;
     const position = getInputValue('role') || undefined;
@@ -252,6 +278,50 @@ if (insertError) {
                   required
                   className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
                 />
+              </div>
+
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-1">
+                  Password *
+                </label>
+                <div className="relative">
+                  <input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    placeholder="Create Password"
+                    className="w-full pr-11 px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={togglePassword}
+                    className="absolute inset-y-0 right-3 flex items-center text-slate-500 hover:text-slate-900"
+                  >
+                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-700 mb-1">
+                  Confirm Password *
+                </label>
+                <div className="relative">
+                  <input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    required
+                    placeholder="Confirm Password"
+                    className="w-full pr-11 px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={toggleConfirmPassword}
+                    className="absolute inset-y-0 right-3 flex items-center text-slate-500 hover:text-slate-900"
+                  >
+                    {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
+                </div>
               </div>
 
               <div>
@@ -489,6 +559,50 @@ if (insertError) {
               </div>
 
               <div>
+                <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-1">
+                  Password *
+                </label>
+                <div className="relative">
+                  <input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    placeholder="Create Password"
+                    className="w-full pr-11 px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={togglePassword}
+                    className="absolute inset-y-0 right-3 flex items-center text-slate-500 hover:text-slate-900"
+                  >
+                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-700 mb-1">
+                  Confirm Password *
+                </label>
+                <div className="relative">
+                  <input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    required
+                    placeholder="Confirm Password"
+                    className="w-full pr-11 px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={toggleConfirmPassword}
+                    className="absolute inset-y-0 right-3 flex items-center text-slate-500 hover:text-slate-900"
+                  >
+                    {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
                 <label htmlFor="idUpload" className="block text-sm font-medium text-slate-700 mb-1">
                   Office ID Upload *
                 </label>
@@ -694,6 +808,50 @@ if (insertError) {
                   required
                   className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
                 />
+              </div>
+
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-1">
+                  Password *
+                </label>
+                <div className="relative">
+                  <input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    placeholder="Create Password"
+                    className="w-full pr-11 px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={togglePassword}
+                    className="absolute inset-y-0 right-3 flex items-center text-slate-500 hover:text-slate-900"
+                  >
+                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-700 mb-1">
+                  Confirm Password *
+                </label>
+                <div className="relative">
+                  <input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    required
+                    placeholder="Confirm Password"
+                    className="w-full pr-11 px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={toggleConfirmPassword}
+                    className="absolute inset-y-0 right-3 flex items-center text-slate-500 hover:text-slate-900"
+                  >
+                    {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
+                </div>
               </div>
 
               <div>
