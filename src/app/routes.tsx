@@ -11,6 +11,7 @@ import { Login } from "./pages/Login";
 import { Register } from "./pages/Register";
 import { Chat } from "./pages/Chat";
 import { Notifications } from "./pages/Notifications";
+import ResetPassword from "./pages/ResetPassword";
 
 export const router = createBrowserRouter([
   {
@@ -27,6 +28,7 @@ export const router = createBrowserRouter([
       { path: "register", Component: Register },
       { path: "chat", Component: Chat },
       { path: "notifications", Component: Notifications },
+      { path: "reset-password", Component : ResetPassword},
     ],
   },
 ]);

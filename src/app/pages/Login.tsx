@@ -10,6 +10,22 @@ export function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const handleForgotPassword = async () => {
+  if (!email) {
+    alert('Please enter your email first');
+    return;
+  }
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: 'http://localhost:5187/reset-password',
+  });
+
+  if (error) {
+    alert(error.message);
+  } else {
+    alert('Password reset email sent!');
+  }
+};
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,9 +110,16 @@ navigate('/dashboard');
               </div>
 
               <div className="text-sm">
-                <a href="#" className="font-medium text-yellow-600 hover:text-yellow-500">
-                  Forgot password?
-                </a>
+                <button
+  type="button"
+  onClick={handleForgotPassword}
+  className="font-medium text-yellow-600 hover:text-yellow-500"
+>
+  Forgot password?
+</button>
+                
+  
+                
               </div>
             </div>
 
