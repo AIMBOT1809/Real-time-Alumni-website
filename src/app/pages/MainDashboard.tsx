@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState , useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { 
   Search, 
@@ -14,15 +14,7 @@ import {
   Activity,
   ThumbsUp,
   MessageSquare,
-  Share2,
-  LogOut,
-  Eye,
-  EyeOff,
-  Edit,
-  Save,
-  X,
-  Camera,
-  ExternalLink
+  Share2
 } from 'lucide-react';
 import { useNavigate } from 'react-router';
 
@@ -31,7 +23,116 @@ export function MainDashboard() {
   const navigate = useNavigate();
   const [activeMenu, setActiveMenu] = useState('home');
   const [eventView, setEventView] = useState('upcoming');
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  
+  // Profile editing state
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({
+    collegeName: user?.collegeName || '',
+    rollNumber: user?.rollNumber || '',
+    department: user?.department || '',
+    year: user?.year || '',
+    about: user?.about || '',
+    linkedin: user?.linkedin || '',
+    resume: user?.resume || '',
+    avatar: user?.avatar || '',
+  });
+  const [skills, setSkills] = useState(user?.skills || []);
+  const [newSkill, setNewSkill] = useState('');
+  const [links, setLinks] = useState(user?.links || []);
+  const [newLink, setNewLink] = useState({ title: '', url: '' });
+  
+  useEffect(() => {
+    if (!user && !isLoggingOut) {
+      navigate('/login');
+    }
+  }, [user, isLoggingOut, navigate]);
 
+  if (!user) return null;
+
+  // Profile handlers
+  const handleSave = () => {
+    const updatedUser = {
+      ...user,
+      ...formData,
+      skills,
+      links,
+    };
+    login(updatedUser);
+    setIsEditing(false);
+  };
+
+  const handleCancel = () => {
+    setFormData({
+      collegeName: user?.collegeName || '',
+      rollNumber: user?.rollNumber || '',
+      department: user?.department || '',
+      year: user?.year || '',
+      about: user?.about || '',
+      linkedin: user?.linkedin || '',
+      resume: user?.resume || '',
+      avatar: user?.avatar || '',
+    });
+    setSkills(user?.skills || []);
+    setLinks(user?.links || []);
+    setNewSkill('');
+    setNewLink({ title: '', url: '' });
+    setIsEditing(false);
+  };
+
+  const handleAvatarUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const avatarData = event.target?.result || '';
+        setFormData(prev => ({ ...prev, avatar: avatarData }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleResumeUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setFormData(prev => ({ ...prev, resume: event.target?.result || '' }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleProfileLogout = () => {
+    setIsLoggingOut(true);
+    logout();
+    navigate('/');
+  };
+
+  const addSkill = () => {
+    if (newSkill.trim() && !skills.includes(newSkill.trim())) {
+      setSkills([...skills, newSkill.trim()]);
+      setNewSkill('');
+    }
+  };
+
+  const removeSkill = (index) => {
+    setSkills(skills.filter((_, i) => i !== index));
+  };
+
+  const addLink = () => {
+    if (newLink.title.trim() && newLink.url.trim()) {
+      setLinks([...links, { title: newLink.title.trim(), url: newLink.url.trim() }]);
+      setNewLink({ title: '', url: '' });
+    }
+  };
+
+  const removeLink = (index) => {
+    setLinks(links.filter((_, i) => i !== index));
+  };
+ 
+ 
+/*
   if (!user) {
     navigate('/login');
     return null;
@@ -58,97 +159,7 @@ export function MainDashboard() {
 
   // Filter jobs to only show from followed alumni
   const followedJobs = jobs?.filter(job => job.alumniId && following?.includes(job.alumniId)) || [];
-  const handleLogout = () => {
-    localStorage.clear();
-    sessionStorage.clear();
-    window.location.href = '/';
-  };
 
-  const handleAvatarClick = () => {
-    avatarInputRef.current?.click();
-  };
-
-  const handleAvatarUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result as string;
-        setFormData(prev => ({ ...prev, avatar: result }));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleResumeUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result as string;
-        setFormData(prev => ({ ...prev, resume: result }));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const addSkill = () => {
-    if (newSkill.trim() && !formData.skills.includes(newSkill.trim())) {
-      setFormData(prev => ({
-        ...prev,
-        skills: [...prev.skills, newSkill.trim()]
-      }));
-      setNewSkill('');
-    }
-  };
-
-  const removeSkill = (skillToRemove: string) => {
-    setFormData(prev => ({
-      ...prev,
-      skills: prev.skills.filter(skill => skill !== skillToRemove)
-    }));
-  };
-
-  const addLink = () => {
-    if (newLinkTitle.trim() && newLinkUrl.trim()) {
-      setFormData(prev => ({
-        ...prev,
-        links: [...prev.links, { title: newLinkTitle.trim(), url: newLinkUrl.trim() }]
-      }));
-      setNewLinkTitle('');
-      setNewLinkUrl('');
-    }
-  };
-
-  const removeLink = (index: number) => {
-    setProfileData(prev => ({
-      ...prev,
-      links: prev.links.filter((_, i) => i !== index)
-    }));
-  };
-
-  const saveProfile = () => {
-    if (user) {
-      login({ ...user, ...formData });
-    }
-    setIsEditing(false);
-  };
-
-  const cancelEdit = () => {
-    setFormData({
-      avatar: user?.avatar || '',
-      collegeName: user?.collegeName || '',
-      rollNumber: user?.rollNumber || '',
-      year: user?.year || '',
-      department: user?.department || '',
-      about: user?.about || '',
-      linkedin: user?.linkedin || '',
-      resume: user?.resume || '',
-      skills: user?.skills || [],
-      links: user?.links || []
-    });
-    setIsEditing(false);
-  };
   return (
     <div className="min-h-screen bg-black text-white pb-28">
       {/* Top Navbar */}
@@ -212,9 +223,9 @@ export function MainDashboard() {
           {/* Sidebar */}
           <aside className="lg:col-span-1">
             <div className="bg-slate-900 rounded-lg border border-slate-800 overflow-hidden sticky top-20">
-              {/* User Profile Card */}
+              {/* Simple User Profile Card */}
               <div className="p-4 border-b border-slate-800">
-                <div className="flex items-center space-x-3 mb-3">
+                <div className="flex items-center space-x-3 mb-4">
                   <img 
                     src={user?.avatar || 'https://ui-avatars.com/api/?name=User&background=FDE68A&color=111827&size=256'} 
                     alt={user?.name || 'User'}
@@ -225,47 +236,9 @@ export function MainDashboard() {
                     <p className="text-sm text-slate-400 capitalize">{role}</p>
                   </div>
                 </div>
-                {user?.position && (
-                  <p className="text-sm text-slate-300">{user.position}</p>
-                )}
-                {user?.company && (
-                  <p className="text-xs text-slate-400">{user.company}</p>
-                )}
-                {user?.email && (
-                  <p className="text-xs text-slate-400 mt-1">{user.email}</p>
-                )}
-                <div className="mt-2 space-y-1">
-                  {user?.linkedin && (
-                    <a 
-                      href={user.linkedin} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="block text-xs text-blue-400 hover:text-blue-300"
-                    >
-                      LinkedIn
-                    </a>
-                  )}
-                  {user?.github && (
-                    <a 
-                      href={user.github} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="block text-xs text-blue-400 hover:text-blue-300"
-                    >
-                      GitHub
-                    </a>
-                  )}
-                  {user?.portfolio && (
-                    <a 
-                      href={user.portfolio} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="block text-xs text-blue-400 hover:text-blue-300"
-                    >
-                      Portfolio
-                    </a>
-                  )}
-                </div>
+                <button onClick={logout} className="w-full bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg transition-colors font-semibold text-sm">
+                  Logout
+                </button>
               </div>
 
             </div>
@@ -555,349 +528,334 @@ export function MainDashboard() {
             )}
 
             {activeMenu === 'profile' && (
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
+              <div className="space-y-6 pb-24">
+                {/* Profile Header */}
+                <div className="flex items-end justify-between">
                   <div>
-                    <h2 className="text-2xl font-bold text-white">Profile</h2>
-                    <p className="text-sm text-slate-400 mt-1">Keep your student profile up to date.</p>
+                    <h2 className="text-2xl font-bold text-white">{user?.name}</h2>
+                    <p className="text-slate-400">{user?.email}</p>
                   </div>
-                  <div className="flex items-center gap-4">
-                    {!isEditing ? (
-                      <button
-                        onClick={() => setIsEditing(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-[#FFD700] text-black rounded-lg font-semibold hover:bg-yellow-600 transition-colors"
-                      >
-                        <Edit className="h-4 w-4" />
-                        Edit Profile
-                      </button>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={saveProfile}
-                          className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors"
-                        >
-                          <Save className="h-4 w-4" />
-                          Save
-                        </button>
-                        <button
-                          onClick={cancelEdit}
-                          className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors"
-                        >
-                          <X className="h-4 w-4" />
-                          Cancel
-                        </button>
-                      </div>
-                    )}
-                    <button
-                      onClick={handleLogout}
-                      className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors"
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => setIsEditing(true)} 
+                      className="bg-[#FFD700] text-black px-4 py-2 rounded-lg font-medium hover:bg-yellow-400"
                     >
-                      <LogOut className="h-4 w-4" />
+                      Edit Profile
+                    </button>
+                    <button 
+                      onClick={handleProfileLogout} 
+                      className="bg-red-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-700"
+                    >
                       Logout
                     </button>
                   </div>
                 </div>
 
-                <div className="bg-slate-900 rounded-lg border border-slate-800 p-6 space-y-6">
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                {/* Edit Form */}
+                {isEditing ? (
+                  <div className="bg-slate-900 rounded-lg border border-slate-800 p-6 space-y-4">
+                    {/* Avatar Section */}
                     <div className="flex items-center gap-4">
-                      <button
-                        type="button"
-                        onClick={handleAvatarClick}
-                        className="h-24 w-24 rounded-full overflow-hidden border-4 border-[#FFD700] focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
-                      >
-                        <img
-                          src={formData.avatar || user?.avatar || 'https://ui-avatars.com/api/?name=User&background=FDE68A&color=111827&size=256'}
-                          alt={fullName}
-                          className="h-full w-full object-cover"
-                        />
-                      </button>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        ref={avatarInputRef}
-                        hidden
-                        onChange={handleAvatarUpload}
-                      />
-                      <div>
-                        <h3 className="text-2xl font-bold text-white">{fullName}</h3>
-                        {user?.email && <p className="text-slate-400">{user.email}</p>}
-                        <p className="text-slate-400 capitalize">{role}</p>
-                      </div>
-                    </div>
-                    {isEditing && (
-                      <label className="inline-flex items-center gap-2 rounded-lg bg-[#FFD700] px-4 py-2 text-black hover:bg-yellow-600 transition-colors cursor-pointer">
-                        <Camera className="h-4 w-4" />
-                        Upload Avatar
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleAvatarUpload}
-                          className="hidden"
+                      <label htmlFor="profile-avatar" className="cursor-pointer">
+                        <img 
+                          src={formData.avatar || user?.avatar || 'https://ui-avatars.com/api/?name=User&background=FDE68A&color=111827&size=256'} 
+                          alt="Profile"
+                          className="h-24 w-24 rounded-full object-cover border-2 border-[#FFD700] hover:opacity-80 transition-opacity"
                         />
                       </label>
-                    )}
-                  </div>
+                      <input id="profile-avatar" type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
+                      <div>
+                        <p className="text-white font-medium">Click avatar to change profile image</p>
+                        <p className="text-xs text-slate-400">Supports: JPG, PNG, GIF</p>
+                      </div>
+                    </div>
 
-                  {isEditing ? (
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                      <div className="sm:col-span-2">
-                        <label className="block text-sm font-medium text-slate-300 mb-2">College Name *</label>
+                    <hr className="border-slate-700" />
+
+                    {/* Form Fields */}
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-1">College Name *</label>
                         <input
                           type="text"
+                          placeholder="Your college name"
                           value={formData.collegeName}
                           onChange={(e) => setFormData(prev => ({ ...prev, collegeName: e.target.value }))}
-                          className="w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-white placeholder-slate-400 focus:border-[#FFD700] focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
+                          className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Roll Number *</label>
+                        <label className="block text-sm font-medium text-slate-300 mb-1">Roll Number *</label>
                         <input
                           type="text"
+                          placeholder="Your roll number"
                           value={formData.rollNumber}
                           onChange={(e) => setFormData(prev => ({ ...prev, rollNumber: e.target.value }))}
-                          className="w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-white placeholder-slate-400 focus:border-[#FFD700] focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
+                          className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Year *</label>
-                        <select
-                          value={formData.year}
-                          onChange={(e) => setFormData(prev => ({ ...prev, year: e.target.value }))}
-                          className="w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-white focus:border-[#FFD700] focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
-                        >
-                          <option value="">Select Year</option>
-                          <option value="1st Year">1st Year</option>
-                          <option value="2nd Year">2nd Year</option>
-                          <option value="3rd Year">3rd Year</option>
-                          <option value="4th Year">4th Year</option>
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Department *</label>
+                        <label className="block text-sm font-medium text-slate-300 mb-1">Department *</label>
                         <input
                           type="text"
+                          placeholder="Your department"
                           value={formData.department}
                           onChange={(e) => setFormData(prev => ({ ...prev, department: e.target.value }))}
-                          className="w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-white placeholder-slate-400 focus:border-[#FFD700] focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
+                          className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
                         />
                       </div>
 
-                      <div className="sm:col-span-2">
-                        <label className="block text-sm font-medium text-slate-300 mb-2">LinkedIn URL *</label>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-1">Year *</label>
                         <input
-                          type="url"
+                          type="text"
+                          placeholder="Your year (e.g., 2nd Year)"
+                          value={formData.year}
+                          onChange={(e) => setFormData(prev => ({ ...prev, year: e.target.value }))}
+                          className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-1">About</label>
+                        <textarea
+                          placeholder="Tell us about yourself (optional)"
+                          value={formData.about}
+                          onChange={(e) => setFormData(prev => ({ ...prev, about: e.target.value }))}
+                          className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
+                          rows={4}
+                        />
+                      </div>
+
+                      {/* Skills */}
+                      <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-2">Skills *</label>
+                        <div className="flex gap-2 mb-2">
+                          <input
+                            type="text"
+                            placeholder="Add a skill"
+                            value={newSkill}
+                            onChange={(e) => setNewSkill(e.target.value)}
+                            onKeyPress={(e) => e.key === 'Enter' && addSkill()}
+                            className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
+                          />
+                          <button onClick={addSkill} className="bg-[#FFD700] text-black px-4 py-2 rounded-lg font-medium hover:bg-yellow-400">
+                            Add Skill
+                          </button>
+                        </div>
+                        {skills.length > 0 && (
+                          <div className="flex flex-wrap gap-2">
+                            {skills.map((skill, idx) => (
+                              <div key={idx} className="bg-slate-700 text-white px-3 py-1 rounded-lg text-sm flex items-center gap-2">
+                                {skill}
+                                <button onClick={() => removeSkill(idx)} className="text-red-400 hover:text-red-300 font-bold">×</button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-1">LinkedIn URL *</label>
+                        <input
+                          type="text"
+                          placeholder="https://linkedin.com/in/your-profile"
                           value={formData.linkedin}
                           onChange={(e) => setFormData(prev => ({ ...prev, linkedin: e.target.value }))}
-                          className="w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-white placeholder-slate-400 focus:border-[#FFD700] focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
+                          className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
                         />
                       </div>
 
-                      <div className="sm:col-span-2">
-                        <label className="block text-sm font-medium text-slate-300 mb-2">About</label>
-                        <textarea
-                          placeholder="Write about yourself..."
-                          value={formData.about || ""}
-                          onChange={(e) => setFormData(prev => ({ ...prev, about: e.target.value }))}
-                          rows={4}
-                          className="w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-white placeholder-slate-400 focus:border-[#FFD700] focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
-                        />
-                      </div>
-
-                      <div className="sm:col-span-2">
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Skills *</label>
-                        <div className="space-y-3">
+                      {/* Other Links */}
+                      <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-2">Other Links</label>
+                        <div className="space-y-2 mb-3">
+                          <input
+                            type="text"
+                            placeholder="Link title (e.g., Portfolio)"
+                            value={newLink.title}
+                            onChange={(e) => setNewLink(prev => ({ ...prev, title: e.target.value }))}
+                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
+                          />
                           <div className="flex gap-2">
                             <input
                               type="text"
-                              value={newSkill}
-                              onChange={(e) => setNewSkill(e.target.value)}
-                              onKeyPress={(e) => e.key === 'Enter' && addSkill()}
-                              className="flex-1 rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-white placeholder-slate-400 focus:border-[#FFD700] focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
-                              placeholder="Add a skill"
+                              placeholder="Link URL"
+                              value={newLink.url}
+                              onChange={(e) => setNewLink(prev => ({ ...prev, url: e.target.value }))}
+                              className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
                             />
-                            <button
-                              type="button"
-                              onClick={addSkill}
-                              className="rounded-md bg-[#FFD700] px-4 py-2 font-semibold text-black hover:bg-yellow-600 transition-colors"
-                            >
-                              Add
+                            <button onClick={addLink} className="bg-[#FFD700] text-black px-4 py-2 rounded-lg font-medium hover:bg-yellow-400">
+                              Add Link
                             </button>
                           </div>
+                        </div>
+                        {links.length > 0 && (
+                          <div className="space-y-2">
+                            {links.map((link, idx) => (
+                              <div key={idx} className="bg-slate-700 px-4 py-2 rounded-lg flex items-center justify-between">
+                                <div>
+                                  <p className="text-white text-sm font-medium">{link.title}</p>
+                                  <p className="text-slate-400 text-xs truncate">{link.url}</p>
+                                </div>
+                                <button onClick={() => removeLink(idx)} className="text-red-400 hover:text-red-300 font-bold">×</button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Resume Upload */}
+                      <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-1">Resume Upload *</label>
+                        <div className="flex items-center gap-2 bg-slate-800 border border-slate-700 rounded-lg px-4 py-2">
+                          <input
+                            type="file"
+                            accept=".pdf,.doc,.docx"
+                            onChange={handleResumeUpload}
+                            className="text-white text-sm flex-1"
+                          />
+                        </div>
+                        {formData.resume && <p className="text-xs text-green-400 mt-2">✓ Resume selected</p>}
+                      </div>
+                    </div>
+
+                    <hr className="border-slate-700" />
+
+                    {/* Save/Cancel Buttons */}
+                    <div className="flex gap-3">
+                      <button 
+                        onClick={handleSave} 
+                        className="flex-1 bg-[#FFD700] text-black py-3 px-4 rounded-lg font-semibold hover:bg-yellow-400"
+                      >
+                        Save Profile
+                      </button>
+                      <button 
+                        onClick={handleCancel} 
+                        className="flex-1 bg-slate-700 text-white py-3 px-4 rounded-lg font-semibold hover:bg-slate-600"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  /* Profile View */
+                  <div className="bg-slate-900 rounded-lg border border-slate-800 p-6 space-y-6">
+                    {/* Profile Avatar and Basic Info */}
+                    <div className="flex items-center gap-4">
+                      <img 
+                        src={user?.avatar || 'https://ui-avatars.com/api/?name=User&background=FDE68A&color=111827&size=256'} 
+                        alt={user?.name}
+                        className="h-24 w-24 rounded-full object-cover border-2 border-[#FFD700]"
+                      />
+                      <div>
+                        <h3 className="text-xl font-bold text-white">{user?.name}</h3>
+                        {user?.collegeName && <p className="text-slate-400">{user.collegeName}</p>}
+                        {user?.department && <p className="text-slate-400">{user.department} - {user?.year || ''}</p>}
+                      </div>
+                    </div>
+
+                    <hr className="border-slate-700" />
+
+                    {/* Profile Grid */}
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      {user?.rollNumber && (
+                        <div className="rounded-lg bg-slate-800 p-4">
+                          <p className="text-sm text-slate-400">Roll Number</p>
+                          <p className="text-white">{user.rollNumber}</p>
+                        </div>
+                      )}
+                      {user?.year && (
+                        <div className="rounded-lg bg-slate-800 p-4">
+                          <p className="text-sm text-slate-400">Year</p>
+                          <p className="text-white">{user.year}</p>
+                        </div>
+                      )}
+                      {user?.linkedin && (
+                        <div className="rounded-lg bg-slate-800 p-4">
+                          <p className="text-sm text-slate-400">LinkedIn</p>
+                          <a href={user.linkedin} target="_blank" rel="noopener noreferrer" className="text-[#FFD700] hover:underline block truncate">
+                            View Profile
+                          </a>
+                        </div>
+                      )}
+                      {user?.resume && (
+                        <div className="rounded-lg bg-slate-800 p-4">
+                          <p className="text-sm text-slate-400">Resume</p>
+                          <a href={user.resume} target="_blank" rel="noopener noreferrer" className="text-[#FFD700] hover:underline block truncate">
+                            View Resume
+                          </a>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* About Section */}
+                    {user?.about && (
+                      <>
+                        <hr className="border-slate-700" />
+                        <div>
+                          <p className="text-sm text-slate-400 mb-2">About</p>
+                          <p className="text-white">{user.about}</p>
+                        </div>
+                      </>
+                    )}
+
+                    {/* Skills Section */}
+                    {user?.skills?.length > 0 && (
+                      <>
+                        <hr className="border-slate-700" />
+                        <div>
+                          <p className="text-sm text-slate-400 mb-3">Skills</p>
                           <div className="flex flex-wrap gap-2">
-                            {formData.skills.map((skill, index) => (
-                              <span key={index} className="inline-flex items-center gap-2 rounded-full bg-slate-700 px-3 py-1 text-sm text-white">
+                            {user.skills.map((skill, idx) => (
+                              <span key={idx} className="bg-slate-700 text-white px-3 py-1 rounded-lg text-sm">
                                 {skill}
-                                <button type="button" onClick={() => removeSkill(skill)} className="text-slate-300 hover:text-red-400">
-                                  <X className="h-3 w-3" />
-                                </button>
                               </span>
                             ))}
                           </div>
                         </div>
-                      </div>
+                      </>
+                    )}
 
-                      <div className="sm:col-span-2">
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Resume Upload *</label>
-                        <input
-                          type="file"
-                          accept=".pdf,.doc,.docx"
-                          onChange={handleResumeUpload}
-                          className="w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-white file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-[#FFD700] file:text-black hover:file:bg-yellow-600"
-                        />
-                        {formData.resume && (
-                          <p className="mt-2 text-slate-300 text-sm">Resume is ready to view after saving.</p>
-                        )}
-                      </div>
-
-                      <div className="sm:col-span-2">
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Other Links</label>
-                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                          <input
-                            type="text"
-                            value={newLinkTitle}
-                            onChange={(e) => setNewLinkTitle(e.target.value)}
-                            className="w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-white placeholder-slate-400 focus:border-[#FFD700] focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
-                            placeholder="Title"
-                          />
-                          <input
-                            type="url"
-                            value={newLinkUrl}
-                            onChange={(e) => setNewLinkUrl(e.target.value)}
-                            className="w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-white placeholder-slate-400 focus:border-[#FFD700] focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
-                            placeholder="URL"
-                          />
-                        </div>
-                        <button
-                          type="button"
-                          onClick={addLink}
-                          className="mt-3 rounded-md bg-[#FFD700] px-4 py-2 font-semibold text-black hover:bg-yellow-600 transition-colors"
-                        >
-                          + Add Link
-                        </button>
-                        {profileData.links.length > 0 && (
-                          <div className="mt-3 space-y-2">
-                            {profileData.links.map((link, index) => (
-                              <div key={index} className="flex items-center justify-between rounded-md bg-slate-800 px-3 py-2">
-                                <div>
-                                  <p className="text-white font-medium">{link.title}</p>
-                                  <p className="text-slate-400 text-sm break-all">{link.url}</p>
-                                </div>
-                                <button type="button" onClick={() => removeLink(index)} className="text-red-400 hover:text-red-300">
-                                  <X className="h-4 w-4" />
-                                </button>
-                              </div>
+                    {/* Other Links */}
+                    {(user?.links?.length > 0) && (
+                      <>
+                        <hr className="border-slate-700" />
+                        <div>
+                          <p className="text-sm text-slate-400 mb-3">Links</p>
+                          <div className="space-y-2">
+                            {user.links.map((link, idx) => (
+                              <a 
+                                key={idx}
+                                href={link.url} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="block bg-slate-800 px-4 py-2 rounded-lg text-[#FFD700] hover:bg-slate-700 hover:underline"
+                              >
+                                {link.title}
+                              </a>
                             ))}
                           </div>
-                        )}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-6">
-                      {hasProfileDetails ? (
-                        <>
-                          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            {profileData.collegeName && (
-                              <div>
-                                <p className="text-sm font-medium text-slate-300 mb-2">College Name</p>
-                                <p className="rounded-md bg-slate-800 p-3 text-white">{profileData.collegeName}</p>
-                              </div>
-                            )}
-                            {profileData.rollNumber && (
-                              <div>
-                                <p className="text-sm font-medium text-slate-300 mb-2">Roll Number</p>
-                                <p className="rounded-md bg-slate-800 p-3 text-white">{profileData.rollNumber}</p>
-                              </div>
-                            )}
-                            {profileData.year && (
-                              <div>
-                                <p className="text-sm font-medium text-slate-300 mb-2">Year</p>
-                                <p className="rounded-md bg-slate-800 p-3 text-white">{profileData.year}</p>
-                              </div>
-                            )}
-                            {profileData.department && (
-                              <div>
-                                <p className="text-sm font-medium text-slate-300 mb-2">Department</p>
-                                <p className="rounded-md bg-slate-800 p-3 text-white">{profileData.department}</p>
-                              </div>
-                            )}
-                          </div>
+                        </div>
+                      </>
+                    )}
 
-                          {profileData.skills.length > 0 && (
-                            <div>
-                              <p className="text-sm font-medium text-slate-300 mb-2">Skills</p>
-                              <div className="flex flex-wrap gap-2">
-                                {profileData.skills.map((skill, index) => (
-                                  <span key={index} className="rounded-full bg-slate-700 px-3 py-1 text-sm text-white">{skill}</span>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          {(profileData.linkedin || profileData.links.length > 0) && (
-                            <div>
-                              <p className="text-sm font-medium text-slate-300 mb-2">Links</p>
-                              <div className="space-y-2">
-                                {profileData.linkedin && (
-                                  <a
-                                    href={profileData.linkedin}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-2 text-[#FFD700] hover:text-yellow-400 transition-colors"
-                                  >
-                                    <ExternalLink className="h-4 w-4" />
-                                    LinkedIn
-                                  </a>
-                                )}
-                                {profileData.links.map((link, index) => (
-                                  <a
-                                    key={index}
-                                    href={link.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-2 text-[#FFD700] hover:text-yellow-400 transition-colors"
-                                  >
-                                    <ExternalLink className="h-4 w-4" />
-                                    {link.title}
-                                  </a>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          {profileData.about && (
-                            <div>
-                              <p className="text-sm font-medium text-slate-300 mb-2">About</p>
-                              <p className="rounded-md bg-slate-800 p-3 text-slate-200 whitespace-pre-line">
-                                {profileData.about}
-                              </p>
-                            </div>
-                          )}
-
-                          {profileData.resume && (
-                            <div>
-                              <p className="text-sm font-medium text-slate-300 mb-2">Resume</p>
-                              <a
-                                href={profileData.resume}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-2 rounded-md bg-[#FFD700] px-4 py-2 text-black font-semibold hover:bg-yellow-600 transition-colors"
-                              >
-                                <ExternalLink className="h-4 w-4" />
-                                View Resume
-                              </a>
-                            </div>
-                          )}
-                        </>
-                      ) : (
-                        <div className="min-h-[220px] rounded-lg border border-dashed border-slate-700 bg-slate-950"></div>
-                      )}
-                    </div>
-                  )}
-                </div>
+                    {/* Non-students Logout */}
+                    {role !== 'student' && (
+                      <>
+                        <hr className="border-slate-700" />
+                        <button 
+                          onClick={logout} 
+                          className="w-full bg-red-600 hover:bg-red-700 text-white py-3 px-4 rounded-lg font-semibold"
+                        >
+                          Logout
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
