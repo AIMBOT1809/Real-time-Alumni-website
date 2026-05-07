@@ -5,14 +5,16 @@ import { useAuth } from '../context/AuthContext';
 import { motion } from 'motion/react';
 
 export function Events() {
-  const { events } = useAuth();
+  const { events, getAlumniById } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<string>('all');
 
   const filteredEvents = events.filter(event => {
+    const organizerName = getAlumniById(event.alumniId)?.name ?? '';
     const matchesSearch = 
       event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       event.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      organizerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       event.alumniId.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesType = selectedType === 'all' || event.type === selectedType;
@@ -88,7 +90,7 @@ export function Events() {
                 </div>
                 <div className="flex items-center">
                   <Users className="h-4 w-4 text-slate-400 mr-2" />
-                  <span>Organized by {event.organizer}</span>
+                  <span>Organized by {getAlumniById(event.alumniId)?.name ?? 'Alumni'}</span>
                 </div>
               </div>
               
