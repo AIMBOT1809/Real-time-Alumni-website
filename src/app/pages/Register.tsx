@@ -471,25 +471,29 @@ if (!selectedRole) {
           {/* Alumni Card */}
           <div
             onClick={() => handleRoleSelection('alumni')}
-            className="relative bg-gradient-to-br from-orange-500 via-amber-400 to-yellow-300 backdrop-blur-xl bg-white/20 backdrop-saturate-150 rounded-2xl p-8 shadow-2xl cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-3xl hover:from-orange-600 hover:via-amber-500 hover:to-yellow-400 border border-white/20"
+            className="group relative bg-gradient-to-br from-orange-600 via-amber-500 to-yellow-400 backdrop-blur-2xl bg-white/10 backdrop-saturate-200 rounded-3xl p-10 shadow-2xl cursor-pointer transform transition-all duration-500 hover:scale-105 hover:shadow-3xl hover:from-orange-700 hover:via-amber-600 hover:to-yellow-500 border-2 border-orange-200/50 hover:border-orange-300/50"
           >
-            {/* Glossy reflection effect */}
-            <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-white/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
+            {/* Premium glassmorphism layers */}
+            <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-white/30 via-transparent to-white/10 opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
+            
+            {/* Top light reflection effect */}
+            <div className="absolute top-2 left-1/2 w-20 h-20 bg-gradient-to-br from-white/60 via-white/20 to-transparent rounded-full blur-2xl opacity-60 group-hover:opacity-80 transition-all duration-500"></div>
             
             <div className="relative z-10">
-              <div className="flex items-center justify-center mb-6">
+              <div className="flex items-center justify-center mb-8">
                 <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-r from-orange-400 to-yellow-300 rounded-full blur-xl opacity-75 animate-pulse"></div>
-                  <GraduationCap className="relative z-10 w-16 h-16 text-white drop-shadow-lg" />
+                  {/* Icon with glossy background */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-orange-400 via-amber-300 to-yellow-200 rounded-full blur-2xl opacity-90 animate-pulse"></div>
+                  <GraduationCap className="relative z-10 w-20 h-20 text-white drop-shadow-2xl" />
                 </div>
               </div>
-              <h2 className="text-2xl font-bold text-white text-center mb-4 drop-shadow-lg">Alumni</h2>
-              <p className="text-orange-100 text-center mb-6 leading-relaxed">
+              <h2 className="text-3xl font-bold text-white text-center mb-6 drop-shadow-2xl">Alumni</h2>
+              <p className="text-orange-50 text-center mb-8 leading-relaxed text-lg">
                 Connect with fellow graduates, share your achievements, and stay connected with your alma mater.
               </p>
               <div className="flex items-center justify-center">
-                <span className="bg-gradient-to-r from-white to-orange-100 text-orange-900 px-8 py-3 rounded-full font-bold shadow-lg backdrop-blur-sm hover:from-orange-50 hover:to-white hover:shadow-xl transform transition-all duration-300 hover:scale-105">
-                  Register as Alumni
+                <span className="relative bg-gradient-to-r from-white via-orange-100 to-orange-50 text-orange-900 px-10 py-4 rounded-2xl font-bold shadow-2xl backdrop-blur-sm hover:from-orange-50 hover:to-white hover:shadow-2xl transform transition-all duration-500 hover:scale-110 hover:shadow-3xl border border-orange-200/50 hover:border-orange-300/50">
+                  <span className="relative z-10">Register as Alumni</span>
                 </span>
               </div>
             </div>
@@ -498,25 +502,29 @@ if (!selectedRole) {
           {/* Faculty Card */}
           <div
             onClick={() => handleRoleSelection('faculty')}
-            className="relative bg-gradient-to-br from-emerald-600 via-green-500 to-teal-400 backdrop-blur-xl bg-white/25 backdrop-saturate-200 rounded-2xl p-8 shadow-2xl cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-3xl hover:from-emerald-700 hover:via-green-600 hover:to-teal-500 border border-white/30"
+            className="group relative bg-gradient-to-br from-green-600 via-emerald-500 to-lime-300 backdrop-blur-2xl bg-white/10 backdrop-saturate-200 rounded-3xl p-10 shadow-2xl cursor-pointer transform transition-all duration-500 hover:scale-105 hover:shadow-3xl hover:from-green-700 hover:via-emerald-600 hover:to-lime-400 border-2 border-green-200/50 hover:border-green-300/50"
           >
-            {/* Enhanced glossy reflection effect */}
-            <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-white/25 via-transparent to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
+            {/* Premium glassmorphism layers */}
+            <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-white/40 via-transparent to-white/5 opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
+            
+            {/* Top light reflection effect */}
+            <div className="absolute top-2 right-2 w-24 h-24 bg-gradient-to-br from-white/60 via-white/20 to-transparent rounded-full blur-3xl opacity-70 group-hover:opacity-90 transition-all duration-500"></div>
             
             <div className="relative z-10">
-              <div className="flex items-center justify-center mb-6">
+              <div className="flex items-center justify-center mb-8">
                 <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 via-green-300 to-teal-200 rounded-full blur-xl opacity-80 animate-pulse"></div>
-                  <Users className="relative z-10 w-16 h-16 text-white drop-shadow-lg" />
+                  {/* Icon with glossy background */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-green-400 via-emerald-300 to-lime-200 rounded-full blur-2xl opacity-95 animate-pulse"></div>
+                  <Users className="relative z-10 w-20 h-20 text-white drop-shadow-2xl" />
                 </div>
               </div>
-              <h2 className="text-2xl font-bold text-white text-center mb-4 drop-shadow-lg">Faculty</h2>
-              <p className="text-emerald-100 text-center mb-6 leading-relaxed">
+              <h2 className="text-3xl font-bold text-white text-center mb-6 drop-shadow-2xl">Faculty</h2>
+              <p className="text-green-50 text-center mb-8 leading-relaxed text-lg">
                 Join our faculty network, mentor students, and contribute to academic excellence.
               </p>
               <div className="flex items-center justify-center">
-                <span className="bg-gradient-to-r from-white via-emerald-50 to-teal-100 text-emerald-900 px-8 py-3 rounded-full font-bold shadow-lg backdrop-blur-sm hover:from-emerald-50 hover:to-white hover:shadow-xl transform transition-all duration-300 hover:scale-105">
-                  Register as Faculty
+                <span className="relative bg-gradient-to-r from-white via-green-100 to-lime-50 text-green-900 px-10 py-4 rounded-2xl font-bold shadow-2xl backdrop-blur-sm hover:from-green-50 hover:to-white hover:shadow-2xl transform transition-all duration-500 hover:scale-110 hover:shadow-3xl border border-green-200/50 hover:border-green-300/50">
+                  <span className="relative z-10">Register as Faculty</span>
                 </span>
               </div>
             </div>
