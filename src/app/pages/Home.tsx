@@ -21,7 +21,7 @@ export function Home() {
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">Welcome to Alumni Connect</h1>
           <p className="text-xl md:text-2xl text-slate-200 max-w-4xl mx-auto mb-8">
-            A professional platform connecting Students, Alumni, and Faculty for career growth, mentorship, networking, and opportunities.
+            A professional platform connecting Alumni and Faculty for career growth, mentorship, networking, and opportunities.
           </p>
           {!isAuthenticated && (
             <div className="flex flex-col sm:flex-row gap-4 justify-center">

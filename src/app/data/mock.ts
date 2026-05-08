@@ -1,6 +1,6 @@
 import { LucideIcon, Briefcase, Calendar, GraduationCap, Users, User, Award, BookOpen } from 'lucide-react';
 
-export type Role = 'student' | 'graduate' | 'alumni' | 'faculty';
+export type Role = 'graduate' | 'alumni' | 'faculty';
 
 export interface UserProfile {
   id: string;
@@ -24,6 +24,7 @@ export interface UserProfile {
   github?: string;
   portfolio?: string;
   resume?: string;
+  idProof?: string;
   links?: { title: string; url: string }[];
   cgpa?: string;
   phoneNumber?: string;
@@ -32,12 +33,12 @@ export interface UserProfile {
 export const CURRENT_USER: UserProfile = {
   id: 'u1',
   name: 'Alex Johnson',
-  role: 'student',
+  role: 'alumni',
   avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
   graduationYear: 2024,
   degree: 'B.S. Computer Science',
   skills: ['React', 'TypeScript', 'Node.js'],
-  bio: 'Final year CS student looking for frontend internships.',
+  bio: 'Recent graduate looking for frontend opportunities.',
 };
 
 export const ALUMNI_DATA: UserProfile[] = [
@@ -187,6 +188,7 @@ export const EVENTS_DATA: Event[] = [
     location: 'Student Center, Room 204',
     type: 'Workshop',
     alumniId: 'f1',
+    image: 'https://images.unsplash.com/photo-1586281380349-632531db7cd4?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
   }
 ];
 

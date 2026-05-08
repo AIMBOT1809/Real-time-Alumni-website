@@ -64,13 +64,6 @@ export function Layout() {
                     alt="Profile"
                     className="w-9 h-9 rounded-full border-2 border-slate-700 object-cover"
                   />
-                  <button 
-                    onClick={logout}
-                    className="text-slate-400 hover:text-white"
-                    title="Logout"
-                  >
-                    <LogOut size={18} />
-                  </button>
                 </div>
               </>
             ) : (
@@ -124,12 +117,6 @@ export function Layout() {
                           <div className="text-slate-400 text-sm capitalize">{user?.role}</div>
                         </div>
                       </div>
-                      <button 
-                        onClick={() => { logout(); setIsMobileMenuOpen(false); }}
-                        className="text-slate-400 hover:text-white"
-                      >
-                        <LogOut size={20} />
-                      </button>
                     </div>
                   ) : (
                     <div className="flex flex-col space-y-3">
@@ -172,7 +159,7 @@ export function Layout() {
               <span>Allumini</span>
             </div>
             <p className="text-sm leading-relaxed">
-              Connecting students and alumni for a brighter future. Bridging the gap between education and professional success.
+              Connecting alumni for a brighter future. Bridging the gap between education and professional success.
             </p>
           </div>
           

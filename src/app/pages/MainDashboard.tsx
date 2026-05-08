@@ -236,10 +236,7 @@ export function MainDashboard() {
                     <p className="text-sm text-slate-400 capitalize">{role}</p>
                   </div>
                 </div>
-                <button onClick={logout} className="w-full bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg transition-colors font-semibold text-sm">
-                  Logout
-                </button>
-              </div>
+                              </div>
 
             </div>
           </aside>
@@ -542,13 +539,7 @@ export function MainDashboard() {
                     >
                       Edit Profile
                     </button>
-                    <button 
-                      onClick={handleProfileLogout} 
-                      className="bg-red-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-700"
-                    >
-                      Logout
-                    </button>
-                  </div>
+                                      </div>
                 </div>
 
                 {/* Edit Form */}
@@ -846,12 +837,14 @@ export function MainDashboard() {
                     {role !== 'student' && (
                       <>
                         <hr className="border-slate-700" />
-                        <button 
-                          onClick={logout} 
-                          className="w-full bg-red-600 hover:bg-red-700 text-white py-3 px-4 rounded-lg font-semibold"
-                        >
-                          Logout
-                        </button>
+                        <div className="flex justify-center">
+                          <span 
+                            onClick={logout} 
+                            className="text-red-600 hover:text-red-700 py-3 px-4 text-center cursor-pointer font-semibold"
+                          >
+                            Logout
+                          </span>
+                        </div>
                       </>
                     )}
                   </div>

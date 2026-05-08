@@ -18,7 +18,6 @@ export function Dashboard() {
     );
   }
 
-  const isStudent = role === 'student';
   const isAlumni = role === 'alumni' || role === 'graduate';
 
   // Filter data based on who the user follows
@@ -81,7 +80,7 @@ export function Dashboard() {
                 <div className="bg-purple-100 p-2 rounded-lg text-purple-600">
                   <Briefcase className="h-5 w-5" />
                 </div>
-                <h3 className="font-semibold text-slate-900">{isStudent ? 'Applications' : 'Job Posts'}</h3>
+                <h3 className="font-semibold text-slate-900">Job Posts</h3>
               </div>
               <p className="text-2xl font-bold text-slate-900">{followedJobs.length}</p>
               <p className="text-xs text-slate-500">Job posts from followed alumni</p>
@@ -89,60 +88,36 @@ export function Dashboard() {
           </div>
 
           {/* Role Specific Content */}
-          {isStudent ? (
-            <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
-              <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
-                <h3 className="font-bold text-slate-900">Recommended Mentors</h3>
-                <Link to="/network" className="text-sm text-yellow-600 hover:text-yellow-700 font-medium">View All</Link>
-              </div>
-              <div className="divide-y divide-slate-100">
-                {[1, 2].map((i) => (
-                  <div key={i} className="p-6 flex items-start space-x-4 hover:bg-slate-50 transition-colors">
-                    <img src={`https://images.unsplash.com/photo-${i === 1 ? '1573496359142-b8d87734a5a2' : '1560250097-0b9358e10395'}?ixlib=rb-1.2.1&auto=format&fit=crop&w=150&q=80`} alt="Mentor" className="w-12 h-12 rounded-full object-cover" />
-                    <div className="flex-grow">
-                      <h4 className="font-semibold text-slate-900">{i === 1 ? 'Dr. Elena Rodriguez' : 'Mark Thompson'}</h4>
-                      <p className="text-sm text-slate-500">{i === 1 ? 'Senior Data Scientist at Google' : 'Product Lead at Spotify'}</p>
-                      <p className="text-xs text-slate-400 mt-1">Specializes in AI & Machine Learning</p>
-                    </div>
-                    <button className="px-3 py-1 border border-slate-300 rounded text-sm font-medium hover:bg-white hover:border-yellow-500 hover:text-yellow-600 transition-colors">
-                      Connect
+          <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+              <h3 className="font-bold text-slate-900">Mentorship Requests</h3>
+              <span className="bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full font-bold">2 New</span>
+            </div>
+            <div className="divide-y divide-slate-100">
+               {[1, 2].map((i) => (
+                <div key={i} className="p-6 flex items-start space-x-4 hover:bg-slate-50 transition-colors">
+                  <img src={`https://images.unsplash.com/photo-${i === 1 ? '1535713875002-d1d0cf377fde' : '1599566150163-29194dcaad36'}?ixlib=rb-1.2.1&auto=format&fit=crop&w=150&q=80`} alt="Student" className="w-12 h-12 rounded-full object-cover" />
+                  <div className="flex-grow">
+                    <h4 className="font-semibold text-slate-900">
+                      {i === 1 ? user.name : 'Samantha Lee'}
+                    </h4>
+                    <p className="text-sm text-slate-500">
+                      {i === 1 ? `${user.degree || 'Alumni'}, Class of ${user.graduationYear || new Date().getFullYear()}` : 'Marketing Major, Class of 2025'}
+                    </p>
+                    <p className="text-sm text-slate-600 mt-2 italic">"I'd love to learn more about your transition from engineering to product management..."</p>
+                  </div>
+                  <div className="flex space-x-2">
+                     <button className="px-3 py-1 bg-yellow-500 text-slate-900 rounded text-sm font-medium hover:bg-yellow-400 transition-colors">
+                      Accept
+                    </button>
+                     <button className="px-3 py-1 border border-slate-300 rounded text-sm font-medium hover:bg-slate-50 transition-colors">
+                      Decline
                     </button>
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
-          ) : (
-             <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
-              <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
-                <h3 className="font-bold text-slate-900">Mentorship Requests</h3>
-                <span className="bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full font-bold">2 New</span>
-              </div>
-              <div className="divide-y divide-slate-100">
-                 {[1, 2].map((i) => (
-                  <div key={i} className="p-6 flex items-start space-x-4 hover:bg-slate-50 transition-colors">
-                    <img src={`https://images.unsplash.com/photo-${i === 1 ? '1535713875002-d1d0cf377fde' : '1599566150163-29194dcaad36'}?ixlib=rb-1.2.1&auto=format&fit=crop&w=150&q=80`} alt="Student" className="w-12 h-12 rounded-full object-cover" />
-                    <div className="flex-grow">
-                      <h4 className="font-semibold text-slate-900">
-                        {i === 1 ? user.name : 'Samantha Lee'}
-                      </h4>
-                      <p className="text-sm text-slate-500">
-                        {i === 1 ? `${user.degree || 'Student'}, Class of ${user.graduationYear || new Date().getFullYear()}` : 'Marketing Major, Class of 2025'}
-                      </p>
-                      <p className="text-sm text-slate-600 mt-2 italic">"I'd love to learn more about your transition from engineering to product management..."</p>
-                    </div>
-                    <div className="flex space-x-2">
-                       <button className="px-3 py-1 bg-yellow-500 text-slate-900 rounded text-sm font-medium hover:bg-yellow-400 transition-colors">
-                        Accept
-                      </button>
-                       <button className="px-3 py-1 border border-slate-300 rounded text-sm font-medium hover:bg-slate-50 transition-colors">
-                        Decline
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          </div>
 
         </div>
 
