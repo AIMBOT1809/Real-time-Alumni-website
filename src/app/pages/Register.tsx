@@ -442,28 +442,31 @@ if (!selectedRole) {
           {/* Alumni Card */}
           <div
             onClick={() => handleRoleSelection('alumni')}
-            className="group relative bg-orange-500/10 backdrop-blur-lg backdrop-saturate-150 rounded-2xl p-6 shadow-lg cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-xl hover:bg-orange-500/20 border border-orange-200/30 hover:border-orange-300/40"
+            className="group relative w-full h-full bg-orange-500/15 backdrop-blur-xl backdrop-saturate-200 rounded-2xl p-8 shadow-xl cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:bg-orange-500/25 border border-orange-300/40 hover:border-orange-400/60 hover:ring-2 hover:ring-orange-500/20"
           >
-            {/* Premium glassmorphism layers */}
-            <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/20 via-transparent to-white/5 opacity-0 group-hover:opacity-100 transition-all duration-300"></div>
+            {/* Enhanced glassmorphism base layer */}
+            <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-orange-400/10 via-transparent to-orange-500/5"></div>
             
-            {/* Top light reflection effect */}
-            <div className="absolute top-1 left-1/2 w-16 h-16 bg-gradient-to-br from-white/40 via-white/10 to-transparent rounded-full blur-xl opacity-40 group-hover:opacity-60 transition-all duration-300"></div>
+            {/* Premium glossy shine effect */}
+            <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/25 via-transparent to-white/5 opacity-0 group-hover:opacity-100 transition-all duration-300"></div>
+            
+            {/* Top light reflection */}
+            <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-32 h-32 bg-gradient-to-br from-white/40 via-orange-200/20 to-transparent rounded-full blur-3xl opacity-30 group-hover:opacity-60 transition-all duration-300"></div>
             
             <div className="relative z-10">
-              <div className="flex items-center justify-center mb-4">
+              <div className="flex items-center justify-center mb-6">
                 <div className="relative">
-                  {/* Icon with glossy background */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-orange-400 via-amber-300 to-yellow-200 rounded-full blur-xl opacity-70 animate-pulse"></div>
-                  <GraduationCap className="relative z-10 w-12 h-12 text-white drop-shadow-lg" />
+                  {/* Icon glow */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-orange-400 via-amber-300 to-yellow-200 rounded-full blur-2xl opacity-60 group-hover:opacity-80 transition-all duration-300 animate-pulse"></div>
+                  <GraduationCap className="relative z-10 w-14 h-14 text-white drop-shadow-lg" />
                 </div>
               </div>
-              <h2 className="text-2xl font-bold text-white text-center mb-4 drop-shadow-lg">Alumni</h2>
-              <p className="text-orange-100 text-center mb-4 leading-relaxed">
+              <h2 className="text-2xl font-bold text-white text-center mb-3 drop-shadow-lg">Alumni</h2>
+              <p className="text-orange-50 text-center mb-6 leading-relaxed">
                 Connect with fellow graduates, share your achievements.
               </p>
               <div className="flex items-center justify-center">
-                <span className="relative bg-gradient-to-r from-orange-100/80 via-orange-50/30 to-orange-100/50 text-orange-900 px-6 py-2 rounded-xl font-bold shadow-lg backdrop-blur-sm hover:from-orange-100 hover:to-orange-200 hover:shadow-lg transform transition-all duration-300 hover:scale-110 hover:shadow-xl hover:bg-orange-100/90 border border-orange-300/50 hover:border-orange-400/50 hover:ring-2 hover:ring-orange-500/50">
+                <span className="relative bg-gradient-to-r from-orange-100/85 to-orange-100/65 text-orange-900 px-6 py-2 rounded-lg font-bold shadow-lg backdrop-blur-md hover:from-orange-100 hover:to-orange-200 hover:shadow-xl transform transition-all duration-300 hover:scale-105 border border-orange-300/60 hover:border-orange-400/80 hover:ring-2 hover:ring-orange-500/30">
                   <span className="relative z-10">Register as Alumni</span>
                 </span>
               </div>
@@ -473,28 +476,31 @@ if (!selectedRole) {
           {/* Faculty Card */}
           <div
             onClick={() => handleRoleSelection('faculty')}
-            className="group relative bg-green-500/20 backdrop-blur-xl backdrop-saturate-150 rounded-3xl p-10 shadow-2xl cursor-pointer transform transition-all duration-500 hover:scale-105 hover:shadow-3xl hover:bg-green-500/30 border-2 border-green-300/50 hover:border-green-400/50"
+            className="group relative w-full h-full bg-green-500/15 backdrop-blur-xl backdrop-saturate-200 rounded-2xl p-8 shadow-xl cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:bg-green-500/25 border border-green-300/40 hover:border-green-400/60 hover:ring-2 hover:ring-green-500/20"
           >
-            {/* Premium glassmorphism layers */}
-            <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-white/40 via-transparent to-white/5 opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
+            {/* Enhanced glassmorphism base layer */}
+            <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-green-400/10 via-transparent to-green-500/5"></div>
             
-            {/* Top light reflection effect */}
-            <div className="absolute top-2 right-2 w-24 h-24 bg-gradient-to-br from-white/60 via-white/20 to-transparent rounded-full blur-3xl opacity-70 group-hover:opacity-90 transition-all duration-500"></div>
+            {/* Premium glossy shine effect */}
+            <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/25 via-transparent to-white/5 opacity-0 group-hover:opacity-100 transition-all duration-300"></div>
+            
+            {/* Top light reflection */}
+            <div className="absolute -top-10 right-1/4 w-32 h-32 bg-gradient-to-br from-white/40 via-green-200/20 to-transparent rounded-full blur-3xl opacity-30 group-hover:opacity-60 transition-all duration-300"></div>
             
             <div className="relative z-10">
-              <div className="flex items-center justify-center mb-8">
+              <div className="flex items-center justify-center mb-6">
                 <div className="relative">
-                  {/* Icon with glossy background */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-green-400 via-emerald-300 to-lime-200 rounded-full blur-2xl opacity-95 animate-pulse"></div>
-                  <Users className="relative z-10 w-20 h-20 text-white drop-shadow-2xl" />
+                  {/* Icon glow */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-green-400 via-emerald-300 to-lime-200 rounded-full blur-2xl opacity-70 group-hover:opacity-90 transition-all duration-300 animate-pulse"></div>
+                  <Users className="relative z-10 w-14 h-14 text-white drop-shadow-lg" />
                 </div>
               </div>
-              <h2 className="text-3xl font-bold text-white text-center mb-6 drop-shadow-2xl">Faculty</h2>
-              <p className="text-green-50 text-center mb-8 leading-relaxed text-lg">
+              <h2 className="text-2xl font-bold text-white text-center mb-3 drop-shadow-lg">Faculty</h2>
+              <p className="text-green-50 text-center mb-6 leading-relaxed">
                 Join our faculty network, mentor students, and contribute to academic excellence.
               </p>
               <div className="flex items-center justify-center">
-                <span className="relative bg-gradient-to-r from-green-100/80 via-green-50/30 to-lime-100/50 text-green-900 px-10 py-4 rounded-2xl font-bold shadow-2xl backdrop-blur-sm hover:from-green-100 hover:to-green-200 hover:shadow-2xl transform transition-all duration-500 hover:scale-110 hover:shadow-3xl hover:bg-green-100/90 border border-green-300/50 hover:border-green-400/50 hover:ring-2 hover:ring-green-500/50">
+                <span className="relative bg-gradient-to-r from-green-100/85 to-green-100/65 text-green-900 px-6 py-2 rounded-lg font-bold shadow-lg backdrop-blur-md hover:from-green-100 hover:to-green-200 hover:shadow-xl transform transition-all duration-300 hover:scale-105 border border-green-300/60 hover:border-green-400/80 hover:ring-2 hover:ring-green-500/30">
                   <span className="relative z-10">Register as Faculty</span>
                 </span>
               </div>
