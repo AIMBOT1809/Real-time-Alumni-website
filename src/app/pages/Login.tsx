@@ -73,17 +73,17 @@ export function Login() {
 });
 
 if (error) {
-
   alert(error.message);
-
   return;
-
 }
 
+const signedInUser = data.user || data.session?.user;
+if (!signedInUser) {
+  alert('Login succeeded, but no user was returned. Please try again.');
+  return;
+}
 
-
-login(data.user);
-
+login(signedInUser);
 navigate('/dashboard');
 
   };

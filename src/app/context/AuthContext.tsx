@@ -93,6 +93,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const getSavedUserProfile = (email?: string, id?: string): UserProfile | null => {
+    const savedUser = localStorage.getItem('allumini_user');
+    if (!savedUser) return null;
+
+    try {
+      const parsed = JSON.parse(savedUser) as UserProfile;
+      if (
+        (email && parsed.email?.toLowerCase() === email.toLowerCase()) ||
+        (id && parsed.id === id)
+      ) {
+        return parsed;
+      }
+    } catch {
+      localStorage.removeItem('allumini_user');
+    }
+
+    return null;
+  };
+
   const login = (payload: Role | UserProfile | User) => {
     if (typeof payload === 'string') {
       // Handle Role
@@ -131,12 +150,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Check if it's a Supabase User
     if ('email' in payload && 'id' in payload && !('role' in payload)) {
+      const savedProfile = getSavedUserProfile(payload.email, payload.id);
+      if (savedProfile) {
+        setUser(savedProfile);
+        localStorage.setItem('allumini_user', JSON.stringify(savedProfile));
+        localStorage.setItem('allumini_role', savedProfile.role);
+        return;
+      }
+
       // Convert Supabase User to UserProfile
       const userProfile: UserProfile = {
         id: payload.id,
         name: payload.user_metadata?.name || payload.email?.split('@')[0] || 'User',
-        role: 'alumni', // Default role for Supabase users
-        avatar: payload.user_metadata?.avatar_url || 'https://ui-avatars.com/api/?name=User&background=FDE68A&color=111827&size=256',
+        role: payload.user_metadata?.role || 'alumni',
+        avatar:
+          payload.user_metadata?.avatar_url ||
+          'https://ui-avatars.com/api/?name=User&background=FDE68A&color=111827&size=256',
         graduationYear: new Date().getFullYear(),
         degree: '',
         skills: [],

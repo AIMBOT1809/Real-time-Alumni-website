@@ -530,7 +530,6 @@ export function MainDashboard() {
                 <div className="flex items-end justify-between">
                   <div>
                     <h2 className="text-2xl font-bold text-white">{user?.name}</h2>
-                    <p className="text-slate-400">{user?.email}</p>
                   </div>
                   <div className="flex gap-2">
                     <button 
@@ -743,6 +742,7 @@ export function MainDashboard() {
                       />
                       <div>
                         <h3 className="text-xl font-bold text-white">{user?.name}</h3>
+                        {user?.email && <p className="text-slate-400 text-sm">{user?.email}</p>}
                         {user?.collegeName && <p className="text-slate-400">{user.collegeName}</p>}
                         {user?.department && <p className="text-slate-400">{user.department} - {user?.year || ''}</p>}
                       </div>
