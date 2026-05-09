@@ -161,7 +161,7 @@ export function MainDashboard() {
   const followedJobs = jobs?.filter(job => job.alumniId && following?.includes(job.alumniId)) || [];
 
   return (
-    <div className="min-h-screen bg-black text-white pb-28">
+    <div className="min-h-screen bg-white text-slate-900 pb-28">
       {/* Top Navbar */}
       <header className="bg-slate-900 border-b border-slate-800 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

@@ -23,6 +23,9 @@ export function Layout() {
 
   // Hide layout components on dashboard
   const isDashboard = location.pathname === '/dashboard';
+  const isLandingPage = location.pathname === '/';
+  const isLoginPage = location.pathname === '/login';
+  const isRegisterPage = location.pathname === '/register';
 
   if (isDashboard) {
     return <Outlet />;
@@ -45,7 +48,12 @@ export function Layout() {
 
           {/* User Controls */}
           <div className="hidden md:flex items-center space-x-4">
-            {isAuthenticated ? (
+            {isLandingPage || isLoginPage || isRegisterPage ? (
+              // Hide buttons on landing, login, and register pages
+              <div className="flex items-center space-x-3">
+              </div>
+            ) : isAuthenticated ? (
+              // Show dashboard items when authenticated (not on landing page)
               <>
                 <button className="text-slate-300 hover:text-white transition-colors">
                   <Search size={20} />
@@ -67,7 +75,20 @@ export function Layout() {
                 </div>
               </>
             ) : (
+              // Show Login/Register when not authenticated (and not on landing page)
               <div className="flex items-center space-x-3">
+                <Link
+                  to="/login"
+                  className="px-4 py-2 text-white border border-slate-400 rounded-md hover:bg-slate-800 transition-colors"
+                >
+                  Login
+                </Link>
+                <Link
+                  to="/register"
+                  className="px-4 py-2 bg-yellow-500 text-slate-900 rounded-md font-semibold hover:bg-yellow-400 transition-colors"
+                >
+                  Register
+                </Link>
               </div>
             )}
           </div>
@@ -104,7 +125,11 @@ export function Layout() {
                   </NavLink>
                 ))}
                 <div className="border-t border-slate-700 pt-4 mt-4">
-                  {isAuthenticated ? (
+                  {isLandingPage || isLoginPage || isRegisterPage ? (
+                    // Hide buttons on landing, login, and register pages mobile menu
+                    <div></div>
+                  ) : isAuthenticated ? (
+                    // Show profile info when authenticated
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
                         <img
@@ -119,6 +144,7 @@ export function Layout() {
                       </div>
                     </div>
                   ) : (
+                    // Show Login/Register when not authenticated
                     <div className="flex flex-col space-y-3">
                       <Link 
                         to="/login" 

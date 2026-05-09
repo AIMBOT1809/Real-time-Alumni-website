@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router';
 import { ArrowRight, Users, Briefcase, Calendar, GraduationCap } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import collegeLogo from '../../assests/college-logo.png';
 
 export function Home() {
   const { isAuthenticated } = useAuth();
@@ -9,7 +10,7 @@ export function Home() {
   return (
     <div className="flex flex-col min-h-[calc(100vh-4rem)]">
       {/* Hero Section */}
-      <section className="relative bg-slate-900 text-white py-20 lg:py-32 overflow-hidden">
+      <section className="relative bg-white text-slate-900 py-12 lg:py-20 overflow-hidden">
         <div className="absolute inset-0 z-0 opacity-20">
           <img
             src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=2070&auto=format&fit=crop"
@@ -19,8 +20,15 @@ export function Home() {
         </div>
         
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="flex justify-center mb-6">
+            <img 
+              src={collegeLogo} 
+              alt="College Logo" 
+              className="h-40 md:h-48 lg:h-64 w-auto object-contain"
+            />
+          </div>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">Welcome to Alumni Connect</h1>
-          <p className="text-xl md:text-2xl text-slate-200 max-w-4xl mx-auto mb-8">
+          <p className="text-xl md:text-2xl text-slate-900 max-w-4xl mx-auto mb-8">
             A professional platform connecting Alumni and Faculty for career growth, mentorship, networking, and opportunities.
           </p>
           {!isAuthenticated && (
@@ -33,7 +41,7 @@ export function Home() {
               </Link>
               <Link
                 to="/login"
-                className="px-8 py-3 bg-white/10 backdrop-blur-sm text-white rounded-lg font-semibold hover:bg-white/20 transition-colors border border-white/20"
+                className="px-8 py-3 bg-black/80 backdrop-blur-md text-white rounded-lg font-semibold hover:bg-black/90 transition-all duration-300 border border-white/20 shadow-lg hover:shadow-xl hover:scale-105"
               >
                 Login
               </Link>
