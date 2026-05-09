@@ -547,7 +547,10 @@ if (!selectedRole) {
             >
               ← Back to role selection
             </button>
-            <h2 className="text-3xl font-bold text-white">Alumni Registration</h2>
+            <h2 className="text-3xl font-bold text-white mb-4">Alumni Registration</h2>
+            <p className="text-slate-300">
+              Already have an account? <Link to="/login" className="text-yellow-400 hover:text-yellow-300 font-medium transition-colors">Login</Link>
+            </p>
           </div>
 
           <div className="bg-white py-8 px-6 shadow-xl rounded-xl">
@@ -659,6 +662,22 @@ if (!selectedRole) {
                   />
                   <p className="mt-1 text-xs text-slate-500">
                     Accepted formats: JPG, PNG, PDF (Max size: 5MB)
+                  </p>
+                </div>
+
+                <div className="mb-4">
+                  <label htmlFor="photo" className="block text-sm font-medium text-slate-700 mb-1">
+                    Upload Photo / Profile Picture
+                  </label>
+                  <input
+                    id="photo"
+                    name="photo"
+                    type="file"
+                    accept="image/jpeg,image/jpg,image/png"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 file:mr-3 file:py-2 file:border-0 file:text-sm file:font-medium file:bg-yellow-50 file:text-yellow-700 hover:file:bg-yellow-100"
+                  />
+                  <p className="mt-1 text-xs text-slate-500">
+                    Accepted formats: JPG, JPEG, PNG (Max size: 5MB)
                   </p>
                 </div>
 
@@ -1000,7 +1019,10 @@ if (!selectedRole) {
             >
               ← Back to role selection
             </button>
-            <h2 className="text-3xl font-bold text-white">Faculty Registration</h2>
+            <h2 className="text-3xl font-bold text-white mb-4">Faculty Registration</h2>
+            <p className="text-slate-300">
+              Already have an account? <Link to="/login" className="text-yellow-400 hover:text-yellow-300 font-medium transition-colors">Login</Link>
+            </p>
           </div>
 
           <div className="bg-white py-8 px-6 shadow-xl rounded-xl">
