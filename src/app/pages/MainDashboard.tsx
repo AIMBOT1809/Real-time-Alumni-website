@@ -260,20 +260,6 @@ export function MainDashboard() {
                           placeholder="Share something with the community..."
                           className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
                         />
-                        <div className="flex items-center space-x-4 mt-3">
-                          <button className="text-sm text-slate-400 hover:text-[#FFD700] transition-colors">
-                            <ImageIcon className="h-5 w-5 inline mr-1" />
-                            Photo
-                          </button>
-                          <button className="text-sm text-slate-400 hover:text-[#FFD700] transition-colors">
-                            <Briefcase className="h-5 w-5 inline mr-1" />
-                            Job
-                          </button>
-                          <button className="text-sm text-slate-400 hover:text-[#FFD700] transition-colors">
-                            <Calendar className="h-5 w-5 inline mr-1" />
-                            Event
-                          </button>
-                        </div>
                       </div>
                     </div>
                   </div>
