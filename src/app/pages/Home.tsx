@@ -7,7 +7,7 @@ export function Home() {
   return (
     <div className="flex flex-col min-h-[calc(100vh-4rem)]">
       {/* Hero Section */}
-      <section className="relative bg-white text-slate-900 py-12 lg:py-20 overflow-hidden">
+      <section className="relative bg-white text-slate-900 py-6 lg:py-12 overflow-hidden">
         <div className="absolute inset-0 z-0 opacity-20">
           <img
             src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=2070&auto=format&fit=crop"
@@ -17,7 +17,7 @@ export function Home() {
         </div>
         
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="flex justify-center mb-6">
+          <div className="flex justify-center mb-4">
             <img 
               src={collegeLogo} 
               alt="College Logo" 
