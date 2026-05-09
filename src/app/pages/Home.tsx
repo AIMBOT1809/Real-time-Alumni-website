@@ -1,12 +1,9 @@
 import React from 'react';
 import { Link } from 'react-router';
 import { ArrowRight, Users, Briefcase, Calendar, GraduationCap } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
 import collegeLogo from '../../assests/college-logo.png';
 
 export function Home() {
-  const { isAuthenticated } = useAuth();
-
   return (
     <div className="flex flex-col min-h-[calc(100vh-4rem)]">
       {/* Hero Section */}
@@ -31,22 +28,20 @@ export function Home() {
           <p className="text-xl md:text-2xl text-slate-900 max-w-4xl mx-auto mb-8">
             A professional platform connecting Alumni and Faculty for career growth, mentorship, networking, and opportunities.
           </p>
-          {!isAuthenticated && (
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                to="/register"
-                className="px-8 py-3 bg-yellow-500 text-slate-900 rounded-lg font-semibold hover:bg-yellow-400 transition-colors"
-              >
-                Register
-              </Link>
-              <Link
-                to="/login"
-                className="px-8 py-3 bg-black/80 backdrop-blur-md text-white rounded-lg font-semibold hover:bg-black/90 transition-all duration-300 border border-white/20 shadow-lg hover:shadow-xl hover:scale-105"
-              >
-                Login
-              </Link>
-            </div>
-          )}
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link
+              to="/register"
+              className="px-8 py-3 bg-yellow-500 text-slate-900 rounded-lg font-semibold hover:bg-yellow-400 transition-colors"
+            >
+              Register
+            </Link>
+            <Link
+              to="/login"
+              className="px-8 py-3 bg-black/80 backdrop-blur-md text-white rounded-lg font-semibold hover:bg-black/90 transition-all duration-300 border border-white/20 shadow-lg hover:shadow-xl hover:scale-105"
+            >
+              Login
+            </Link>
+          </div>
         </div>
       </section>
 

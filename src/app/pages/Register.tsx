@@ -268,38 +268,6 @@ export function Register() {
       return;
     }
 
-    // Current Status Validation
-
-    if (!currentStatus) {
-      alert('Please select your current status');
-      return;
-    }
-
-    if (currentStatus === 'job') {
-
-      if (!organization) {
-        alert('Please enter your organization name');
-        return;
-      }
-
-      if (!jobRole) {
-        alert('Please enter your role/position');
-        return;
-      }
-
-      if (!package_) {
-        alert('Please enter your package/CTC');
-        return;
-      }
-
-      if (!jobProof) {
-        alert(
-          'Please upload your proof (LOR/Joining Letter)'
-        );
-        return;
-      }
-    }
-
     if (currentStatus === 'higher-education') {
 
       if (!university) {
@@ -864,25 +832,23 @@ if (!selectedRole) {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label htmlFor="organization" className="block text-sm font-medium text-slate-700 mb-1">
-                          Organization Name *
+                          Organization Name
                         </label>
                         <input
                           id="organization"
                           name="organization"
                           type="text"
-                          required
                           className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
                         />
                       </div>
                       <div>
                         <label htmlFor="jobRole" className="block text-sm font-medium text-slate-700 mb-1">
-                          Role/Position *
+                          Role/Position
                         </label>
                         <input
                           id="jobRole"
                           name="jobRole"
                           type="text"
-                          required
                           className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
                         />
                       </div>
@@ -891,26 +857,24 @@ if (!selectedRole) {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label htmlFor="package" className="block text-sm font-medium text-slate-700 mb-1">
-                          Package/CTC *
+                          Package/CTC
                         </label>
                         <input
                           id="package"
                           name="package"
                           type="text"
                           placeholder="e.g. 5 LPA – 6 LPA"
-                          required
                           className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
                         />
                       </div>
                       <div>
                         <label htmlFor="jobProof" className="block text-sm font-medium text-slate-700 mb-1">
-                          Proof (LOR/Joining Letter) *
+                          Proof (LOR/Joining Letter)
                         </label>
                         <input
                           id="jobProof"
                           name="jobProof"
                           type="file"
-                          required
                           accept="image/*,.pdf"
                           className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 file:mr-3 file:py-2 file:border-0 file:text-sm file:font-medium file:bg-yellow-50 file:text-yellow-700 hover:file:bg-yellow-100"
                         />
@@ -928,7 +892,7 @@ if (!selectedRole) {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label htmlFor="university" className="block text-sm font-medium text-slate-700 mb-1">
-                          University/College Applied *
+                          University/College Applied
                         </label>
                         <input
                           id="university"
@@ -940,7 +904,7 @@ if (!selectedRole) {
                       </div>
                       <div>
                         <label htmlFor="country" className="block text-sm font-medium text-slate-700 mb-1">
-                          Country *
+                          Country
                         </label>
                         <input
                           id="country"
@@ -955,7 +919,7 @@ if (!selectedRole) {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label htmlFor="city" className="block text-sm font-medium text-slate-700 mb-1">
-                          City *
+                          City
                         </label>
                         <input
                           id="city"
@@ -967,7 +931,7 @@ if (!selectedRole) {
                       </div>
                       <div>
                         <label htmlFor="course" className="block text-sm font-medium text-slate-700 mb-1">
-                          Course *
+                          Course
                         </label>
                         <input
                           id="course"
@@ -981,7 +945,7 @@ if (!selectedRole) {
 
                     <div>
                       <label htmlFor="branch" className="block text-sm font-medium text-slate-700 mb-1">
-                        Branch/Specialization *
+                        Branch/Specialization
                       </label>
                       <input
                         id="branch"
