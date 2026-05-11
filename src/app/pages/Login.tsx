@@ -79,6 +79,10 @@ if (error) {
   return;
 
 }
+if (!data.user.email_confirmed_at) {
+  alert('Please verify your email before logging in.');
+  return;
+}
 
 
 

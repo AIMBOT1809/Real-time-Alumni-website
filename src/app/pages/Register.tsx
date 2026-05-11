@@ -353,6 +353,44 @@ export function Register() {
         return;
       }
 
+      const { error: profileError } = await supabase
+  .from('alumni_profiles')
+  .insert([
+    {
+      user_id: authData.user?.id,
+
+      First_Name: firstName,
+      Last_name: lastName,
+      Email_Address: email,
+      Phone_Number: phone,
+      LinkedIn_Profile_URL: linkedin,
+
+      College_Name: collegeName,
+      Department: department,
+      Year_of_Joining: yearOfJoining,
+      Passed_Out_Year: passedOutYear,
+      Roll_Number: rollNumber,
+
+      Current_Status: currentStatus,
+
+      Organization_Name: organization,
+      Role_Position: jobRole,
+      Package_CTC: package_,
+
+      University_Applied: university,
+      Country: country,
+      City: city,
+      Course: course,
+      Branch_Specialization: branch
+    }
+  ]);
+
+  if(profileError) {
+    console.log(profileError);
+    alert(profileError.message);
+    return;
+  }
+
       const newUser: UserProfile = {
 
         id: `u-${Date.now()}`,
