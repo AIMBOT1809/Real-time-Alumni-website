@@ -73,21 +73,21 @@ export function Login() {
 });
 
 if (error) {
-
   alert(error.message);
-
   return;
-
 }
 if (!data.user.email_confirmed_at) {
   alert('Please verify your email before logging in.');
   return;
 }
 
+const signedInUser = data.user || data.session?.user;
+if (!signedInUser) {
+  alert('Login succeeded, but no user was returned. Please try again.');
+  return;
+}
 
-
-login(data.user);
-
+login(signedInUser);
 navigate('/dashboard');
 
   };

@@ -260,20 +260,6 @@ export function MainDashboard() {
                           placeholder="Share something with the community..."
                           className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
                         />
-                        <div className="flex items-center space-x-4 mt-3">
-                          <button className="text-sm text-slate-400 hover:text-[#FFD700] transition-colors">
-                            <ImageIcon className="h-5 w-5 inline mr-1" />
-                            Photo
-                          </button>
-                          <button className="text-sm text-slate-400 hover:text-[#FFD700] transition-colors">
-                            <Briefcase className="h-5 w-5 inline mr-1" />
-                            Job
-                          </button>
-                          <button className="text-sm text-slate-400 hover:text-[#FFD700] transition-colors">
-                            <Calendar className="h-5 w-5 inline mr-1" />
-                            Event
-                          </button>
-                        </div>
                       </div>
                     </div>
                   </div>
@@ -530,7 +516,6 @@ export function MainDashboard() {
                 <div className="flex items-end justify-between">
                   <div>
                     <h2 className="text-2xl font-bold text-white">{user?.name}</h2>
-                    <p className="text-slate-400">{user?.email}</p>
                   </div>
                   <div className="flex gap-2">
                     <button 
@@ -743,6 +728,7 @@ export function MainDashboard() {
                       />
                       <div>
                         <h3 className="text-xl font-bold text-white">{user?.name}</h3>
+                        {user?.email && <p className="text-slate-400 text-sm">{user?.email}</p>}
                         {user?.collegeName && <p className="text-slate-400">{user.collegeName}</p>}
                         {user?.department && <p className="text-slate-400">{user.department} - {user?.year || ''}</p>}
                       </div>

@@ -1,16 +1,13 @@
 import React from 'react';
 import { Link } from 'react-router';
 import { ArrowRight, Users, Briefcase, Calendar, GraduationCap } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
 import collegeLogo from '../../assests/college-logo.png';
 
 export function Home() {
-  const { isAuthenticated } = useAuth();
-
   return (
     <div className="flex flex-col min-h-[calc(100vh-4rem)]">
       {/* Hero Section */}
-      <section className="relative bg-white text-slate-900 py-12 lg:py-20 overflow-hidden">
+      <section className="relative bg-white text-slate-900 py-6 lg:py-12 overflow-hidden">
         <div className="absolute inset-0 z-0 opacity-20">
           <img
             src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=2070&auto=format&fit=crop"
@@ -20,7 +17,7 @@ export function Home() {
         </div>
         
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="flex justify-center mb-6">
+          <div className="flex justify-center mb-4">
             <img 
               src={collegeLogo} 
               alt="College Logo" 
@@ -31,22 +28,20 @@ export function Home() {
           <p className="text-xl md:text-2xl text-slate-900 max-w-4xl mx-auto mb-8">
             A professional platform connecting Alumni and Faculty for career growth, mentorship, networking, and opportunities.
           </p>
-          {!isAuthenticated && (
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                to="/register"
-                className="px-8 py-3 bg-yellow-500 text-slate-900 rounded-lg font-semibold hover:bg-yellow-400 transition-colors"
-              >
-                Register
-              </Link>
-              <Link
-                to="/login"
-                className="px-8 py-3 bg-black/80 backdrop-blur-md text-white rounded-lg font-semibold hover:bg-black/90 transition-all duration-300 border border-white/20 shadow-lg hover:shadow-xl hover:scale-105"
-              >
-                Login
-              </Link>
-            </div>
-          )}
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link
+              to="/register"
+              className="px-8 py-3 bg-yellow-500 text-slate-900 rounded-lg font-semibold hover:bg-yellow-400 transition-colors"
+            >
+              Register
+            </Link>
+            <Link
+              to="/login"
+              className="px-8 py-3 bg-black/80 backdrop-blur-md text-white rounded-lg font-semibold hover:bg-black/90 transition-all duration-300 border border-white/20 shadow-lg hover:shadow-xl hover:scale-105"
+            >
+              Login
+            </Link>
+          </div>
         </div>
       </section>
 
