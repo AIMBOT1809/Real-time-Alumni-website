@@ -1,6 +1,3 @@
-import{
-  validateUploadedDocument
-}from "../documentValidation"
 import React, { useState } from 'react';
 import { supabase } from '../../supabaseClient';
 import { Link, useNavigate } from 'react-router';
@@ -10,7 +7,7 @@ import {
   Briefcase,
   Eye,
   EyeOff
-} from 'lucide-react';  
+} from 'lucide-react';
 
 import { useAuth } from '../context/AuthContext';
 import type { UserProfile } from '../data/mock';
@@ -28,17 +25,7 @@ export function Register() {
   const [currentStatus, setCurrentStatus] = useState<
     'job' | 'higher-education' | null
   >(null);
-const [documentStatus,
-setDocumentStatus] =
-useState("");
 
-const [isCheckingDocument,
-setIsCheckingDocument] =
-useState(false);
-
-const [documentValid,
-setDocumentValid] =
-useState(false);
   const { login } = useAuth();
 
   const navigate = useNavigate();
@@ -54,89 +41,19 @@ useState(false);
   const toggleConfirmPassword = () => {
     setShowConfirmPassword((prev) => !prev);
   };
-const handleDocumentUpload =
-async (
-  e: React.ChangeEvent<HTMLInputElement>
-) => {
 
-  const file =
-    e.target.files?.[0];
-
-  if (!file) return;
-if(!documentValid){
-
-  alert(
-    "Please upload a valid ID document"
-  );
-
-  return;
-}
-  try {
-
-    setIsCheckingDocument(true);
-
-    setDocumentStatus(
-      "Validating document..."
-    );
-
-    const result =
-      await validateUploadedDocument(
-        file
-      );
-
-    console.log(result);
-
-    if(result.valid){
-
-      setDocumentValid(true);
-
-      setDocumentStatus(
-        "✅ Valid ID document uploaded"
-      );
-
-    } else {
-
-      setDocumentValid(false);
-
-      setDocumentStatus(
-        "❌ Invalid or irrelevant document"
-      );
-    }
-
-  } catch(error){
-
-    console.log(error);
-
-    setDocumentValid(false);
-
-    setDocumentStatus(
-      "Validation failed"
-    );
-
-  } finally {
-
-    setIsCheckingDocument(false);
-  }
-};
-const isValidFile = (file: File, allowedTypes: string[], maxSizeMB: number) => {
-  if (!file) return false;
-
-  const maxSize = maxSizeMB * 1024 * 1024;
-
-  const isTypeValid =
-    allowedTypes.includes(file.type) ||
-    allowedTypes.some(type => file.name.toLowerCase().endsWith(type.replace('image/', '.').replace('application/', '.')));
-
-  const isSizeValid = file.size <= maxSize;
-
-  return isTypeValid && isSizeValid;
-};
   const handleSubmit = async (
     e: React.FormEvent<HTMLFormElement>
   ) => {
+
     e.preventDefault();
-    const form = e.currentTarget as HTMLFormElement;
+
+    if (!selectedRole) return;
+
+    const form = e.currentTarget;
+
     const formData = new FormData(form);
+
     // Get form values
 
     const firstName = formData.get('firstName') as string;
@@ -176,7 +93,7 @@ const isValidFile = (file: File, allowedTypes: string[], maxSizeMB: number) => {
     const linkedin =
       formData.get('linkedin') as string;
 
-    const formcurrentStatus =
+    const currentStatus =
       formData.get('currentStatus') as string;
 
     // Current Status specific fields
@@ -242,13 +159,7 @@ const isValidFile = (file: File, allowedTypes: string[], maxSizeMB: number) => {
         alert('Resume file size must be less than 5MB');
         return;
       }
-if (
-  resume &&
-  !isValidFile(resume, ['.pdf', '.doc', '.docx'], 5)
-) {
-  alert('Invalid Resume. Upload PDF/DOC/DOCX under 5MB');
-  return;
-}
+
       // Check file format
       const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
       if (!allowedTypes.includes(resume.type)) {
@@ -265,13 +176,7 @@ if (
         alert('ID Proof file size must be less than 5MB');
         return;
       }
-if (
-  idProof &&
-  !isValidFile(idProof, ['.jpg', '.jpeg', '.png', '.pdf'], 5)
-) {
-  alert('Invalid ID Proof. Upload JPG, PNG or PDF under 5MB');
-  return;
-}
+
       // Check file type
       const allowedIdTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
       if (!allowedIdTypes.includes(idProof.type)) {
@@ -363,7 +268,7 @@ if (
       return;
     }
 
-    if (formcurrentStatus === 'higher-education') {
+    if (currentStatus === 'higher-education') {
 
       if (!university) {
         alert(
@@ -460,7 +365,7 @@ if (
 
         name,
 
-        role: selectedRole!,
+        role: selectedRole,
 
         avatar: photo
           ? URL.createObjectURL(photo)
@@ -470,25 +375,25 @@ if (
           parseInt(passedOutYear),
 
         degree:
-          formcurrentStatus === 'job'
+          currentStatus === 'job'
             ? `${department} - ${collegeName}`
-            : formcurrentStatus === 'higher-education'
+            : currentStatus === 'higher-education'
             ? `${course} at ${university}`
             : `${department} - ${collegeName}`,
 
         company:
-          formcurrentStatus === 'job'
+          currentStatus === 'job'
             ? organization
             : undefined,
 
         position:
-          formcurrentStatus === 'job'
+          currentStatus === 'job'
             ? jobRole
             : undefined,
 
         bio:
-          `${selectedRole!.charAt(0).toUpperCase() +
-          selectedRole!.slice(1)} registered user`,
+          `${selectedRole.charAt(0).toUpperCase() +
+          selectedRole.slice(1)} registered user`,
 
         skills: [],
 
@@ -501,12 +406,12 @@ if (
           : undefined,
 
         collegeName:
-          formcurrentStatus === 'higher-education'
+          currentStatus === 'higher-education'
             ? university.trim()
             : collegeName.trim(),
 
         department:
-          formcurrentStatus === 'higher-education'
+          currentStatus === 'higher-education'
             ? branch.trim()
             : department.trim(),
 
@@ -530,7 +435,7 @@ if (
 
         }),
 
-        ...(formcurrentStatus === 'higher-education' && {
+        ...(currentStatus === 'higher-education' && {
 
           country: country.trim(),
 
@@ -768,23 +673,8 @@ if (!selectedRole) {
                     type="file"
                     accept="image/*,.pdf"
                     required
-                    onChange={handleDocumentUpload}
                     className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 file:mr-3 file:py-2 file:border-0 file:text-sm file:font-medium file:bg-yellow-50 file:text-yellow-700 hover:file:bg-yellow-100"
                   />
-                  {
-  documentStatus && (
-
-    <p
-      className={`mt-2 text-sm font-medium ${
-        documentValid
-          ? "text-green-600"
-          : "text-red-600"
-      }`}
-    >
-      {documentStatus}
-    </p>
-  )
-}
                   <p className="mt-1 text-xs text-slate-500">
                     Accepted formats: JPG, PNG, PDF (Max size: 5MB)
                   </p>
