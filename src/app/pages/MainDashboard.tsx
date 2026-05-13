@@ -80,24 +80,24 @@ export function MainDashboard() {
     setIsEditing(false);
   };
 
-  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarUpload = (e) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = (event) => {
-        const avatarData = (event.target?.result as string) || '';
+        const avatarData = event.target?.result || '';
         setFormData(prev => ({ ...prev, avatar: avatarData }));
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleResumeUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleResumeUpload = (e) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = (event) => {
-        setFormData(prev => ({ ...prev, resume: (event.target?.result as string) || '' }));
+        setFormData(prev => ({ ...prev, resume: event.target?.result || '' }));
       };
       reader.readAsDataURL(file);
     }
@@ -116,8 +116,8 @@ export function MainDashboard() {
     }
   };
 
-  const removeSkill = (index: number) => {
-    setSkills(skills.filter((_: string, i: number) => i !== index));
+  const removeSkill = (index) => {
+    setSkills(skills.filter((_, i) => i !== index));
   };
 
   const addLink = () => {
@@ -127,8 +127,8 @@ export function MainDashboard() {
     }
   };
 
-  const removeLink = (index: number) => {
-    setLinks(links.filter((_: any, i: number) => i !== index));
+  const removeLink = (index) => {
+    setLinks(links.filter((_, i) => i !== index));
   };
  
  
@@ -670,7 +670,7 @@ export function MainDashboard() {
                         </div>
                         {links.length > 0 && (
                           <div className="space-y-2">
-                            {links.map((link: any, idx: number) => (
+                            {links.map((link, idx) => (
                               <div key={idx} className="bg-slate-700 px-4 py-2 rounded-lg flex items-center justify-between">
                                 <div>
                                   <p className="text-white text-sm font-medium">{link.title}</p>
@@ -797,13 +797,13 @@ export function MainDashboard() {
                     )}
 
                     {/* Other Links */}
-                    {(user?.links?.length! > 0) && (
+                    {(user?.links?.length > 0) && (
                       <>
                         <hr className="border-slate-700" />
                         <div>
                           <p className="text-sm text-slate-400 mb-3">Links</p>
                           <div className="space-y-2">
-                            {user.links?.map((link: any, idx: number) => (
+                            {user.links.map((link, idx) => (
                               <a 
                                 key={idx}
                                 href={link.url} 
