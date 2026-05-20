@@ -73,8 +73,6 @@ export function Register() {
 
     const photo = formData.get('photo') as File;
 
-    const resume = formData.get('resume') as File;
-
     const collegeName =
       formData.get('collegeName') as string;
 
@@ -147,23 +145,6 @@ export function Register() {
       const linkedinRegex = /^https?:\/\/(www\.)?linkedin\.com\/.+/i;
       if (!linkedinRegex.test(linkedin.trim())) {
         alert('Please enter a valid LinkedIn profile URL (e.g., https://linkedin.com/in/yourprofile)');
-        return;
-      }
-    }
-
-    // Resume file validation (optional field)
-    if (resume) {
-      // Check file size (5MB limit)
-      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
-      if (resume.size > maxSize) {
-        alert('Resume file size must be less than 5MB');
-        return;
-      }
-
-      // Check file format
-      const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-      if (!allowedTypes.includes(resume.type)) {
-        alert('Resume must be in PDF, DOC, or DOCX format');
         return;
       }
     }
@@ -420,11 +401,6 @@ export function Register() {
 
         year: yearOfJoining,
 
-        resume:
-          resume
-            ? resume.name
-            : undefined,
-
         idProof: idProof
           ? idProof.name
           : undefined,
@@ -644,22 +620,6 @@ if (!selectedRole) {
                   />
                   <p className="mt-1 text-xs text-slate-500">
                     Optional: Add your LinkedIn profile URL
-                  </p>
-                </div>
-
-                <div className="mb-4">
-                  <label htmlFor="resume" className="block text-sm font-medium text-slate-700 mb-1">
-                    Resume/CV
-                  </label>
-                  <input
-                    id="resume"
-                    name="resume"
-                    type="file"
-                    accept=".pdf,.doc,.docx"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 file:mr-3 file:py-2 file:border-0 file:text-sm file:font-medium file:bg-yellow-50 file:text-yellow-700 hover:file:bg-yellow-100"
-                  />
-                  <p className="mt-1 text-xs text-slate-500">
-                    Optional: Upload your resume (PDF, DOC, DOCX - Max size: 5MB)
                   </p>
                 </div>
 

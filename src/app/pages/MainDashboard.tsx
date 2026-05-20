@@ -1,7 +1,6 @@
 import React, { useState , useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { 
-  Search, 
   MessageCircle, 
   Bell, 
   User, 
@@ -14,7 +13,8 @@ import {
   Activity,
   ThumbsUp,
   MessageSquare,
-  Share2
+  Share2,
+  Search
 } from 'lucide-react';
 import { useNavigate } from 'react-router';
 
@@ -23,6 +23,7 @@ export function MainDashboard() {
   const navigate = useNavigate();
   const [activeMenu, setActiveMenu] = useState('home');
   const [eventView, setEventView] = useState('upcoming');
+  const [searchQuery, setSearchQuery] = useState('');
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   
   // Profile editing state
@@ -161,7 +162,7 @@ export function MainDashboard() {
   const followedJobs = jobs?.filter(job => job.alumniId && following?.includes(job.alumniId)) || [];
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 pb-28">
+    <div className="min-h-screen bg-white text-slate-900">
       {/* Top Navbar */}
       <header className="bg-slate-900 border-b border-slate-800 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -169,18 +170,6 @@ export function MainDashboard() {
             {/* Logo */}
             <div className="flex items-center space-x-4">
               <h1 className="text-2xl font-bold text-[#FFD700]">Alumni Connect</h1>
-            </div>
-
-            {/* Search Bar */}
-            <div className="flex-1 max-w-2xl mx-8 hidden md:block">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Search alumni, posts, opportunities..."
-                  className="w-full pl-10 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#FFD700] focus:border-transparent"
-                />
-              </div>
             </div>
 
             {/* Right Icons */}
@@ -213,8 +202,71 @@ export function MainDashboard() {
               </button>
             </div>
           </div>
+
+          <div className="mt-4 mb-3">
+            <div className="relative max-w-3xl mx-auto">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5" />
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search the dashboard..."
+                className="w-full rounded-2xl border border-slate-700 bg-slate-800 py-3 pl-10 pr-4 text-slate-100 placeholder:text-slate-500 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/20"
+              />
+            </div>
+          </div>
         </div>
       </header>
+
+      <nav className="mt-4 bg-white border border-slate-200 rounded-3xl shadow-sm max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+        <div className="grid grid-cols-5 gap-1">
+          <button
+            onClick={() => setActiveMenu('home')}
+            className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[0.72rem] transition ${
+              activeMenu === 'home' ? 'bg-[#FFD700] text-black' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            <Home className="h-5 w-5" />
+            <span>Home</span>
+          </button>
+          <button
+            onClick={() => setActiveMenu('status')}
+            className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[0.72rem] transition ${
+              activeMenu === 'status' ? 'bg-[#FFD700] text-black' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            <Activity className="h-5 w-5" />
+            <span>Activity</span>
+          </button>
+          <button
+            onClick={() => setActiveMenu('events')}
+            className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[0.72rem] transition ${
+              activeMenu === 'events' ? 'bg-[#FFD700] text-black' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            <Calendar className="h-5 w-5" />
+            <span>Event</span>
+          </button>
+          <button
+            onClick={() => setActiveMenu('community')}
+            className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[0.72rem] transition ${
+              activeMenu === 'community' ? 'bg-[#FFD700] text-black' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            <Users className="h-5 w-5" />
+            <span>Community Discussion</span>
+          </button>
+          <button
+            onClick={() => setActiveMenu('profile')}
+            className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[0.72rem] transition ${
+              activeMenu === 'profile' ? 'bg-[#FFD700] text-black' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            <User className="h-5 w-5" />
+            <span>Profile</span>
+          </button>
+        </div>
+      </nav>
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -864,58 +916,6 @@ export function MainDashboard() {
           </main>
         </div>
       </div>
-
-      <footer className="fixed inset-x-0 bottom-0 z-50 border-t border-slate-800 bg-black/95 backdrop-blur-xl shadow-[0_-4px_30px_rgba(0,0,0,0.55)]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-5 gap-1 py-2">
-            <button
-              onClick={() => setActiveMenu('home')}
-              className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[0.72rem] transition ${
-                activeMenu === 'home' ? 'bg-[#FFD700] text-black' : 'text-slate-300 hover:text-white hover:bg-slate-900'
-              }`}
-            >
-              <Home className="h-5 w-5" />
-              <span>Home</span>
-            </button>
-            <button
-              onClick={() => setActiveMenu('status')}
-              className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[0.72rem] transition ${
-                activeMenu === 'status' ? 'bg-[#FFD700] text-black' : 'text-slate-300 hover:text-white hover:bg-slate-900'
-              }`}
-            >
-              <Activity className="h-5 w-5" />
-              <span>Activity</span>
-            </button>
-            <button
-              onClick={() => setActiveMenu('events')}
-              className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[0.72rem] transition ${
-                activeMenu === 'events' ? 'bg-[#FFD700] text-black' : 'text-slate-300 hover:text-white hover:bg-slate-900'
-              }`}
-            >
-              <Calendar className="h-5 w-5" />
-              <span>Events</span>
-            </button>
-            <button
-              onClick={() => setActiveMenu('community')}
-              className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[0.72rem] transition ${
-                activeMenu === 'community' ? 'bg-[#FFD700] text-black' : 'text-slate-300 hover:text-white hover:bg-slate-900'
-              }`}
-            >
-              <Users className="h-5 w-5" />
-              <span>Community</span>
-            </button>
-            <button
-              onClick={() => setActiveMenu('profile')}
-              className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[0.72rem] transition ${
-                activeMenu === 'profile' ? 'bg-[#FFD700] text-black' : 'text-slate-300 hover:text-white hover:bg-slate-900'
-              }`}
-            >
-              <User className="h-5 w-5" />
-              <span>Profile</span>
-            </button>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }
