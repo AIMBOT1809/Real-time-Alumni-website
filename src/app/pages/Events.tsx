@@ -1,13 +1,14 @@
 
 import React, { useState } from 'react';
-import { Calendar, MapPin, Clock, Users, ArrowRight } from 'lucide-react';
+import { Calendar, MapPin, Users, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'motion/react';
 
 export function Events() {
-  const { events, getAlumniById } = useAuth();
+  const { events, getAlumniById, role, user, addEvent } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<string>('all');
+
 
   const filteredEvents = events.filter(event => {
     const organizerName = getAlumniById(event.alumniId)?.name ?? '';
@@ -25,8 +26,12 @@ export function Events() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-900 mb-4">Upcoming Events</h1>
-        <p className="text-slate-600 mb-8">Join webinars, workshops, and networking events to connect with fellow alumni.</p>
+        <div className="flex flex-col md:flex-row justify-between gap-4 mb-4">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900 mb-1">Upcoming Events</h1>
+            <p className="text-slate-600">Join webinars, workshops, and networking events to connect with fellow alumni.</p>
+          </div>
+        </div>
         
         <div className="flex flex-col md:flex-row gap-4 bg-white p-4 rounded-lg shadow-sm border border-slate-200">
           <div className="relative flex-grow">

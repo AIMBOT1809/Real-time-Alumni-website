@@ -1,5 +1,6 @@
 import React, { useState , useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { supabase } from '../../supabaseClient';
 import { 
   MessageCircle, 
   Bell, 
@@ -42,12 +43,142 @@ export function MainDashboard() {
   const [newSkill, setNewSkill] = useState('');
   const [links, setLinks] = useState(user?.links || []);
   const [newLink, setNewLink] = useState({ title: '', url: '' });
+  const [alumniStrip, setAlumniStrip] = useState<Array<{ id: string; name: string; avatar: string }>>([]);
   
   useEffect(() => {
     if (!user && !isLoggingOut) {
       navigate('/login');
     }
   }, [user, isLoggingOut, navigate]);
+
+  // Fetch alumni data for the scrollbar
+  useEffect(() => {
+    let mounted = true;
+    let subscription: any = null;
+
+    const normalizeRole = (row: any) => {
+      const roleValue = (row.role ?? row.Role ?? '').toString().toLowerCase();
+      const statusValue = (row.Current_Status ?? row.current_status ?? row.currentStatus ?? '').toString().toLowerCase();
+
+      if (roleValue.includes('faculty')) return 'faculty';
+      if (statusValue === 'job') return 'graduate';
+      if (statusValue === 'higher-education' || statusValue === 'higher education') return 'higher-education';
+      return 'alumni';
+    };
+
+    const fetchAlumniRecords = async () => {
+      try {
+        console.log('[MainDashboard] Fetching alumni records from alumni_profiles...');
+        const { data, error } = await supabase
+          .from('alumni_profiles')
+          .select('*')
+          .order('First_Name', { ascending: true });
+
+        if (error) {
+          console.error('[MainDashboard] Supabase fetch error:', {
+            code: error.code,
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+          });
+          setAlumniStrip([]);
+          return;
+        }
+
+        if (!mounted) {
+          console.log('[MainDashboard] Component unmounted, skipping state update');
+          return;
+        }
+
+        if (!data || data.length === 0) {
+          console.log('[MainDashboard] No alumni records found in database');
+          setAlumniStrip([]);
+          return;
+        }
+
+        console.log(`[MainDashboard] Found ${data.length} total records in alumni_profiles`);
+
+        const mappedRecords = data.map((r: any) => {
+          const first = r.First_Name ?? r.first_name ?? r.FirstName ?? '';
+          const last = r.Last_name ?? r.last_name ?? r.LastName ?? '';
+          const fullName = `${first} ${last}`.trim();
+          const name = fullName || r.Email_Address || r.email || 'Unknown';
+          const role = normalizeRole(r);
+
+          return {
+            id: String(r.user_id ?? r.id ?? name),
+            name,
+            avatar: r.Photo_URL ?? r.photo_url ?? r.avatar_url ?? `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=FDE68A&color=111827&size=128`,
+            role,
+          };
+        });
+
+        // Filter to only include alumni role users
+        const alumniUsers = mappedRecords.filter((record) => record.role === 'alumni');
+        console.log(`[MainDashboard] Filtered to ${alumniUsers.length} alumni users (role='alumni')`);
+
+        // Create strip list with only alumni users
+        const stripList = alumniUsers.map((record) => ({
+          id: record.id,
+          name: record.name,
+          avatar: record.avatar,
+        }));
+
+        console.log(`[MainDashboard] Alumni strip list prepared with ${stripList.length} members`);
+        setAlumniStrip(stripList);
+      } catch (err) {
+        console.error('[MainDashboard] Unexpected error fetching alumni records:', {
+          error: err instanceof Error ? err.message : String(err),
+          stack: err instanceof Error ? err.stack : undefined,
+        });
+        setAlumniStrip([]);
+      }
+    };
+
+    fetchAlumniRecords();
+
+    // Setup Realtime subscription with error handling
+    const setupRealtimeSubscription = async () => {
+      try {
+        subscription = supabase
+          .channel('public:alumni_profiles')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'alumni_profiles' }, (payload) => {
+            console.log('[MainDashboard] Realtime update received:', {
+              eventType: payload.eventType,
+              newRecord: payload.new?.id,
+              oldRecord: payload.old?.id,
+            });
+            fetchAlumniRecords();
+          })
+          .subscribe((status, err) => {
+            if (status === 'SUBSCRIBED') {
+              console.log('[MainDashboard] Realtime subscription established');
+            } else if (status === 'CHANNEL_ERROR' || err) {
+              console.error('[MainDashboard] Realtime subscription error:', {
+                status,
+                error: err,
+              });
+            }
+          });
+      } catch (err) {
+        console.error('[MainDashboard] Failed to setup Realtime subscription:', err);
+      }
+    };
+
+    setupRealtimeSubscription();
+
+    return () => {
+      mounted = false;
+      if (subscription) {
+        try {
+          subscription.unsubscribe();
+          console.log('[MainDashboard] Realtime subscription unsubscribed');
+        } catch (e) {
+          console.error('[MainDashboard] Error unsubscribing from Realtime:', e);
+        }
+      }
+    };
+  }, []);
 
   if (!user) return null;
 
@@ -140,10 +271,10 @@ export function MainDashboard() {
   }
 */    
 
-  const canPost = role === 'faculty' || role === 'alumni';
-
-  // Filter posts to only show from followed alumni
-  const followedPosts = posts?.filter(post => following?.includes(post.alumniId)) || [];
+  const canPost = role === 'admin';
+  const followedPosts = posts?.filter(
+    post => following?.includes(post.alumniId) || post.alumniId === 'admin'
+  ) || [];
   
   // Filter events
   const now = new Date();
@@ -914,6 +1045,7 @@ export function MainDashboard() {
               </div>
             )}
           </main>
+
         </div>
       </div>
     </div>

@@ -9,8 +9,16 @@ export function Opportunities() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<string>('all');
 
-  // Filter jobs to only show from followed alumni
-  const followedJobs = jobs?.filter(job => job.alumniId && following?.includes(job.alumniId)) || [];
+  // Filter jobs to show followed alumni postings plus admin-managed listings
+  const followedJobs = jobs?.filter(
+    job =>
+      job.alumniId &&
+      (
+        following?.includes(job.alumniId) ||
+        job.alumniId === 'admin' ||
+        (role === 'admin' && user?.id === job.alumniId)
+      )
+  ) || [];
 
   // Apply search and type filters
   const filteredJobs = followedJobs.filter(job => {
@@ -24,18 +32,6 @@ export function Opportunities() {
     return matchesSearch && matchesType;
   });
 
-  const handlePostJob = () => {
-    if (user && (role === 'alumni' || role === 'graduate')) {
-      addJob({
-        title: 'Sample Job Posting',
-        company: 'Sample Company',
-        type: 'Full-time',
-        location: 'Remote',
-        alumniId: user.id,
-        description: 'This is a sample job posting created by an alumni.',
-      });
-    }
-  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -44,14 +40,6 @@ export function Opportunities() {
           <h1 className="text-3xl font-bold text-slate-900">Career Opportunities</h1>
           <p className="text-slate-600 mt-2">Find your next internship or full-time role from our alumni network.</p>
         </div>
-        {(role === 'alumni' || role === 'graduate') && (
-          <button 
-            onClick={handlePostJob}
-            className="mt-4 md:mt-0 bg-yellow-500 text-slate-900 font-bold py-2 px-6 rounded-md hover:bg-yellow-400 transition-colors shadow-sm"
-          >
-            Post a Job
-          </button>
-        )}
       </div>
 
       <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-200 mb-8 flex flex-col md:flex-row gap-4">

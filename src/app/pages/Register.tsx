@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 
 import { useAuth } from '../context/AuthContext';
-import type { UserProfile } from '../data/mock';
+import type { UserProfile } from '../data/types';
 
 type Role = 'alumni' | 'faculty' | null;
 
@@ -290,11 +290,13 @@ export function Register() {
         data: authData,
         error: authError
       } = await supabase.auth.signUp({
-
         email: email.trim(),
-
-        password: password
-
+        password: password,
+        options: {
+          data: {
+            role: selectedRole,
+          },
+        },
       });
 
       if (authError) {
@@ -341,11 +343,8 @@ export function Register() {
   }
 
       const newUser: UserProfile = {
-
-        id: `u-${Date.now()}`,
-
+        id: authData.user?.id ?? `u-${Date.now()}`,
         name,
-
         role: selectedRole,
 
         avatar: photo

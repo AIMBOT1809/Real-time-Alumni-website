@@ -1,26 +1,16 @@
 
 import React from 'react';
-import { MessageSquare, ThumbsUp, User } from 'lucide-react';
+import { MessageSquare, ThumbsUp } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'motion/react';
 
 export function Community() {
-  const { isAuthenticated, posts, following, getAlumniById, role, addPost, user } = useAuth();
+  const { posts, following, getAlumniById, role, user } = useAuth();
 
-  // Filter posts to only show from followed alumni
-  const followedPosts = posts.filter(post => following.includes(post.alumniId));
-
-  const handleStartDiscussion = () => {
-    if (user && (role === 'alumni' || role === 'graduate')) {
-      addPost({
-        alumniId: user.id,
-        content: 'This is a sample post created by an alumni.',
-        type: 'general',
-        likes: 0,
-        comments: 0,
-      });
-    }
-  };
+  // Filter posts to show followed alumni posts plus admin announcements
+  const followedPosts = posts.filter(
+    post => following.includes(post.alumniId) || post.alumniId === 'admin' || (role === 'admin' && user?.id === post.alumniId)
+  );
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -29,14 +19,6 @@ export function Community() {
           <h1 className="text-3xl font-bold text-slate-900">Community Discussion</h1>
           <p className="text-slate-600 mt-2">Share insights, ask questions, and connect with peers.</p>
         </div>
-        {(role === 'alumni' || role === 'graduate') && (
-          <button 
-            onClick={handleStartDiscussion}
-            className="mt-4 md:mt-0 bg-yellow-500 text-slate-900 font-bold py-2 px-6 rounded-md hover:bg-yellow-400 transition-colors shadow-sm"
-          >
-            Start a Discussion
-          </button>
-        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -67,8 +49,15 @@ export function Community() {
         {/* Feed */}
         <div className="lg:col-span-3 space-y-6">
           {followedPosts.map((post, index) => {
-            const author = getAlumniById(post.alumniId);
-            if (!author) return null;
+            const author = getAlumniById(post.alumniId) || {
+              id: post.alumniId,
+              name: post.alumniId === 'admin' ? 'Admin' : 'Alumni Member',
+              role: 'alumni',
+              avatar: 'https://ui-avatars.com/api/?name=Alumni&background=FDE68A&color=111827&size=256',
+              graduationYear: new Date().getFullYear(),
+              degree: '',
+              skills: [],
+            };
             
             return (
               <motion.div

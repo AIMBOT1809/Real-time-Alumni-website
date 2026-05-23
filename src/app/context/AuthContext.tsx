@@ -1,10 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User } from '@supabase/supabase-js';
-import { UserProfile, Role, Post, Job, Event, ALUMNI_DATA, POSTS_DATA, JOBS_DATA, EVENTS_DATA } from '../data/mock';
+import { UserProfile, Role, Post, Job, Event } from '../data/types';
 
 interface AuthContextType {
   user: UserProfile | null;
-  login: (payload: Role | UserProfile | User) => void;
+  login: (payload: UserProfile | User) => void;
   logout: () => void;
   isAuthenticated: boolean;
   role: Role | null;
@@ -20,6 +20,9 @@ interface AuthContextType {
   addPost: (post: Omit<Post, 'id' | 'timestamp'>) => void;
   addJob: (job: Omit<Job, 'id' | 'postedDate'>) => void;
   addEvent: (event: Omit<Event, 'id'>) => void;
+  deletePost: (id: string) => void;
+  deleteJob: (id: string) => void;
+  deleteEvent: (id: string) => void;
   getAlumniById: (id: string) => UserProfile | undefined;
 }
 
@@ -31,7 +34,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
-  const [alumni] = useState<UserProfile[]>(ALUMNI_DATA); // Static alumni data
+  const [alumni, setAlumni] = useState<UserProfile[]>([]);
 
   // Load data from localStorage on mount
   useEffect(() => {
@@ -53,6 +56,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
+    const savedAlumni = localStorage.getItem('allumini_alumni');
+    if (savedAlumni) {
+      try {
+        setAlumni(JSON.parse(savedAlumni) as UserProfile[]);
+      } catch {
+        localStorage.removeItem('allumini_alumni');
+      }
+    }
+
     const savedEvents = localStorage.getItem('allumini_events');
     if (savedEvents) {
       try {
@@ -60,10 +72,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch {
         localStorage.removeItem('allumini_events');
       }
-    } else {
-      // Initialize with sample data if no saved data exists
-      setEvents(EVENTS_DATA);
-      localStorage.setItem('allumini_events', JSON.stringify(EVENTS_DATA));
     }
 
     const savedJobs = localStorage.getItem('allumini_jobs');
@@ -73,10 +81,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch {
         localStorage.removeItem('allumini_jobs');
       }
-    } else {
-      // Initialize with sample data if no saved data exists
-      setJobs(JOBS_DATA);
-      localStorage.setItem('allumini_jobs', JSON.stringify(JOBS_DATA));
     }
 
     const savedPosts = localStorage.getItem('allumini_posts');
@@ -86,10 +90,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch {
         localStorage.removeItem('allumini_posts');
       }
-    } else {
-      // Initialize with sample data if no saved data exists
-      setPosts(POSTS_DATA);
-      localStorage.setItem('allumini_posts', JSON.stringify(POSTS_DATA));
     }
   }, []);
 
@@ -112,42 +112,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return null;
   };
 
-  const login = (payload: Role | UserProfile | User) => {
-    if (typeof payload === 'string') {
-      // Handle Role
-      const savedUser = localStorage.getItem('allumini_user');
-      if (savedUser) {
-        try {
-          const parsed = JSON.parse(savedUser) as UserProfile;
-          if (parsed.role === payload) {
-            setUser(parsed);
-            localStorage.setItem('allumini_user', JSON.stringify(parsed));
-            localStorage.setItem('allumini_role', parsed.role);
-            return;
-          }
-        } catch {
-          localStorage.removeItem('allumini_user');
-        }
-      }
-
-      const fallbackUser: UserProfile = {
-        id: `u-${payload}-${Date.now()}`,
-        name: '',
-        role: payload,
-        avatar: 'https://ui-avatars.com/api/?name=User&background=FDE68A&color=111827&size=256',
-        graduationYear: new Date().getFullYear(),
-        degree: '',
-        skills: [],
-        email: '',
-        phone: '',
-      };
-
-      setUser(fallbackUser);
-      localStorage.setItem('allumini_user', JSON.stringify(fallbackUser));
-      localStorage.setItem('allumini_role', fallbackUser.role);
-      return;
-    }
-
+  const login = (payload: UserProfile | User) => {
     // Check if it's a Supabase User
     if ('email' in payload && 'id' in payload && !('role' in payload)) {
       const savedProfile = getSavedUserProfile(payload.email, payload.id);
@@ -222,6 +187,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const addPost = (postData: Omit<Post, 'id' | 'timestamp'>) => {
+    if (user?.role !== 'admin') return;
+
     const newPost: Post = {
       ...postData,
       id: `p-${Date.now()}`,
@@ -233,6 +200,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const addJob = (jobData: Omit<Job, 'id' | 'postedDate'>) => {
+    if (user?.role !== 'admin') return;
+
     const newJob: Job = {
       ...jobData,
       id: `j-${Date.now()}`,
@@ -244,6 +213,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const addEvent = (eventData: Omit<Event, 'id'>) => {
+    if (user?.role !== 'admin') return;
+
     const newEvent: Event = {
       ...eventData,
       id: `e-${Date.now()}`,
@@ -253,7 +224,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('allumini_events', JSON.stringify(newEvents));
   };
 
+  const deletePost = (id: string) => {
+    if (user?.role !== 'admin') return;
+    const newPosts = posts.filter(post => post.id !== id);
+    setPosts(newPosts);
+    localStorage.setItem('allumini_posts', JSON.stringify(newPosts));
+  };
+
+  const deleteJob = (id: string) => {
+    if (user?.role !== 'admin') return;
+    const newJobs = jobs.filter(job => job.id !== id);
+    setJobs(newJobs);
+    localStorage.setItem('allumini_jobs', JSON.stringify(newJobs));
+  };
+
+  const deleteEvent = (id: string) => {
+    if (user?.role !== 'admin') return;
+    const newEvents = events.filter(event => event.id !== id);
+    setEvents(newEvents);
+    localStorage.setItem('allumini_events', JSON.stringify(newEvents));
+  };
+
   const getAlumniById = (id: string) => {
+    if (id === user?.id) {
+      return user;
+    }
+
     return alumni.find(a => a.id === id);
   };
 
@@ -283,6 +279,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       addPost,
       addJob,
       addEvent,
+      deletePost,
+      deleteJob,
+      deleteEvent,
       getAlumniById
     }}>
       {children}

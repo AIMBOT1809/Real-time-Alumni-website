@@ -7,6 +7,7 @@ import { Events } from "./pages/Events";
 import { Community } from "./pages/Community";
 import { Dashboard } from "./pages/Dashboard";
 import { MainDashboard } from "./pages/MainDashboard";
+import { AdminDashboard } from "./pages/AdminDashboard";
 import { Login } from "./pages/Login";
 import { Register } from "./pages/Register";
 import { Chat } from "./pages/Chat";
@@ -24,6 +25,7 @@ export const router = createBrowserRouter([
       { path: "events", Component: Events },
       { path: "community", Component: Community },
       { path: "dashboard", Component: MainDashboard },
+      { path: "admin", Component: AdminDashboard },
       { path: "login", Component: Login },
       { path: "register", Component: Register },
       { path: "chat", Component: Chat },

@@ -20,10 +20,16 @@ export function Dashboard() {
 
   const isAlumni = role === 'alumni' || role === 'graduate';
 
-  // Filter data based on who the user follows
-  const followedPosts = posts.filter(post => following.includes(post.alumniId));
-  const followedJobs = jobs.filter(job => following.includes(job.alumniId));
-  const followedEvents = events.filter(event => following.includes(event.alumniId));
+  // Filter data based on who the user follows plus admin-managed content
+  const followedPosts = posts.filter(
+    post => following.includes(post.alumniId) || post.alumniId === 'admin' || (role === 'admin' && user?.id === post.alumniId)
+  );
+  const followedJobs = jobs.filter(
+    job => following.includes(job.alumniId) || job.alumniId === 'admin' || (role === 'admin' && user?.id === job.alumniId)
+  );
+  const followedEvents = events.filter(
+    event => following.includes(event.alumniId) || event.alumniId === 'admin' || (role === 'admin' && user?.id === event.alumniId)
+  );
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -89,33 +95,13 @@ export function Dashboard() {
 
           {/* Role Specific Content */}
           <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+            <div className="px-6 py-4 border-b border-slate-100">
               <h3 className="font-bold text-slate-900">Mentorship Requests</h3>
-              <span className="bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full font-bold">2 New</span>
+              <p className="text-sm text-slate-500 mt-2">Track incoming mentorship requests from your network.</p>
             </div>
-            <div className="divide-y divide-slate-100">
-               {[1, 2].map((i) => (
-                <div key={i} className="p-6 flex items-start space-x-4 hover:bg-slate-50 transition-colors">
-                  <img src={`https://images.unsplash.com/photo-${i === 1 ? '1535713875002-d1d0cf377fde' : '1599566150163-29194dcaad36'}?ixlib=rb-1.2.1&auto=format&fit=crop&w=150&q=80`} alt="Student" className="w-12 h-12 rounded-full object-cover" />
-                  <div className="flex-grow">
-                    <h4 className="font-semibold text-slate-900">
-                      {i === 1 ? user.name : 'Samantha Lee'}
-                    </h4>
-                    <p className="text-sm text-slate-500">
-                      {i === 1 ? `${user.degree || 'Alumni'}, Class of ${user.graduationYear || new Date().getFullYear()}` : 'Marketing Major, Class of 2025'}
-                    </p>
-                    <p className="text-sm text-slate-600 mt-2 italic">"I'd love to learn more about your transition from engineering to product management..."</p>
-                  </div>
-                  <div className="flex space-x-2">
-                     <button className="px-3 py-1 bg-yellow-500 text-slate-900 rounded text-sm font-medium hover:bg-yellow-400 transition-colors">
-                      Accept
-                    </button>
-                     <button className="px-3 py-1 border border-slate-300 rounded text-sm font-medium hover:bg-slate-50 transition-colors">
-                      Decline
-                    </button>
-                  </div>
-                </div>
-              ))}
+            <div className="p-8 text-center text-slate-500">
+              <p className="text-lg font-semibold text-slate-900 mb-2">No mentorship requests yet</p>
+              <p className="text-sm">Once alumni start connecting with you, their requests will appear here.</p>
             </div>
           </div>
 
