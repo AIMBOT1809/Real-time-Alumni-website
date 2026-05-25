@@ -703,41 +703,28 @@ if (!selectedRole) {
   }
 
   try {
+      const validationResult =
+        await validateUploadedDocument(file);
 
-    const validationResult =
-      await validateUploadedDocument(file);
+      console.log("verify-id response:", validationResult);
 
-    console.log(validationResult);
+      if (!validationResult.valid) {
+        alert(
+          validationResult.reason ||
+            "Invalid document. Please upload a valid college or company ID card."
+        );
 
-    // INVALID DOCUMENT
-    if (
-  !validationResult.success
-){
+        setIsDocumentVerified(false);
+        setVerifiedDocument(null);
+        e.target.value = "";
 
-      alert(
-        "Invalid document"
-      );
+        return;
+      }
 
-      setIsDocumentVerified(false);
+      setIsDocumentVerified(true);
+      setVerifiedDocument(file);
 
-      setVerifiedDocument(null);
-
-      e.target.value = "";
-
-      return;
-    }
-
-    // VERIFIED
-    setIsDocumentVerified(true);
-
-    setVerifiedDocument(file);
-
-    // Optional console log instead of popup
-  console.log(
-    "Document verified successfully",
-    validationResult.matchedKeywords
-  );
-
+      console.log("Document verified successfully", validationResult);
 
   } catch (error) {
 

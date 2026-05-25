@@ -76,38 +76,56 @@ const safeDelete = (filePath) => {
 
 // Route
 router.post(
-  "/validate-document",
-  upload.single("document"),
+  "/verify-id",
+  upload.single("idCard"),
   async (req, res) => {
     let filePath = null;
 
     try {
       if (!req.file) {
         return res.status(400).json({
-          success: false,
-          message: "No file uploaded",
+          valid: false,
+          reason: "No file uploaded",
         });
       }
 
+      console.log("Uploading file:", {
+        originalName: req.file.originalname,
+        mimeType: req.file.mimetype,
+        size: req.file.size,
+        path: req.file.path,
+      });
+
       filePath = req.file.path;
 
-      // Business logic validation
-      const result =
-  await validateCollegeId(
-    filePath,
-    req.file.originalname
-  );
-safeDelete(filePath);
+      const result = await validateCollegeId(
+        filePath,
+        req.file.originalname
+      );
 
-return res.json(result);
+      console.log("OCR extracted text:", result.extractedText);
+      console.log("Matched keywords:", result.matchedKeywords);
+      console.log("Validation result:", result.success);
+
+      safeDelete(filePath);
+
+      if (result.success) {
+        return res.json({ valid: true });
+      }
+
+      return res.status(400).json({
+        valid: false,
+        reason:
+          "Document does not appear to be a valid college or company ID card.",
+      });
     } catch (error) {
       console.error("Validation error:", error);
 
       safeDelete(filePath);
 
       return res.status(500).json({
-        success: false,
-        message: error.message || "Validation failed",
+        valid: false,
+        reason: error.message || "Validation failed",
       });
     }
   }
