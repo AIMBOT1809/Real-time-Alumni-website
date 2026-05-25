@@ -116,7 +116,7 @@ router.post(
       return res.status(400).json({
         valid: false,
         reason:
-          "Document does not appear to be a valid college or company ID card.",
+          "Invalid Document",
       });
     } catch (error) {
       console.error("Validation error:", error);
