@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Briefcase, Calendar, MessageSquare, User, PlusCircle, Settings, FileText, Bell } from 'lucide-react';
+import { Briefcase, CalendarDays, MessageCircle, User, Plus, Settings, FileText, Bell } from 'lucide-react';
 import { Link } from 'react-router';
 
 export function Dashboard() {
@@ -67,7 +67,7 @@ export function Dashboard() {
             <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
               <div className="flex items-center space-x-3 mb-2">
                 <div className="bg-blue-100 p-2 rounded-lg text-blue-600">
-                  <MessageSquare className="h-5 w-5" />
+                  <MessageCircle className="h-5 w-5" />
                 </div>
                 <h3 className="font-semibold text-slate-900">Messages</h3>
               </div>
@@ -78,7 +78,7 @@ export function Dashboard() {
             <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
               <div className="flex items-center space-x-3 mb-2">
                 <div className="bg-green-100 p-2 rounded-lg text-green-600">
-                  <Calendar className="h-5 w-5" />
+                  <CalendarDays className="h-5 w-5" />
                 </div>
                 <h3 className="font-semibold text-slate-900">Events</h3>
               </div>

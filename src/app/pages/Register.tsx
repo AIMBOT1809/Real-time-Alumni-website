@@ -13,7 +13,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import type { UserProfile } from '../data/types';
 
-type Role = 'alumni' | 'faculty' | null;
+type Role = 'student' | 'alumni' | 'faculty' | null;
 
 export function Register() {
 const [isDocumentVerified, setIsDocumentVerified] =
@@ -46,7 +46,49 @@ const [verifiedDocument, setVerifiedDocument] =
   const toggleConfirmPassword = () => {
     setShowConfirmPassword((prev) => !prev);
   };
+const handleDocumentValidation = async (
+  e: React.ChangeEvent<HTMLInputElement>
+) => {
 
+  const file = e.target.files?.[0];
+
+  if (!file) return;
+
+  try {
+
+    const validationResult =
+      await validateUploadedDocument(file);
+
+    if (!validationResult.valid) {
+
+      alert(
+        validationResult.reason ||
+        "Invalid document."
+      );
+
+      setIsDocumentVerified(false);
+      setVerifiedDocument(null);
+
+      e.target.value = "";
+
+      return;
+    }
+
+    setIsDocumentVerified(true);
+    setVerifiedDocument(file);
+
+  } catch (error) {
+
+    console.error(error);
+
+    alert("Unable to validate document");
+
+    setIsDocumentVerified(false);
+    setVerifiedDocument(null);
+
+    e.target.value = "";
+  }
+};
   const handleSubmit = async (
     e: React.FormEvent<HTMLFormElement>
   ) => {
@@ -501,6 +543,46 @@ if (!selectedRole) {
         </div>
         
         <div className="flex flex-col sm:flex-row justify-center gap-6">
+            {/* Student Card */}
+<div
+  onClick={() => handleRoleSelection("student")}
+  className="group relative w-full h-full bg-blue-500/15 backdrop-blur-xl backdrop-saturate-200 rounded-2xl p-8 shadow-xl cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:bg-blue-500/25 border border-blue-300/40 hover:border-blue-400/60 hover:ring-2 hover:ring-blue-500/20"
+>
+  {/* Glassmorphism Layer */}
+  <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-400/10 via-transparent to-blue-500/5"></div>
+
+  {/* Shine Effect */}
+  <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/25 via-transparent to-white/5 opacity-0 group-hover:opacity-100 transition-all duration-300"></div>
+
+  {/* Glow */}
+  <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-32 h-32 bg-gradient-to-br from-white/40 via-blue-200/20 to-transparent rounded-full blur-3xl opacity-30 group-hover:opacity-60 transition-all duration-300"></div>
+
+  <div className="relative z-10">
+    <div className="flex items-center justify-center mb-6">
+      <div className="relative">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-400 via-cyan-300 to-sky-200 rounded-full blur-2xl opacity-60 group-hover:opacity-80 transition-all duration-300 animate-pulse"></div>
+
+        <GraduationCap className="relative z-10 w-14 h-14 text-white drop-shadow-lg" />
+      </div>
+    </div>
+
+    <h2 className="text-2xl font-bold text-white text-center mb-3 drop-shadow-lg">
+      Student
+    </h2>
+
+    <p className="text-blue-50 text-center mb-6 leading-relaxed">
+      Connect with alumni, faculty members and discover opportunities.
+    </p>
+
+    <div className="flex items-center justify-center">
+      <span className="relative bg-gradient-to-r from-blue-100/85 to-blue-100/65 text-blue-900 px-6 py-2 rounded-lg font-bold shadow-lg backdrop-blur-md hover:from-blue-100 hover:to-blue-200 hover:shadow-xl transform transition-all duration-300 hover:scale-105 border border-blue-300/60 hover:border-blue-400/80 hover:ring-2 hover:ring-blue-500/30">
+        <span className="relative z-10">
+          Register as Student
+        </span>
+      </span>
+    </div>
+  </div>
+</div>
           {/* Alumni Card */}
           <div
             onClick={() => handleRoleSelection('alumni')}
@@ -573,7 +655,246 @@ if (!selectedRole) {
     </div>
   );
   }
+if (selectedRole === "student") {
+  return (
+    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-slate-900 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-2xl w-full">
+        <div className="text-center mb-8">
+          <button
+            onClick={() => setSelectedRole(null)}
+            className="text-yellow-500 hover:text-yellow-400 mb-4 inline-flex items-center"
+          >
+            ← Back to role selection
+          </button>
 
+          <h2 className="text-3xl font-bold text-white mb-4">
+            Student Registration
+          </h2>
+
+          <p className="text-slate-300">
+            Already have an account?{" "}
+            <Link
+              to="/login"
+              className="text-yellow-400 hover:text-yellow-300 font-medium"
+            >
+              Login
+            </Link>
+          </p>
+        </div>
+
+        <div className="bg-white py-8 px-6 shadow-xl rounded-xl">
+          <form onSubmit={handleSubmit} className="space-y-6">
+
+            {/* Personal Details */}
+            <div className="bg-slate-50 border border-slate-200 rounded-lg p-6 mb-6">
+  <div className="flex items-center mb-4">
+    <div className="w-1 h-6 bg-yellow-500 rounded-full mr-3"></div>
+    <h3 className="text-lg font-semibold text-slate-900">
+                  Personal Details
+                </h3>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    First Name *
+                  </label>
+                  <input
+                    name="firstName"
+                    type="text"
+                    required
+                    className="w-full px-3 py-2 border rounded-md"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Last Name *
+                  </label>
+                  <input
+                    name="lastName"
+                    type="text"
+                    required
+                    className="w-full px-3 py-2 border rounded-md"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+  <div>
+    <label className="block text-sm font-medium text-slate-700 mb-1">
+      Email Address *
+    </label>
+    <input
+      type="email"
+      name="email"
+      required
+      className="w-full px-3 py-2 border border-slate-300 rounded-md
+      focus:outline-none focus:ring-2 focus:ring-yellow-500
+      focus:border-yellow-500"
+    />
+  </div>
+
+  <div>
+    <label className="block text-sm font-medium text-slate-700 mb-1">
+      Phone Number *
+    </label>
+    <input
+      type="tel"
+      name="phone"
+      required
+      className="w-full px-3 py-2 border border-slate-300 rounded-md
+      focus:outline-none focus:ring-2 focus:ring-yellow-500
+      focus:border-yellow-500"
+    />
+  </div>
+</div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-1">
+                  LinkedIn URL
+                </label>
+                <input
+                  name="linkedin"
+                  type="url"
+                  placeholder="https://linkedin.com/in/username"
+                  className="w-full px-3 py-2 border rounded-md"
+                />
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-1">
+                  GitHub URL
+                </label>
+                <input
+                  name="github"
+                  type="url"
+                  placeholder="https://github.com/username"
+                  className="w-full px-3 py-2 border rounded-md"
+                />
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-1">
+                  ID Proof *
+                </label>
+                <input
+  name="idProof"
+  type="file"
+  accept=".jpg,.jpeg,.png,.pdf"
+  required
+  onChange={handleDocumentValidation}
+  className="w-full border border-slate-300 rounded-md p-2
+  file:bg-yellow-50 file:text-yellow-700 file:border-0
+  file:px-3 file:py-2 file:rounded-md"
+/>
+              </div>
+              
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Password *
+                  </label>
+                  <input
+                    name="password"
+                    type="password"
+                    minLength={8}
+                    required
+                    className="w-full px-3 py-2 border rounded-md"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Confirm Password *
+                  </label>
+                  <input
+                    name="confirmPassword"
+                    type="password"
+                    minLength={8}
+                    required
+                    className="w-full px-3 py-2 border rounded-md"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Academic Details */}
+            <div className="bg-slate-50 border border-slate-200 rounded-lg p-6 mb-6">
+  <div className="flex items-center mb-4">
+    <div className="w-1 h-6 bg-yellow-500 rounded-full mr-3"></div>
+    <h3 className="text-lg font-semibold text-slate-900">
+      Academic Details
+    </h3>
+  </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-1">
+                  College Name *
+                </label>
+                <input
+                  name="collegeName"
+                  type="text"
+                  required
+                  className="w-full px-3 py-2 border rounded-md"
+                />
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-1">
+                  Roll Number *
+                </label>
+                <input
+                  name="rollNumber"
+                  type="text"
+                  required
+                  className="w-full px-3 py-2 border rounded-md"
+                />
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-1">
+                  Year *
+                </label>
+                <select
+                  name="year"
+                  required
+                  className="w-full px-3 py-2 border rounded-md"
+                >
+                  <option value="">Select Year</option>
+                  <option value="1">1st Year</option>
+                  <option value="2">2nd Year</option>
+                  <option value="3">3rd Year</option>
+                  <option value="4">4th Year</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Department *
+                </label>
+                <input
+                  name="department"
+                  type="text"
+                  required
+                  className="w-full px-3 py-2 border rounded-md"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-center">
+  <button
+    type="submit"
+    className="w-full py-3 px-4 bg-yellow-500 text-slate-900 rounded-md font-semibold hover:bg-yellow-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-colors"
+  >
+    Register as Student
+  </button>
+</div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}
   // Alumni Registration Form
   if (selectedRole === 'alumni') {
     return (
@@ -681,107 +1002,7 @@ if (!selectedRole) {
   type="file"
   accept=".jpg,.jpeg,.png,.pdf"
   required
-  onChange={async (e) => {
-
-  const file = e.target.files?.[0];
-
-  if (!file) return;
-
-  setIsDocumentVerified(false);
-  setVerifiedDocument(null);
-
-  const allowedTypes = [
-    "image/jpeg",
-    "image/png",
-    "application/pdf"
-  ];
-
-  const allowedExtensions = [
-    ".jpg",
-    ".jpeg",
-    ".png",
-    ".pdf"
-  ];
-
-  const fileExtension = file.name
-    .substring(file.name.lastIndexOf("."))
-    .toLowerCase();
-
-  // Extension validation
-  if (!allowedExtensions.includes(fileExtension)) {
-
-    alert(
-      "Only JPG, JPEG, PNG and PDF files are allowed"
-    );
-
-    e.target.value = "";
-
-    return;
-  }
-
-  // MIME validation
-  if (!allowedTypes.includes(file.type)) {
-
-    alert("Invalid file type");
-
-    e.target.value = "";
-
-    return;
-  }
-
-  // Size validation
-  const maxSize = 5 * 1024 * 1024;
-
-  if (file.size > maxSize) {
-
-    alert("File size must be less than 5MB");
-
-    e.target.value = "";
-
-    return;
-  }
-
-  try {
-      const validationResult =
-        await validateUploadedDocument(file);
-
-      console.log("verify-id response:", validationResult);
-
-      if (!validationResult.valid) {
-        alert(
-          validationResult.reason ||
-            "Invalid document. Please upload a valid college or company ID card."
-        );
-
-        setIsDocumentVerified(false);
-        setVerifiedDocument(null);
-        e.target.value = "";
-
-        return;
-      }
-
-      setIsDocumentVerified(true);
-      setVerifiedDocument(file);
-
-      console.log("Document verified successfully", validationResult);
-
-  } catch (error) {
-
-    console.error(error);
-    if (error instanceof Error) {
-
-  console.error(error.stack);
-
-}
-    alert("Unable to validate document");
-
-    setIsDocumentVerified(false);
-
-    setVerifiedDocument(null);
-
-    e.target.value = "";
-  }
-}}
+  onChange={handleDocumentValidation}
 className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 file:mr-3 file:py-2 file:border-0 file:text-sm file:font-medium file:bg-yellow-50 file:text-yellow-700 hover:file:bg-yellow-100"   
 />
 <p className="mt-1 text-xs text-slate-500">

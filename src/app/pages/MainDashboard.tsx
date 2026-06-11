@@ -2,20 +2,16 @@ import React, { useState , useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../../supabaseClient';
 import { 
-  MessageCircle, 
   Bell, 
   User, 
   Plus,
   Home,
   Users,
-  Calendar,
   Briefcase,
-  Image as ImageIcon,
-  Activity,
-  ThumbsUp,
-  MessageSquare,
-  Share2,
-  Search
+  Search,
+  Settings,
+  LogOut,
+  Eye,
 } from 'lucide-react';
 import { useNavigate } from 'react-router';
 
@@ -351,7 +347,7 @@ export function MainDashboard() {
                 onClick={() => setActiveMenu('chat')}
                 className="p-2 hover:bg-slate-800 rounded-lg transition-colors relative"
               >
-                <MessageCircle className="h-6 w-6 text-slate-300" />
+                <Bell className="h-6 w-6 text-slate-300" />
                 <span className="absolute top-1 right-1 h-2 w-2 bg-[#FFD700] rounded-full"></span>
               </button>
               <button 
@@ -403,7 +399,7 @@ export function MainDashboard() {
               activeMenu === 'status' ? 'bg-[#FFD700] text-black' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
-            <Activity className="h-5 w-5" />
+            <Settings className="h-5 w-5" />
             <span>Activity</span>
           </button>
           <button
@@ -412,7 +408,7 @@ export function MainDashboard() {
               activeMenu === 'events' ? 'bg-[#FFD700] text-black' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
-            <Calendar className="h-5 w-5" />
+            <Briefcase className="h-5 w-5" />
             <span>Event</span>
           </button>
           <button
@@ -545,15 +541,15 @@ export function MainDashboard() {
                           </div>
                           <div className="flex items-center justify-around border-t border-slate-800 pt-2">
                             <button className="flex items-center space-x-2 px-4 py-2 text-slate-300 hover:text-[#FFD700] hover:bg-slate-800 rounded-lg transition-colors">
-                              <ThumbsUp className="h-5 w-5" />
+                              <Eye className="h-5 w-5" />
                               <span>Like</span>
                             </button>
                             <button className="flex items-center space-x-2 px-4 py-2 text-slate-300 hover:text-[#FFD700] hover:bg-slate-800 rounded-lg transition-colors">
-                              <MessageSquare className="h-5 w-5" />
+                              <Bell className="h-5 w-5" />
                               <span>Comment</span>
                             </button>
                             <button className="flex items-center space-x-2 px-4 py-2 text-slate-300 hover:text-[#FFD700] hover:bg-slate-800 rounded-lg transition-colors">
-                              <Share2 className="h-5 w-5" />
+                              <Settings className="h-5 w-5" />
                               <span>Share</span>
                             </button>
                           </div>
@@ -564,7 +560,7 @@ export function MainDashboard() {
                   
                   {followedPosts.length === 0 && (
                     <div className="text-center py-12 bg-slate-800 rounded-lg border border-slate-700">
-                      <MessageSquare className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+                      <Bell className="h-12 w-12 text-slate-400 mx-auto mb-4" />
                       <h3 className="text-lg font-medium text-white">No posts yet</h3>
                       <p className="text-slate-400">Follow some alumni to see their posts here.</p>
                     </div>
@@ -622,7 +618,7 @@ export function MainDashboard() {
                   
                   {(eventView === 'upcoming' ? upcomingEvents : currentEvents).length === 0 && (
                     <div className="col-span-full text-center py-12 bg-slate-800 rounded-lg border border-slate-700">
-                      <Calendar className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+                      <Briefcase className="h-12 w-12 text-slate-400 mx-auto mb-4" />
                       <h3 className="text-lg font-medium text-white">No events available</h3>
                       <p className="text-slate-400">
                         {eventView === 'upcoming' 
