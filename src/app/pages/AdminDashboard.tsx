@@ -98,6 +98,39 @@ export function AdminDashboard() {
   const [reportAlumni, setReportAlumni] = useState<CommunityAlumniRecord[]>([]);
 
   useEffect(() => {
+  fetchAlumniProfiles();
+}, []);
+
+const fetchAlumniProfiles = async () => {
+  const { data, error } = await supabase
+    .from("alumni_profiles")
+    .select(`
+      First_Name,
+      Email_Address,
+      Phone_Number,
+      Passed_Out_Year
+    `);
+
+  if (error) {
+    console.error("Error fetching alumni:", error);
+    return;
+  }
+
+  const formattedData: CommunityAlumniRecord[] = (data || []).map(
+    (item, index) => ({
+      id: String(index),
+      name: item.First_Name || "",
+      email: item.Email_Address || "",
+      phone: item.Phone_Number || "",
+      graduationYear: String(item.Passed_Out_Year || ""),
+      role: "alumni",
+    })
+  );
+
+  setReportAlumni(formattedData);
+};
+
+  useEffect(() => {
     if (user?.role === 'admin' && user.email) {
       setAdminAccounts((prev) => {
         if (prev.some((admin) => admin.id === user.id)) {
@@ -276,7 +309,7 @@ export function AdminDashboard() {
 
   const filteredAlumni = useMemo(() => {
     return reportAlumni.filter((item) => {
-      const searchText = [item.name, item.email, item.company, item.position]
+      const searchText = [item.name, item.email, item.phone, item.graduationYear,]
         .filter(Boolean)
         .join(' ')
         .toLowerCase();
@@ -284,7 +317,7 @@ export function AdminDashboard() {
       const matchesSearch = searchText.includes(searchTerm.toLowerCase());
       const matchesStatus = filterStatus === 'all' || item.role === filterStatus;
       const joinYearValue = String(item.year || '').trim();
-      const passedOutYearValue = String(item.year || '').trim();
+      const passedOutYearValue = String(item.graduationYear || '').trim();
       const matchesJoiningYear = !showJoiningYearFilter || !joiningYear || joinYearValue === joiningYear;
       const matchesPassedOutYear = !showPassedOutYearFilter || !passedOutYear || passedOutYearValue === passedOutYear;
 
@@ -1019,12 +1052,9 @@ export function AdminDashboard() {
                   <thead className="bg-slate-50 border-b border-slate-200">
                     <tr>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">Name</th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">Email</th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">Role</th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">Company</th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">Position</th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">Contact</th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">Year</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">Email Address</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">Phone Number</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">Passed Out Year</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200">
@@ -1048,19 +1078,6 @@ export function AdminDashboard() {
                             </div>
                           </td>
                           <td className="px-6 py-4 text-sm text-slate-600">{alumnus.email || '—'}</td>
-                          <td className="px-6 py-4">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              alumnus.role === 'alumni'
-                                ? 'bg-blue-100 text-blue-800'
-                                : alumnus.role === 'graduate'
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-purple-100 text-purple-800'
-                            }`}>
-                              {alumnus.role.charAt(0).toUpperCase() + alumnus.role.slice(1)}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-sm text-slate-600">{alumnus.company || '—'}</td>
-                          <td className="px-6 py-4 text-sm text-slate-600">{alumnus.position || alumnus.status || '—'}</td>
                           <td className="px-6 py-4 text-sm text-slate-600">{alumnus.phone || '—'}</td>
                           <td className="px-6 py-4 text-sm text-slate-600">{alumnus.graduationYear || '—'}</td>
                         </tr>
