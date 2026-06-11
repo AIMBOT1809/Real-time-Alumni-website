@@ -28,7 +28,7 @@ const [verifiedDocument, setVerifiedDocument] =
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [currentStatus, setCurrentStatus] = useState<
-    'job' | 'higher-education' | null
+    'working-professional' | 'higher-education' | 'career-aspirant' | null
   >(null);
 
   const { login } = useAuth();
@@ -117,6 +117,12 @@ if (!idProof || idProof.size === 0) {
 
     const jobProof =
       formData.get('jobProof') as File;
+
+    const skills =
+      formData.get('skills') as string;
+
+    const resumeUpload =
+      formData.get('resumeUpload') as File;
 
     const university =
       formData.get('university') as string;
@@ -291,6 +297,34 @@ if (!idProof || idProof.size === 0) {
       }
     }
 
+    if (currentStatus === 'career-aspirant') {
+      if (!skills) {
+        alert('Please enter your skills');
+        return;
+      }
+
+      if (!resumeUpload || resumeUpload.size === 0) {
+        alert('Please upload your resume');
+        return;
+      }
+
+      const maxResumeSize = 5 * 1024 * 1024;
+      if (resumeUpload.size > maxResumeSize) {
+        alert('Resume must be less than 5MB');
+        return;
+      }
+
+      const allowedResumeTypes = [
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      ];
+      if (!allowedResumeTypes.includes(resumeUpload.type)) {
+        alert('Resume must be PDF, DOC, or DOCX');
+        return;
+      }
+    }
+
     const name =
       `${firstName} ${lastName}`.trim();
 
@@ -365,19 +399,21 @@ if (!idProof || idProof.size === 0) {
           parseInt(passedOutYear),
 
         degree:
-          currentStatus === 'job'
+          currentStatus === 'working-professional'
             ? `${department} - ${collegeName}`
             : currentStatus === 'higher-education'
             ? `${course} at ${university}`
+            : currentStatus === 'career-aspirant'
+            ? skills
             : `${department} - ${collegeName}`,
 
         company:
-          currentStatus === 'job'
+          currentStatus === 'working-professional'
             ? organization
             : undefined,
 
         position:
-          currentStatus === 'job'
+          currentStatus === 'working-professional'
             ? jobRole
             : undefined,
 
@@ -385,7 +421,10 @@ if (!idProof || idProof.size === 0) {
           `${selectedRole.charAt(0).toUpperCase() +
           selectedRole.slice(1)} registered user`,
 
-        skills: [],
+        skills:
+          currentStatus === 'career-aspirant' && skills
+            ? skills.split(',').map((skill) => skill.trim()).filter(Boolean)
+            : [],
 
         email: email.trim(),
 
@@ -414,7 +453,7 @@ if (!idProof || idProof.size === 0) {
           ? idProof.name
           : undefined,
 
-        ...(currentStatus === 'job' && {
+        ...(currentStatus === 'working-professional' && {
 
           package: package_.trim()
 
@@ -910,18 +949,18 @@ className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-non
                   <h3 className="text-lg font-semibold text-slate-900">Current Status</h3>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                   <div>
                     <label className="flex items-center space-x-3">
                       <input
                         type="radio"
                         name="currentStatus"
-                        value="job"
-                        checked={currentStatus === 'job'}
-                        onChange={() => setCurrentStatus('job')}
+                        value="working-professional"
+                        checked={currentStatus === 'working-professional'}
+                        onChange={() => setCurrentStatus('working-professional')}
                         className="w-4 h-4 text-yellow-600 focus:ring-yellow-500 border-slate-300"
                       />
-                      <span className="text-sm font-medium text-slate-700">Job</span>
+                      <span className="text-sm font-medium text-slate-700">Working Professional</span>
                     </label>
                   </div>
                   <div>
@@ -937,10 +976,23 @@ className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-non
                       <span className="text-sm font-medium text-slate-700">Higher Education</span>
                     </label>
                   </div>
+                  <div>
+                    <label className="flex items-center space-x-3">
+                      <input
+                        type="radio"
+                        name="currentStatus"
+                        value="career-aspirant"
+                        checked={currentStatus === 'career-aspirant'}
+                        onChange={() => setCurrentStatus('career-aspirant')}
+                        className="w-4 h-4 text-yellow-600 focus:ring-yellow-500 border-slate-300"
+                      />
+                      <span className="text-sm font-medium text-slate-700">Career Aspirant</span>
+                    </label>
+                  </div>
                 </div>
 
                 {/* Job Details */}
-                {currentStatus === 'job' && (
+                {currentStatus === 'working-professional' && (
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
@@ -995,6 +1047,42 @@ className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-non
                           Accepted formats: JPG, PNG, PDF (Max size: 5MB)
                         </p>
                       </div>
+                    </div>
+                  </div>
+                )}
+
+                {currentStatus === 'career-aspirant' && (
+                  <div className="space-y-4">
+                    <div>
+                      <label htmlFor="skills" className="block text-sm font-medium text-slate-700 mb-1">
+                        Skills
+                      </label>
+                      <input
+                        id="skills"
+                        name="skills"
+                        type="text"
+                        placeholder="e.g. JavaScript, Data Analysis"
+                        className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                      />
+                      <p className="mt-1 text-xs text-slate-500">
+                        Add comma-separated skills relevant to your job search.
+                      </p>
+                    </div>
+                    <div>
+                      <label htmlFor="resumeUpload" className="block text-sm font-medium text-slate-700 mb-1">
+                        Resume Upload
+                      </label>
+                      <input
+                        id="resumeUpload"
+                        name="resumeUpload"
+                        type="file"
+                        required
+                        accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                        className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 file:mr-3 file:py-2 file:border-0 file:text-sm file:font-medium file:bg-yellow-50 file:text-yellow-700 hover:file:bg-yellow-100"
+                      />
+                      <p className="mt-1 text-xs text-slate-500">
+                        Accepted formats: PDF, DOC, DOCX (Max size: 5MB)
+                      </p>
                     </div>
                   </div>
                 )}
