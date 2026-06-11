@@ -86,6 +86,9 @@ export function Community() {
                   </div>
                 </div>
                 
+                {post.title && (
+                  <h3 className="text-lg font-semibold text-slate-900 mb-2">{post.title}</h3>
+                )}
                 <p className="text-slate-600 mb-4">{post.content}</p>
                 
                 {post.image && (

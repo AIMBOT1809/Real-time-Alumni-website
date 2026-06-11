@@ -62,10 +62,12 @@ export interface Event {
 export interface Post {
   id: string;
   alumniId: string;
+  title?: string;
   content: string;
   timestamp: string;
   type: 'general' | 'opportunity' | 'event';
   likes: number;
   comments: number;
   image?: string;
+  file?: string;
 }

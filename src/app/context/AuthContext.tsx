@@ -18,7 +18,7 @@ interface AuthContextType {
   posts: Post[];
   jobs: Job[];
   events: Event[];
-  addPost: (post: Omit<Post, 'id' | 'timestamp'>) => void;
+  addPost: (post: Omit<Post, 'id' | 'timestamp'>) => Promise<void>;
   addJob: (job: Omit<Job, 'id' | 'postedDate'>) => void;
   addEvent: (event: Omit<Event, 'id'>) => void;
   deletePost: (id: string) => void;
@@ -248,6 +248,79 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch (e) {
         // ignore
       }
+    };
+  }, []);
+
+  // Fetch posts from Supabase and subscribe to realtime updates
+  useEffect(() => {
+    let mounted = true;
+    let channel: any = null;
+
+    const fetchPosts = async () => {
+      try {
+        console.log('[AuthContext] Fetching posts from Supabase...');
+        const { data, error } = await supabase.from('posts').select('*').order('timestamp', { ascending: false });
+        if (error) {
+          console.error('[AuthContext] Error fetching posts:', error.message, error);
+          if (mounted) {
+            setPosts([]);
+            localStorage.removeItem('allumini_posts');
+          }
+          return;
+        }
+
+        if (!data) {
+          if (mounted) {
+            setPosts([]);
+            localStorage.setItem('allumini_posts', JSON.stringify([]));
+          }
+          return;
+        }
+
+        // Normalize rows to Post type where possible
+        const mapped = data.map((r: any) => ({
+          id: String(r.id ?? r.ID ?? `p-${Date.now()}`),
+          alumniId: r.alumni_id ?? r.alumniId ?? r.user_id ?? String(r.alumniId ?? 'unknown'),
+          title: r.title ?? r.Title ?? undefined,
+          content: r.content ?? r.body ?? r.description ?? '',
+          timestamp: r.timestamp ?? r.created_at ?? new Date().toISOString(),
+          type: (r.type as any) || 'general',
+          likes: Number(r.likes ?? 0),
+          comments: Number(r.comments ?? 0),
+          image: r.image ?? r.image_url ?? undefined,
+          file: r.file ?? undefined,
+        }));
+
+        if (mounted) {
+          setPosts(mapped as Post[]);
+          try { localStorage.setItem('allumini_posts', JSON.stringify(mapped)); } catch {}
+          console.log('[AuthContext] posts loaded, count =', mapped.length);
+        }
+      } catch (err) {
+        console.error('[AuthContext] Unexpected error fetching posts:', err);
+      }
+    };
+
+    fetchPosts();
+
+    try {
+      channel = supabase
+        .channel('public:posts')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, (payload) => {
+          console.log('[AuthContext] Realtime update for posts:', payload);
+          fetchPosts();
+        })
+        .subscribe((status, err) => {
+          if (status === 'SUBSCRIBED') console.log('[AuthContext] Realtime channel subscribed for posts');
+          if (err) console.error('[AuthContext] Realtime channel error (posts):', err);
+        });
+    } catch (err) {
+      console.error('[AuthContext] Failed to create realtime channel for posts:', err);
+    }
+
+    return () => {
+      mounted = false;
+      try { if (channel) channel.unsubscribe(); } catch (e) {}
     };
   }, []);
 
@@ -577,17 +650,91 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return following.includes(alumniId);
   };
 
-  const addPost = (postData: Omit<Post, 'id' | 'timestamp'>) => {
-    if (user?.role !== 'admin') return;
+  const addPost = async (postData: Omit<Post, 'id' | 'timestamp'>) => {
+    if (!user || user.role === 'student') return;
 
-    const newPost: Post = {
-      ...postData,
-      id: `p-${Date.now()}`,
-      timestamp: new Date().toISOString(),
-    };
-    const newPosts = [...posts, newPost];
-    setPosts(newPosts);
-    localStorage.setItem('allumini_posts', JSON.stringify(newPosts));
+    try {
+      let imageUrl: string | undefined = undefined;
+      let fileUrl: string | undefined = undefined;
+
+      // If image is a data URL, convert to blob and upload
+      if (postData.image && postData.image.startsWith('data:')) {
+        const matches = postData.image.match(/^data:(.*);base64,(.*)$/);
+        if (matches) {
+          const mime = matches[1];
+          const b64 = matches[2];
+          const byteChars = atob(b64);
+          const byteNumbers = new Array(byteChars.length);
+          for (let i = 0; i < byteChars.length; i++) {
+            byteNumbers[i] = byteChars.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          const blob = new Blob([byteArray], { type: mime });
+          const path = `posts/${user.id}-${Date.now()}`;
+          const uploadRes = await supabase.storage.from('posts').upload(path, blob as any, { cacheControl: '3600', upsert: false });
+          if (uploadRes.error) {
+            console.warn('[AuthContext] Storage upload error:', uploadRes.error.message);
+          } else {
+            const publicUrl = supabase.storage.from('posts').getPublicUrl(path).data.publicUrl;
+            imageUrl = publicUrl;
+          }
+        }
+      }
+
+      // Insert into posts table
+      const insertRow: any = {
+        alumni_id: user.id,
+        title: (postData as any).title ?? null,
+        content: postData.content,
+        type: postData.type,
+        likes: postData.likes ?? 0,
+        comments: postData.comments ?? 0,
+        image: imageUrl ?? postData.image ?? null,
+        file: fileUrl ?? null,
+        timestamp: new Date().toISOString(),
+      };
+
+      const { data, error } = await supabase.from('posts').insert([insertRow]).select();
+      if (error) {
+        console.error('[AuthContext] Error inserting post into DB:', error.message, error);
+        // fallback to local state
+        const fallbackPost: Post = {
+          id: `p-${Date.now()}`,
+          alumniId: user.id,
+          title: (postData as any).title,
+          content: postData.content,
+          timestamp: new Date().toISOString(),
+          type: postData.type,
+          likes: postData.likes ?? 0,
+          comments: postData.comments ?? 0,
+          image: imageUrl ?? (postData.image as any) ?? undefined,
+        };
+        setPosts(prev => [fallbackPost, ...prev]);
+        try { localStorage.setItem('allumini_posts', JSON.stringify([fallbackPost, ...posts])); } catch {}
+        return;
+      }
+
+      // Successfully inserted; fetchPosts real-time subscription will sync. Still update local state optimistically
+      if (data && data[0]) {
+        const row = data[0];
+        const newPost: Post = {
+          id: String(row.id ?? `p-${Date.now()}`),
+          alumniId: row.alumni_id ?? user.id,
+          title: row.title ?? undefined,
+          content: row.content ?? '',
+          timestamp: row.timestamp ?? row.created_at ?? new Date().toISOString(),
+          type: row.type ?? 'general',
+          likes: Number(row.likes ?? 0),
+          comments: Number(row.comments ?? 0),
+          image: row.image ?? undefined,
+          file: row.file ?? undefined,
+        };
+        setPosts(prev => [newPost, ...prev]);
+        try { localStorage.setItem('allumini_posts', JSON.stringify([newPost, ...posts])); } catch {}
+      }
+    } catch (err) {
+      console.error('[AuthContext] addPost unexpected error:', err);
+    }
   };
 
   const addJob = (jobData: Omit<Job, 'id' | 'postedDate'>) => {

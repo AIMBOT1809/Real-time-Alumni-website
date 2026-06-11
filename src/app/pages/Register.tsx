@@ -390,7 +390,6 @@ if (!idProof || idProof.size === 0) {
         return;
       }
 
-<<<<<<< HEAD
       // Handle Faculty-specific profile insertion
       if (selectedRole === 'faculty') {
         const facultyId = formData.get('facultyId') as string;
@@ -485,38 +484,32 @@ if (!idProof || idProof.size === 0) {
         navigate('/dashboard');
         return;
       }
-=======
 
       // Upload ID Proof
-const idProofFileName = `${Date.now()}-${idProof.name}`;
+      const idProofFileName = `${Date.now()}-${idProof.name}`;
 
-const { data: idProofUpload, error: idProofError } = await supabase.storage
-  .from('id-proofs')
-  .upload(idProofFileName, idProof);
+      const { data: idProofUpload, error: idProofError } = await supabase.storage
+        .from('id-proofs')
+        .upload(idProofFileName, idProof);
 
-  if (idProofError) {
-  console.log(idProofError);
-  alert(idProofError.message);
-  return;
-}
+      if (idProofError) {
+        console.log(idProofError);
+        alert(idProofError.message);
+        return;
+      }
 
-/*if (idProofError) {
-  alert('Failed to upload ID proof');
-  return;
-}  */
+      const { data: idProofUrlData } = supabase.storage
+        .from('id-proofs')
+        .getPublicUrl(idProofFileName);
 
-const { data: idProofUrlData } = supabase.storage
-  .from('id-proofs')
-  .getPublicUrl(idProofFileName);
+      const idProofUrl = idProofUrlData.publicUrl;
 
-const idProofUrl = idProofUrlData.publicUrl;
+      // Upload Photo
+      const photoFileName = `${Date.now()}-${photo.name}`;
 
-// Upload Photo
-const photoFileName = `${Date.now()}-${photo.name}`;
-
-const { data: photoUpload, error: photoError } = await supabase.storage
-  .from('profile-photos')
-  .upload(photoFileName, photo);
+      const { data: photoUpload, error: photoError } = await supabase.storage
+        .from('profile-photos')
+        .upload(photoFileName, photo);
 
 if (photoError) {
   alert('Failed to upload profile photo');
@@ -528,7 +521,7 @@ const { data: photoUrlData } = supabase.storage
   .getPublicUrl(photoFileName);
 
 const photoUrl = photoUrlData.publicUrl;
->>>>>>> f1c8b6a05866db61162c429c5955cff0e93e237f
+ 
 
       const { error: profileError } = await supabase
   .from('alumni_profiles')
