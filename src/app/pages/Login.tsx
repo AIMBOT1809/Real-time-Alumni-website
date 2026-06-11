@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router';
 
 import { useAuth } from '../context/AuthContext';
+import { UserProfile } from '../data/types';
 
 import { GraduationCap, Eye, EyeOff } from 'lucide-react';
 
@@ -54,7 +55,7 @@ export function Login() {
       email.trim().toLowerCase() === predefinedAdminEmail &&
       password === predefinedAdminPassword
     ) {
-      login({
+      await login({
         id: 'admin-predefined',
         name: 'Admin',
         role: 'admin',
@@ -89,8 +90,124 @@ export function Login() {
       return;
     }
 
-    login(signedInUser);
-    if (signedInUser.user_metadata?.role === 'admin') {
+    console.log('[LOGIN] SignedInUser details:', {
+      id: signedInUser.id,
+      email: signedInUser.email,
+      metadata: signedInUser.user_metadata,
+    });
+
+    const metadata = signedInUser.user_metadata || {};
+
+    // Try to load the registered profile (prefer exact match by user_id, fallback to email)
+    let profile: any = null;
+    try {
+      console.log('[LOGIN] Attempting to fetch profile for signedInUser:', { id: signedInUser.id, email: signedInUser.email });
+
+      // First, check by user_id which is authoritative
+      let profileResp = await supabase
+        .from('alumni_profiles')
+        .select('*')
+        .eq('user_id', signedInUser.id)
+        .maybeSingle();
+
+      if (profileResp.error) {
+        console.warn('[LOGIN] Profile fetch by user_id error:', profileResp.error.message, profileResp.error);
+      }
+
+      if (profileResp.data) {
+        console.log('[LOGIN] Profile found by user_id, columns:', Object.keys(profileResp.data));
+        profile = profileResp.data;
+      } else if (signedInUser.email) {
+        // Fallback to email match (case-insensitive)
+        const profileByEmail = await supabase
+          .from('alumni_profiles')
+          .select('*')
+          .ilike('Email_Address', signedInUser.email || '')
+          .maybeSingle();
+
+        console.log('[LOGIN] Profile fetch by email result:', { profileByEmail });
+
+        if (profileByEmail.error) {
+          console.warn('[LOGIN] Profile fetch by email error:', profileByEmail.error.message, profileByEmail.error);
+        } else if (profileByEmail.data) {
+          console.log('[LOGIN] Profile found by email, columns:', Object.keys(profileByEmail.data));
+          profile = profileByEmail.data;
+        } else {
+          console.log('[LOGIN] No profile data returned by user_id or email');
+        }
+      }
+    } catch (err) {
+      console.error('[LOGIN] Profile fetch exception:', err);
+      // ignore profile fetch errors and fall back to metadata
+    }
+
+    const firstName = profile?.First_Name || profile?.first_name || profile?.firstName || '';
+    const lastName = profile?.Last_name || profile?.last_name || profile?.lastName || '';
+    const passedOutYear = profile?.Passed_Out_Year || profile?.passed_out_year || profile?.passedOutYear;
+    const fullName = (firstName || lastName)
+      ? `${firstName.toString().trim()} ${lastName.toString().trim()}`.trim()
+      : null;
+    console.log('[LOGIN] Constructed full name from profile:', { firstName, lastName, fullName, passedOutYear });
+
+    const mappedUser: UserProfile = {
+      id: signedInUser.id,
+      name: fullName
+        ? fullName
+        : (metadata.name as string) || signedInUser.email?.split('@')[0] || 'User',
+      role: (metadata.role as any) || 'alumni',
+      avatar:
+        profile?.Photo_URL || profile?.photo_url ||
+        (metadata.avatar_url as string) ||
+        (metadata.avatar as string) ||
+        'https://ui-avatars.com/api/?name=User&background=FDE68A&color=111827&size=256',
+      graduationYear:
+        Number(passedOutYear) || Number(metadata.graduationYear) || Number(metadata.graduation_year) || new Date().getFullYear(),
+      degree:
+        profile?.Department && profile?.College_Name
+          ? `${profile.Department} - ${profile.College_Name}`
+          : (metadata.degree as string) || '',
+      skills: (metadata.skills as string[]) || [],
+      email: signedInUser.email || undefined,
+      phone: profile?.Phone_Number || profile?.phone || metadata.phone || undefined,
+      collegeName: profile?.College_Name || profile?.college_name || metadata.collegeName || '',
+      rollNumber: profile?.Roll_Number || profile?.roll_number || metadata.rollNumber || '',
+      department: profile?.Department || profile?.department || metadata.department || '',
+      year: profile?.Passed_Out_Year || profile?.passed_out_year || profile?.Year_of_Joining || profile?.year || metadata.year || '',
+      about: profile?.About || profile?.about || '',
+      linkedin: profile?.LinkedIn_Profile_URL || profile?.linkedin || (metadata.linkedin as string) || '',
+      resume: profile?.Resume_URL || profile?.resume || '',
+      links: (metadata.links as { title: string; url: string }[]) || [],
+    };
+
+    console.log('[LOGIN] Final mappedUser state before login():', mappedUser);
+    await login(mappedUser);
+    console.log('[LOGIN] Login called with mappedUser, waiting for AuthContext/localStorage sync');
+
+    // Wait briefly for AuthContext to persist to localStorage so downstream pages can read immediately
+    const waitForStored = async (timeout = 500) => {
+      const start = Date.now();
+      while (Date.now() - start < timeout) {
+        try {
+          const saved = localStorage.getItem('allumini_user');
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            if (parsed && parsed.id === mappedUser.id) return true;
+          }
+        } catch (e) {
+          // ignore
+        }
+        // small delay
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise((r) => setTimeout(r, 50));
+      }
+      return false;
+    };
+
+    const synced = await waitForStored(800);
+    if (!synced) console.warn('[LOGIN] Timeout waiting for stored user in localStorage');
+
+    console.log('[LOGIN] Navigating after login');
+    if (mappedUser.role === 'admin') {
       navigate('/admin');
     } else {
       navigate('/dashboard');

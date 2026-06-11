@@ -431,7 +431,7 @@ if (!idProof || idProof.size === 0) {
         })
       };
 
-      login(newUser);
+      await login(newUser);
 
       navigate('/dashboard');
 

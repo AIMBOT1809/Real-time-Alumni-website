@@ -26,6 +26,7 @@ export interface UserProfile {
   links?: { title: string; url: string }[];
   cgpa?: string;
   phoneNumber?: string;
+  profileComplete?: boolean;
 }
 
 export interface Job {

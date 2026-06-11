@@ -45,6 +45,43 @@ export function MainDashboard() {
   const [newLink, setNewLink] = useState({ title: '', url: '' });
   const [alumniStrip, setAlumniStrip] = useState<Array<{ id: string; name: string; avatar: string }>>([]);
   
+  const resetFormFromUser = () => {
+    setFormData({
+      collegeName: user?.collegeName || '',
+      rollNumber: user?.rollNumber || '',
+      department: user?.department || '',
+      year: user?.year || '',
+      about: user?.about || '',
+      linkedin: user?.linkedin || '',
+      resume: user?.resume || '',
+      avatar: user?.avatar || '',
+    });
+    setSkills(user?.skills || []);
+    setLinks(user?.links || []);
+  };
+
+  // Keep edit form state synchronized with latest user profile
+  useEffect(() => {
+    if (!user) return;
+    try {
+      console.log('[MainDashboard] Syncing formData with latest user profile', { userId: user?.id, userName: user?.name });
+      resetFormFromUser();
+    } catch (err) {
+      console.error('[MainDashboard] Failed to sync formData from user', err);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    console.log('[MainDashboard] AuthContext user change:', user);
+    console.log('[MainDashboard] localStorage allumini_user:', (() => { try { return JSON.parse(localStorage.getItem('allumini_user')||'null'); } catch { return null; } })());
+  }, [user]);
+
+  const startEditing = () => {
+    if (!user) return;
+    resetFormFromUser();
+    setIsEditing(true);
+  };
+  
   useEffect(() => {
     if (!user && !isLoggingOut) {
       navigate('/login');
@@ -142,11 +179,11 @@ export function MainDashboard() {
       try {
         subscription = supabase
           .channel('public:alumni_profiles')
-          .on('postgres_changes', { event: '*', schema: 'public', table: 'alumni_profiles' }, (payload) => {
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'alumni_profiles' }, (payload: any) => {
             console.log('[MainDashboard] Realtime update received:', {
               eventType: payload.eventType,
-              newRecord: payload.new?.id,
-              oldRecord: payload.old?.id,
+              newRecord: (payload.new as any)?.id,
+              oldRecord: (payload.old as any)?.id,
             });
             fetchAlumniRecords();
           })
@@ -183,14 +220,14 @@ export function MainDashboard() {
   if (!user) return null;
 
   // Profile handlers
-  const handleSave = () => {
+  const handleSave = async () => {
     const updatedUser = {
       ...user,
       ...formData,
       skills,
       links,
     };
-    login(updatedUser);
+    await login(updatedUser);
     setIsEditing(false);
   };
 
@@ -702,7 +739,7 @@ export function MainDashboard() {
                   </div>
                   <div className="flex gap-2">
                     <button 
-                      onClick={() => setIsEditing(true)} 
+                      onClick={startEditing} 
                       className="bg-[#FFD700] text-black px-4 py-2 rounded-lg font-medium hover:bg-yellow-400"
                     >
                       Edit Profile
@@ -1002,8 +1039,8 @@ export function MainDashboard() {
                       </>
                     )}
 
-                    {/* Non-students Logout */}
-                    {role !== 'student' && (
+                    {/* Logout */}
+                    {role && (
                       <>
                         <hr className="border-slate-700" />
                         <div className="flex justify-center">

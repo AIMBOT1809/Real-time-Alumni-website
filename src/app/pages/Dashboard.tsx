@@ -7,6 +7,11 @@ import { Link } from 'react-router';
 export function Dashboard() {
   const { user, role, logout, following, posts, jobs, events, isFollowing } = useAuth();
 
+  React.useEffect(() => {
+    console.log('[Dashboard] AuthContext user on render:', user);
+    console.log('[Dashboard] localStorage allumini_user:', (() => { try { return JSON.parse(localStorage.getItem('allumini_user')||'null'); } catch { return null; } })());
+  }, [user]);
+
   if (!user) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
@@ -109,6 +114,7 @@ export function Dashboard() {
 
         {/* Sidebar */}
         <div className="space-y-8">
+          {!(user?.profileComplete || user?.collegeName || user?.rollNumber) && (
            <div className="bg-slate-900 text-white p-6 rounded-lg shadow-lg relative overflow-hidden">
              <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-yellow-500/20 rounded-full blur-2xl"></div>
              <h3 className="font-bold text-lg mb-2 relative z-10">Complete Your Profile</h3>
@@ -120,6 +126,7 @@ export function Dashboard() {
                Update Profile
              </button>
            </div>
+          )}
 
            <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
              <h3 className="font-bold text-slate-900 mb-4">Upcoming Events</h3>
