@@ -390,6 +390,44 @@ if (!idProof || idProof.size === 0) {
         return;
       }
 
+      // Upload ID Proof
+const idProofFileName = `${Date.now()}-${idProof.name}`;
+
+const { data: idProofUpload, error: idProofError } = await supabase.storage
+  .from('id-proofs')
+  .upload(idProofFileName, idProof);
+
+if (idProofError) {
+  console.log(idProofError);
+  alert(idProofError.message);
+  return;
+}
+
+const { data: idProofUrlData } = supabase.storage
+  .from('id-proofs')
+  .getPublicUrl(idProofFileName);
+
+const idProofUrl = idProofUrlData.publicUrl;
+
+// Upload Photo
+const photoFileName = `${Date.now()}-${photo.name}`;
+
+const { data: photoUpload, error: photoError } = await supabase.storage
+  .from('profile-photos')
+  .upload(photoFileName, photo);
+
+if (photoError) {
+  console.log(photoError);
+  alert(photoError.message);
+  return;
+}
+
+const { data: photoUrlData } = supabase.storage
+  .from('profile-photos')
+  .getPublicUrl(photoFileName);
+
+const photoUrl = photoUrlData.publicUrl;
+
       const { error: profileError } = await supabase
   .from('alumni_profiles')
   .insert([
@@ -418,7 +456,16 @@ if (!idProof || idProof.size === 0) {
       Country: country,
       City: city,
       Course: course,
-      Branch_Specialization: branch
+      Branch_Specialization: branch,
+      id_proof_url:idProofUrl,
+      photo_url:photoUrl,
+
+      // Career Aspirant data
+      Skills:skills,
+      Resume_File_Name:
+        currentStatus === "career-aspirant"
+          ?resumeUpload?.name
+          :null
     }
   ]);
 
