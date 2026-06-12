@@ -170,7 +170,7 @@ export function Layout() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-grow container mx-auto px-4 py-8">
+      <main className={`flex-grow container mx-auto px-4 ${isLandingPage ? 'py-0' : 'py-8'}`}>
         <Outlet />
       </main>
 

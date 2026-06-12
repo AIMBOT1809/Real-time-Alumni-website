@@ -174,7 +174,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         console.log('[AuthContext] Fetching alumni_profiles from Supabase...');
         const { data, error } = await supabase.from('alumni_profiles').select('*');
-        if (error) {
+          if (error) {
           console.error('[AuthContext] Error fetching alumni_profiles:', {
             code: error.code,
             message: error.message,
@@ -194,7 +194,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (!data) {
           console.log('[AuthContext] No alumni_profiles rows returned');
-          if (mounted) {
+            if (mounted) {
             setAlumni([]);
             localStorage.setItem('allumini_alumni', JSON.stringify([]));
           }
@@ -214,8 +214,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             email: r.Email_Address ?? r.email ?? undefined,
           }));
 
-          setAlumni(mapped as any);
-          localStorage.setItem('allumini_alumni', JSON.stringify(mapped));
+            setAlumni(mapped as any);
+            localStorage.setItem('allumini_alumni', JSON.stringify(mapped));
           console.log('[AuthContext] setAlumni called, alumni.length =', mapped.length);
         }
       } catch (err) {
@@ -272,7 +272,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!data) {
           if (mounted) {
             setPosts([]);
-            localStorage.setItem('allumini_posts', JSON.stringify([]));
+            localStorage.setItem('alumni_posts', JSON.stringify([]));
           }
           return;
         }
@@ -291,7 +291,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           file: r.file ?? undefined,
         }));
 
-        if (mounted) {
+          if (mounted) {
           setPosts(mapped as Post[]);
           try { localStorage.setItem('allumini_posts', JSON.stringify(mapped)); } catch {}
           console.log('[AuthContext] posts loaded, count =', mapped.length);
