@@ -456,7 +456,16 @@ const photoUrl = photoUrlData.publicUrl;
       Country: country,
       City: city,
       Course: course,
-      Branch_Specialization: branch
+      Branch_Specialization: branch,
+      id_proof_url:idProofUrl,
+      photo_url:photoUrl,
+
+      // Career Aspirant data
+      Skills:skills,
+      Resume_File_Name:
+        currentStatus === "career-aspirant"
+          ?resumeUpload?.name
+          :null
     }
   ]);
 
