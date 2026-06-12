@@ -27,6 +27,14 @@ export interface UserProfile {
   cgpa?: string;
   phoneNumber?: string;
   profileComplete?: boolean;
+  // Faculty-specific fields
+  facultyId?: string;
+  designation?: string;
+  facultyType?: 'Professor' | 'Associate Professor' | 'Assistant Professor' | 'HOD' | 'Lecturer' | 'Other';
+  officeEmail?: string;
+  yearsOfExperience?: number;
+  specialization?: string;
+  researchInterests?: string[];
 }
 
 export interface Job {

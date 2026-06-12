@@ -390,6 +390,101 @@ if (!idProof || idProof.size === 0) {
         return;
       }
 
+      // Handle Faculty-specific profile insertion
+      if (selectedRole === 'faculty') {
+        const facultyId = formData.get('facultyId') as string;
+        const officeEmail = formData.get('officeEmail') as string;
+        const designation = formData.get('designation') as string;
+        const facultyType = formData.get('facultyType') as string;
+        const yearsOfExperience = formData.get('yearsOfExperience') as string;
+        const specialization = formData.get('specialization') as string;
+        const researchInterests = formData.get('researchInterests') as string;
+
+        if (!facultyId) {
+          alert('Please enter your Faculty ID');
+          return;
+        }
+        if (!officeEmail) {
+          alert('Please enter your Office Email Address');
+          return;
+        }
+        if (!designation) {
+          alert('Please enter your Designation');
+          return;
+        }
+        if (!facultyType) {
+          alert('Please select your Faculty Type');
+          return;
+        }
+        if (!yearsOfExperience) {
+          alert('Please enter your Years of Experience');
+          return;
+        }
+        if (!specialization) {
+          alert('Please enter your Specialization');
+          return;
+        }
+
+        const { error: profileError } = await supabase
+          .from('alumni_profiles')
+          .insert([
+            {
+              user_id: authData.user?.id,
+              First_Name: firstName,
+              Last_name: lastName,
+              Email_Address: email,
+              Office_Email: officeEmail,
+              Phone_Number: phone,
+              LinkedIn_Profile_URL: linkedin,
+              College_Name: collegeName,
+              Department: department,
+              Faculty_ID: facultyId,
+              Designation: designation,
+              Faculty_Type: facultyType,
+              Years_Of_Experience: parseInt(yearsOfExperience),
+              Specialization: specialization,
+              Research_Interests: researchInterests || null,
+            }
+          ]);
+
+        if(profileError) {
+          console.log(profileError);
+          alert(profileError.message);
+          return;
+        }
+
+        const newUser: UserProfile = {
+          id: authData.user?.id ?? `u-${Date.now()}`,
+          name,
+          role: selectedRole,
+          avatar: photo
+            ? URL.createObjectURL(photo)
+            : `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=FDE68A&color=111827&size=256`,
+          graduationYear: new Date().getFullYear(),
+          degree: `${specialization} - ${department}`,
+          bio: `Faculty member at ${collegeName}`,
+          skills: [],
+          email: email.trim(),
+          phone: phone.trim(),
+          linkedin: linkedin ? linkedin.trim() : undefined,
+          collegeName: collegeName.trim(),
+          department: department.trim(),
+          idProof: idProof ? idProof.name : undefined,
+          // Faculty-specific fields
+          facultyId: facultyId.trim(),
+          officeEmail: officeEmail.trim(),
+          designation: designation.trim(),
+          facultyType: facultyType as any,
+          yearsOfExperience: parseInt(yearsOfExperience),
+          specialization: specialization.trim(),
+          researchInterests: researchInterests ? researchInterests.split(',').map(interest => interest.trim()).filter(Boolean) : [],
+        };
+
+        await login(newUser);
+        navigate('/dashboard');
+        return;
+      }
+
       const { error: profileError } = await supabase
   .from('alumni_profiles')
   .insert([
@@ -1400,7 +1495,7 @@ className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-non
   if (selectedRole === 'faculty') {
     return (
       <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-slate-900 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-2xl w-full">
+        <div className="max-w-3xl w-full">
           <div className="text-center mb-8">
             <button
               onClick={() => setSelectedRole(null)}
@@ -1423,7 +1518,7 @@ className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-non
                   <h3 className="text-lg font-semibold text-slate-900">Personal Details</h3>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div>
                     <label htmlFor="firstName" className="block text-sm font-medium text-slate-700 mb-1">
                       First Name *
@@ -1431,18 +1526,6 @@ className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-non
                     <input
                       id="firstName"
                       name="firstName"
-                      type="text"
-                      required
-                      className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="middleName" className="block text-sm font-medium text-slate-700 mb-1">
-                      Middle Name *
-                    </label>
-                    <input
-                      id="middleName"
-                      name="middleName"
                       type="text"
                       required
                       className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
@@ -1465,7 +1548,7 @@ className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-non
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div>
                     <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1">
-                      Email Address *
+                      Personal Email Address *
                     </label>
                     <input
                       id="email"
@@ -1475,6 +1558,20 @@ className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-non
                       className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
                     />
                   </div>
+                  <div>
+                    <label htmlFor="CollegeEmail" className="block text-sm font-medium text-slate-700 mb-1">
+                      College Email Address 
+                    </label>
+                    <input
+                      id="CollegeEmail"
+                      name="CollegeEmail"
+                      type="email"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div>
                     <label htmlFor="phone" className="block text-sm font-medium text-slate-700 mb-1">
                       Phone Number *
@@ -1487,6 +1584,52 @@ className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-non
                       className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
                     />
                   </div>
+                  <div>
+                    <label htmlFor="linkedin" className="block text-sm font-medium text-slate-700 mb-1">
+                      LinkedIn Profile URL
+                    </label>
+                    <input
+                      id="linkedin"
+                      name="linkedin"
+                      type="url"
+                      placeholder="https://linkedin.com/in/yourprofile"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="mb-4">
+                  <label htmlFor="idProof" className="block text-sm font-medium text-slate-700 mb-1">
+                    ID Proof (Faculty ID/Government ID) *
+                  </label>
+                  <input
+                    id="idProof"
+                    name="idProof"
+                    type="file"
+                    accept=".jpg,.jpeg,.png,.pdf"
+                    required
+                    onChange={handleDocumentValidation}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 file:mr-3 file:py-2 file:border-0 file:text-sm file:font-medium file:bg-yellow-50 file:text-yellow-700 hover:file:bg-yellow-100"
+                  />
+                  <p className="mt-1 text-xs text-slate-500">
+                    Accepted formats: JPG, JPEG, PNG, PDF (Max 5MB)
+                  </p>
+                </div>
+
+                <div className="mb-4">
+                  <label htmlFor="photo" className="block text-sm font-medium text-slate-700 mb-1">
+                    Upload Photo / Profile Picture
+                  </label>
+                  <input
+                    id="photo"
+                    name="photo"
+                    type="file"
+                    accept="image/jpeg,image/jpg,image/png"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 file:mr-3 file:py-2 file:border-0 file:text-sm file:font-medium file:bg-yellow-50 file:text-yellow-700 hover:file:bg-yellow-100"
+                  />
+                  <p className="mt-1 text-xs text-slate-500">
+                    Accepted formats: JPG, JPEG, PNG (Max 5MB)
+                  </p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1547,17 +1690,30 @@ className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-non
                 </div>
               </div>
 
-              {/* Academic Details Section */}
+              {/* Faculty Details Section */}
               <div className="bg-slate-50 border border-slate-200 rounded-lg p-6 mb-6">
                 <div className="flex items-center mb-4">
                   <div className="w-1 h-6 bg-yellow-500 rounded-full mr-3"></div>
-                  <h3 className="text-lg font-semibold text-slate-900">Academic Details</h3>
+                  <h3 className="text-lg font-semibold text-slate-900">Faculty Details</h3>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div>
+                    <label htmlFor="facultyId" className="block text-sm font-medium text-slate-700 mb-1">
+                      Faculty ID *
+                    </label>
+                    <input
+                      id="facultyId"
+                      name="facultyId"
+                      type="text"
+                      required
+                      placeholder="e.g., FAC-2024-001"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                    />
+                  </div>
+                  <div>
                     <label htmlFor="collegeName" className="block text-sm font-medium text-slate-700 mb-1">
-                      College Name *
+                      College/Institute Name *
                     </label>
                     <input
                       id="collegeName"
@@ -1567,6 +1723,9 @@ className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-non
                       className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
                     />
                   </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div>
                     <label htmlFor="department" className="block text-sm font-medium text-slate-700 mb-1">
                       Department *
@@ -1578,6 +1737,73 @@ className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-non
                       required
                       className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
                     />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label htmlFor="Designation" className="block text-sm font-medium text-slate-700 mb-1">
+                      Designation *
+                    </label>
+                    <select
+                      id="designation"
+                      name="designation"
+                      required
+                      className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                    >
+                      <option value="">Select designation</option>
+                      <option value="Professor">Professor</option>
+                      <option value="Associate Professor">Associate Professor</option>
+                      <option value="Assistant Professor">Assistant Professor</option>
+                      <option value="HOD">HOD (Head of Department)</option>
+                      <option value="Lecturer">Lecturer</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="yearsOfExperience" className="block text-sm font-medium text-slate-700 mb-1">
+                      Years of Experience *
+                    </label>
+                    <input
+                      id="yearsOfExperience"
+                      name="yearsOfExperience"
+                      type="number"
+                      min="0"
+                      max="70"
+                      required
+                      className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label htmlFor="specialization" className="block text-sm font-medium text-slate-700 mb-1">
+                      Specialization *
+                    </label>
+                    <input
+                      id="specialization"
+                      name="specialization"
+                      type="text"
+                      required
+                      placeholder="e.g., Data Science, Machine Learning"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="researchInterests" className="block text-sm font-medium text-slate-700 mb-1">
+                      Research Interests
+                    </label>
+                    <input
+                      id="researchInterests"
+                      name="researchInterests"
+                      type="text"
+                      placeholder="e.g., AI, NLP, Computer Vision (comma-separated)"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                    />
+                    <p className="mt-1 text-xs text-slate-500">
+                      Enter comma-separated research interests
+                    </p>
                   </div>
                 </div>
               </div>
