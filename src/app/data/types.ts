@@ -17,6 +17,8 @@ export interface UserProfile {
   collegeName?: string;
   rollNumber?: string;
   year?: string;
+  yearOfJoining?: number;
+  passedOutYear?: number;
   department?: string;
   linkedin?: string;
   github?: string;

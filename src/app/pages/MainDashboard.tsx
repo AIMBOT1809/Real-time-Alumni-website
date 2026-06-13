@@ -37,6 +37,8 @@ export function MainDashboard() {
     rollNumber: user?.rollNumber || '',
     department: user?.department || '',
     year: user?.year || '',
+    yearOfJoining: user?.yearOfJoining || undefined,
+    passedOutYear: user?.passedOutYear || undefined,
     about: user?.about || '',
     linkedin: user?.linkedin || '',
     resume: user?.resume || '',
@@ -54,6 +56,8 @@ export function MainDashboard() {
       rollNumber: user?.rollNumber || '',
       department: user?.department || '',
       year: user?.year || '',
+      yearOfJoining: user?.yearOfJoining || undefined,
+      passedOutYear: user?.passedOutYear || undefined,
       about: user?.about || '',
       linkedin: user?.linkedin || '',
       resume: user?.resume || '',
@@ -240,6 +244,8 @@ export function MainDashboard() {
       rollNumber: user?.rollNumber || '',
       department: user?.department || '',
       year: user?.year || '',
+      yearOfJoining: user?.yearOfJoining || undefined,
+      passedOutYear: user?.passedOutYear || undefined,
       about: user?.about || '',
       linkedin: user?.linkedin || '',
       resume: user?.resume || '',
@@ -902,8 +908,35 @@ export function MainDashboard() {
                         />
                       </div>
 
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-sm font-medium text-slate-300 mb-1">Year of Joining</label>
+                          <input
+                            type="number"
+                            min="1950"
+                            max={new Date().getFullYear()}
+                            placeholder="e.g., 2020"
+                            value={user?.yearOfJoining || ''}
+                            onChange={(e) => setFormData(prev => ({ ...prev, yearOfJoining: parseInt(e.target.value) }))}
+                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-slate-300 mb-1">Year of Passing Out</label>
+                          <input
+                            type="number"
+                            min="1950"
+                            max={new Date().getFullYear() + 10}
+                            placeholder="e.g., 2024"
+                            value={user?.passedOutYear || ''}
+                            onChange={(e) => setFormData(prev => ({ ...prev, passedOutYear: parseInt(e.target.value) }))}
+                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
+                          />
+                        </div>
+                      </div>
+
                       <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1">Year *</label>
+                        <label className="block text-sm font-medium text-slate-300 mb-1">Study Year *</label>
                         <input
                           type="text"
                           placeholder="Your year (e.g., 2nd Year)"
@@ -1065,8 +1098,20 @@ export function MainDashboard() {
                       )}
                       {user?.year && (
                         <div className="rounded-lg bg-slate-800 p-4">
-                          <p className="text-sm text-slate-400">Year</p>
+                          <p className="text-sm text-slate-400">Study Year</p>
                           <p className="text-white">{user.year}</p>
+                        </div>
+                      )}
+                      {user?.yearOfJoining && (
+                        <div className="rounded-lg bg-slate-800 p-4">
+                          <p className="text-sm text-slate-400">Year of Joining</p>
+                          <p className="text-white">{user.yearOfJoining}</p>
+                        </div>
+                      )}
+                      {user?.passedOutYear && (
+                        <div className="rounded-lg bg-slate-800 p-4">
+                          <p className="text-sm text-slate-400">Year of Passing Out</p>
+                          <p className="text-white">{user.passedOutYear}</p>
                         </div>
                       )}
                       {user?.linkedin && (

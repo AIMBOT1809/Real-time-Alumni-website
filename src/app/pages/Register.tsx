@@ -629,6 +629,10 @@ if (!idProof || idProof.size === 0) {
 
         year: yearOfJoining,
 
+        yearOfJoining: parseInt(yearOfJoining),
+
+        passedOutYear: parseInt(passedOutYear),
+
         idProof: idProof
           ? idProof.name
           : undefined,
@@ -926,6 +930,20 @@ if (selectedRole === "student") {
   file:px-3 file:py-2 file:rounded-md"
 />
               </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-1">
+                  Photo / Profile Picture
+                </label>
+                <input
+  name="photo"
+  type="file"
+  accept="image/jpeg,image/jpg,image/png"
+  className="w-full border border-slate-300 rounded-md p-2
+  file:bg-yellow-50 file:text-yellow-700 file:border-0
+  file:px-3 file:py-2 file:rounded-md"
+/>
+              </div>
               
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -991,23 +1009,6 @@ if (selectedRole === "student") {
 
               <div className="mb-4">
                 <label className="block text-sm font-medium mb-1">
-                  Year *
-                </label>
-                <select
-                  name="year"
-                  required
-                  className="w-full px-3 py-2 border rounded-md"
-                >
-                  <option value="">Select Year</option>
-                  <option value="1">1st Year</option>
-                  <option value="2">2nd Year</option>
-                  <option value="3">3rd Year</option>
-                  <option value="4">4th Year</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">
                   Department *
                 </label>
                 <input
@@ -1016,6 +1017,37 @@ if (selectedRole === "student") {
                   required
                   className="w-full px-3 py-2 border rounded-md"
                 />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Year of Joining *
+                  </label>
+                  <input
+                    name="yearOfJoining"
+                    type="number"
+                    min="1950"
+                    max={new Date().getFullYear()}
+                    required
+                    placeholder="e.g., 2020"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Year of Passing Out *
+                  </label>
+                  <input
+                    name="passedOutYear"
+                    type="number"
+                    min="1950"
+                    max={new Date().getFullYear() + 10}
+                    required
+                    placeholder="e.g., 2024"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                  />
+                </div>
               </div>
             </div>
 
