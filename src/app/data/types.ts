@@ -65,9 +65,26 @@ export interface Post {
   title?: string;
   content: string;
   timestamp: string;
-  type: 'general' | 'opportunity' | 'event';
+  type: 'general' | 'opportunity' | 'event' | 'community';
   likes: number;
   comments: number;
   image?: string;
+  attachmentUrl?: string;
+  attachmentName?: string;
+  attachmentType?: string;
   file?: string;
+}
+
+export interface Event {
+  id: string;
+  title: string;
+  date: string;
+  time: string;
+  location: string;
+  type: 'Networking' | 'Workshop' | 'Webinar';
+  alumniId: string;
+  image: string;
+  attachmentUrl?: string;
+  attachmentName?: string;
+  attachmentType?: string;
 }
