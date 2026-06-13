@@ -350,27 +350,8 @@ export function MainDashboard() {
                   <Plus className="h-6 w-6 text-[#FFD700] group-hover:text-yellow-400" />
                 </button>
               )}
-              <button 
-                onClick={() => setActiveMenu('chat')}
-                className="p-2 hover:bg-slate-800 rounded-lg transition-colors relative"
-              >
-                <Bell className="h-6 w-6 text-slate-300" />
-                <span className="absolute top-1 right-1 h-2 w-2 bg-[#FFD700] rounded-full"></span>
-              </button>
-              <button 
-                onClick={() => setActiveMenu('notifications')}
-                className="p-2 hover:bg-slate-800 rounded-lg transition-colors relative"
-              >
-                <Bell className="h-6 w-6 text-slate-300" />
-                <span className="absolute top-1 right-1 h-2 w-2 bg-[#FFD700] rounded-full"></span>
-              </button>
-              <button className="p-2 hover:bg-slate-800 rounded-lg transition-colors">
-                <img 
-                  src={user?.avatar || 'https://ui-avatars.com/api/?name=User&background=FDE68A&color=111827&size=256'} 
-                  alt={user?.name || 'User'}
-                  className="h-8 w-8 rounded-full object-cover border-2 border-[#FFD700]"
-                />
-              </button>
+              
+              
             </div>
           </div>
 
