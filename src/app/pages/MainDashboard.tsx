@@ -37,6 +37,8 @@ export function MainDashboard() {
     rollNumber: user?.rollNumber || '',
     department: user?.department || '',
     year: user?.year || '',
+    yearOfJoining: user?.yearOfJoining || undefined,
+    passedOutYear: user?.passedOutYear || undefined,
     about: user?.about || '',
     linkedin: user?.linkedin || '',
     resume: user?.resume || '',
@@ -54,6 +56,8 @@ export function MainDashboard() {
       rollNumber: user?.rollNumber || '',
       department: user?.department || '',
       year: user?.year || '',
+      yearOfJoining: user?.yearOfJoining || undefined,
+      passedOutYear: user?.passedOutYear || undefined,
       about: user?.about || '',
       linkedin: user?.linkedin || '',
       resume: user?.resume || '',
@@ -240,6 +244,8 @@ export function MainDashboard() {
       rollNumber: user?.rollNumber || '',
       department: user?.department || '',
       year: user?.year || '',
+      yearOfJoining: user?.yearOfJoining || undefined,
+      passedOutYear: user?.passedOutYear || undefined,
       about: user?.about || '',
       linkedin: user?.linkedin || '',
       resume: user?.resume || '',
@@ -350,27 +356,8 @@ export function MainDashboard() {
                   <Plus className="h-6 w-6 text-[#FFD700] group-hover:text-yellow-400" />
                 </button>
               )}
-              <button 
-                onClick={() => setActiveMenu('chat')}
-                className="p-2 hover:bg-slate-800 rounded-lg transition-colors relative"
-              >
-                <Bell className="h-6 w-6 text-slate-300" />
-                <span className="absolute top-1 right-1 h-2 w-2 bg-[#FFD700] rounded-full"></span>
-              </button>
-              <button 
-                onClick={() => setActiveMenu('notifications')}
-                className="p-2 hover:bg-slate-800 rounded-lg transition-colors relative"
-              >
-                <Bell className="h-6 w-6 text-slate-300" />
-                <span className="absolute top-1 right-1 h-2 w-2 bg-[#FFD700] rounded-full"></span>
-              </button>
-              <button className="p-2 hover:bg-slate-800 rounded-lg transition-colors">
-                <img 
-                  src={user?.avatar || 'https://ui-avatars.com/api/?name=User&background=FDE68A&color=111827&size=256'} 
-                  alt={user?.name || 'User'}
-                  className="h-8 w-8 rounded-full object-cover border-2 border-[#FFD700]"
-                />
-              </button>
+              
+              
             </div>
           </div>
 
@@ -390,7 +377,7 @@ export function MainDashboard() {
       </header>
 
       <nav className="mt-4 bg-white border border-slate-200 rounded-3xl shadow-sm max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-        <div className="grid grid-cols-6 gap-1">
+        <div className={`grid ${role === 'student' ? 'grid-cols-5' : 'grid-cols-6'} gap-1`}>
           <button
             onClick={() => setActiveMenu('home')}
             className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[0.72rem] transition ${
@@ -400,6 +387,7 @@ export function MainDashboard() {
             <Home className="h-5 w-5" />
             <span>Home</span>
           </button>
+          {role !== 'student' && (
           <button
             onClick={() => setActiveMenu('post')}
             className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[0.72rem] transition ${
@@ -409,6 +397,7 @@ export function MainDashboard() {
             <Plus className="h-5 w-5" />
             <span>Post</span>
           </button>
+          )}
           <button
             onClick={() => setActiveMenu('status')}
             className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[0.72rem] transition ${
@@ -921,8 +910,35 @@ export function MainDashboard() {
                         />
                       </div>
 
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-sm font-medium text-slate-300 mb-1">Year of Joining</label>
+                          <input
+                            type="number"
+                            min="1950"
+                            max={new Date().getFullYear()}
+                            placeholder="e.g., 2020"
+                            value={user?.yearOfJoining || ''}
+                            onChange={(e) => setFormData(prev => ({ ...prev, yearOfJoining: parseInt(e.target.value) }))}
+                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-slate-300 mb-1">Year of Passing Out</label>
+                          <input
+                            type="number"
+                            min="1950"
+                            max={new Date().getFullYear() + 10}
+                            placeholder="e.g., 2024"
+                            value={user?.passedOutYear || ''}
+                            onChange={(e) => setFormData(prev => ({ ...prev, passedOutYear: parseInt(e.target.value) }))}
+                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
+                          />
+                        </div>
+                      </div>
+
                       <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1">Year *</label>
+                        <label className="block text-sm font-medium text-slate-300 mb-1">Study Year *</label>
                         <input
                           type="text"
                           placeholder="Your year (e.g., 2nd Year)"
@@ -1084,8 +1100,20 @@ export function MainDashboard() {
                       )}
                       {user?.year && (
                         <div className="rounded-lg bg-slate-800 p-4">
-                          <p className="text-sm text-slate-400">Year</p>
+                          <p className="text-sm text-slate-400">Study Year</p>
                           <p className="text-white">{user.year}</p>
+                        </div>
+                      )}
+                      {user?.yearOfJoining && (
+                        <div className="rounded-lg bg-slate-800 p-4">
+                          <p className="text-sm text-slate-400">Year of Joining</p>
+                          <p className="text-white">{user.yearOfJoining}</p>
+                        </div>
+                      )}
+                      {user?.passedOutYear && (
+                        <div className="rounded-lg bg-slate-800 p-4">
+                          <p className="text-sm text-slate-400">Year of Passing Out</p>
+                          <p className="text-white">{user.passedOutYear}</p>
                         </div>
                       )}
                       {user?.linkedin && (

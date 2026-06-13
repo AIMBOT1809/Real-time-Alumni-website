@@ -108,7 +108,8 @@ const fetchAlumniProfiles = async () => {
       First_Name,
       Email_Address,
       Phone_Number,
-      Passed_Out_Year
+      Passed_Out_Year,
+      Year_of_Joining
     `);
 
   if (error) {
@@ -123,6 +124,7 @@ const fetchAlumniProfiles = async () => {
       email: item.Email_Address || "",
       phone: item.Phone_Number || "",
       graduationYear: String(item.Passed_Out_Year || ""),
+      year: String(item.Year_of_Joining || ""),
       role: "alumni",
     })
   );
@@ -1059,13 +1061,14 @@ const fetchAlumniProfiles = async () => {
                       <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">Name</th>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">Email Address</th>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">Phone Number</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">Year of Joining</th>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">Passed Out Year</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200">
                     {reportAlumni.length === 0 ? (
                       <tr>
-                        <td colSpan={7} className="px-6 py-8 text-center text-slate-500">
+                        <td colSpan={5} className="px-6 py-8 text-center text-slate-500">
                           No registered alumni found
                         </td>
                       </tr>
@@ -1084,12 +1087,13 @@ const fetchAlumniProfiles = async () => {
                           </td>
                           <td className="px-6 py-4 text-sm text-slate-600">{alumnus.email || '—'}</td>
                           <td className="px-6 py-4 text-sm text-slate-600">{alumnus.phone || '—'}</td>
+                          <td className="px-6 py-4 text-sm text-slate-600">{alumnus.year || '—'}</td>
                           <td className="px-6 py-4 text-sm text-slate-600">{alumnus.graduationYear || '—'}</td>
                         </tr>
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={7} className="px-6 py-8 text-center text-slate-500">
+                        <td colSpan={5} className="px-6 py-8 text-center text-slate-500">
                           No alumni found matching your search criteria
                         </td>
                       </tr>
