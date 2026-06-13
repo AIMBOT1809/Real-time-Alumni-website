@@ -230,7 +230,7 @@ export function StudentRegistration({ onBack }: StudentRegistrationProps) {
       }
 
       const { error: profileError } = await supabase
-        .from('alumni_profiles')
+        .from('student_profiles')
         .insert([
           {
             user_id: authData.user?.id,

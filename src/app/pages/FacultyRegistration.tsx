@@ -231,7 +231,7 @@ export function FacultyRegistration({ onBack }: FacultyRegistrationProps) {
       }
 
       const { error: profileError } = await supabase
-        .from('alumni_profiles')
+        .from('faculty_profiles')
         .insert([
           {
             user_id: authData.user?.id,
