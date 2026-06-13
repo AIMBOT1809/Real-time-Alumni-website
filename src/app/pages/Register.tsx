@@ -390,180 +390,183 @@ if (!idProof || idProof.size === 0) {
         return;
       }
 
-      // Handle Faculty-specific profile insertion
-      if (selectedRole === 'faculty') {
-        const facultyId = formData.get('facultyId') as string;
-        const officeEmail = formData.get('officeEmail') as string;
-        const designation = formData.get('designation') as string;
-        const facultyType = formData.get('facultyType') as string;
-        const yearsOfExperience = formData.get('yearsOfExperience') as string;
-        const specialization = formData.get('specialization') as string;
-        const researchInterests = formData.get('researchInterests') as string;
+        // Handle Faculty-specific profile insertion
+        if (selectedRole === 'faculty') {
+          const facultyId = formData.get('facultyId') as string;
+          const officeEmail = formData.get('officeEmail') as string;
+          const designation = formData.get('designation') as string;
+          const facultyType = formData.get('facultyType') as string;
+          const yearsOfExperience = formData.get('yearsOfExperience') as string;
+          const specialization = formData.get('specialization') as string;
+          const researchInterests = formData.get('researchInterests') as string;
 
-        if (!facultyId) {
-          alert('Please enter your Faculty ID');
+          if (!facultyId) {
+            alert('Please enter your Faculty ID');
+            return;
+          }
+          if (!officeEmail) {
+            alert('Please enter your Office Email Address');
+            return;
+          }
+          if (!designation) {
+            alert('Please enter your Designation');
+            return;
+          }
+          if (!facultyType) {
+            alert('Please select your Faculty Type');
+            return;
+          }
+          if (!yearsOfExperience) {
+            alert('Please enter your Years of Experience');
+            return;
+          }
+          if (!specialization) {
+            alert('Please enter your Specialization');
+            return;
+          }
+
+          const { error: profileError } = await supabase
+            .from('alumni_profiles')
+            .insert([
+              {
+                user_id: authData.user?.id,
+                First_Name: firstName,
+                Last_name: lastName,
+                Email_Address: email,
+                Office_Email: officeEmail,
+                Phone_Number: phone,
+                LinkedIn_Profile_URL: linkedin,
+                College_Name: collegeName,
+                Department: department,
+                Faculty_ID: facultyId,
+                Designation: designation,
+                Faculty_Type: facultyType,
+                Years_Of_Experience: parseInt(yearsOfExperience),
+                Specialization: specialization,
+                Research_Interests: researchInterests || null,
+              }
+            ]);
+
+          if (profileError) {
+            console.log(profileError);
+            alert(profileError.message);
+            return;
+          }
+
+          const newUser: UserProfile = {
+            id: authData.user?.id ?? `u-${Date.now()}`,
+            name,
+            role: selectedRole,
+            avatar: photo
+              ? URL.createObjectURL(photo)
+              : `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=FDE68A&color=111827&size=256`,
+            graduationYear: new Date().getFullYear(),
+            degree: `${specialization} - ${department}`,
+            bio: `Faculty member at ${collegeName}`,
+            skills: [],
+            email: email.trim(),
+            phone: phone.trim(),
+            linkedin: linkedin ? linkedin.trim() : undefined,
+            collegeName: collegeName.trim(),
+            department: department.trim(),
+            idProof: idProof ? idProof.name : undefined,
+            facultyId: facultyId.trim(),
+            officeEmail: officeEmail.trim(),
+            designation: designation.trim(),
+            facultyType: facultyType as any,
+            yearsOfExperience: parseInt(yearsOfExperience),
+            specialization: specialization.trim(),
+            researchInterests: researchInterests ? researchInterests.split(',').map(interest => interest.trim()).filter(Boolean) : [],
+          };
+
+          await login(newUser);
+          navigate('/dashboard');
           return;
         }
-        if (!officeEmail) {
-          alert('Please enter your Office Email Address');
+
+        // Upload ID Proof
+        const idProofFileName = `${Date.now()}-${idProof.name}`;
+
+        const { data: idProofUpload, error: idProofError } = await supabase.storage
+          .from('id-proofs')
+          .upload(idProofFileName, idProof);
+
+        if (idProofError) {
+          console.log(idProofError);
+          alert(idProofError.message);
           return;
         }
-        if (!designation) {
-          alert('Please enter your Designation');
+
+        const { data: idProofUrlData } = supabase.storage
+          .from('id-proofs')
+          .getPublicUrl(idProofFileName);
+
+        const idProofUrl = idProofUrlData.publicUrl;
+
+        // Upload Photo
+        const photoFileName = `${Date.now()}-${photo.name}`;
+
+        const { data: photoUpload, error: photoError } = await supabase.storage
+          .from('profile-photos')
+          .upload(photoFileName, photo);
+
+        if (photoError) {
+          console.log(photoError);
+          alert(photoError.message);
           return;
         }
-        if (!facultyType) {
-          alert('Please select your Faculty Type');
-          return;
-        }
-        if (!yearsOfExperience) {
-          alert('Please enter your Years of Experience');
-          return;
-        }
-        if (!specialization) {
-          alert('Please enter your Specialization');
-          return;
-        }
+
+        const { data: photoUrlData } = supabase.storage
+          .from('profile-photos')
+          .getPublicUrl(photoFileName);
+
+        const photoUrl = photoUrlData.publicUrl;
 
         const { error: profileError } = await supabase
           .from('alumni_profiles')
           .insert([
             {
               user_id: authData.user?.id,
+
               First_Name: firstName,
               Last_name: lastName,
               Email_Address: email,
-              Office_Email: officeEmail,
               Phone_Number: phone,
               LinkedIn_Profile_URL: linkedin,
+
               College_Name: collegeName,
               Department: department,
-              Faculty_ID: facultyId,
-              Designation: designation,
-              Faculty_Type: facultyType,
-              Years_Of_Experience: parseInt(yearsOfExperience),
-              Specialization: specialization,
-              Research_Interests: researchInterests || null,
+              Year_of_Joining: yearOfJoining,
+              Passed_Out_Year: passedOutYear,
+              Roll_Number: rollNumber,
+
+              Current_Status: currentStatus,
+
+              Organization_Name: organization,
+              Role_Position: jobRole,
+              Package_CTC: package_,
+
+              University_Applied: university,
+              Country: country,
+              City: city,
+              Course: course,
+              Branch_Specialization: branch,
+              id_proof_url: idProofUrl,
+              photo_url: photoUrl,
+
+              // Career Aspirant data
+              Skills: skills,
+              Resume_File_Name: currentStatus === 'career-aspirant' ? resumeUpload?.name : null,
             }
           ]);
 
-        if(profileError) {
+        if (profileError) {
           console.log(profileError);
           alert(profileError.message);
           return;
         }
 
         const newUser: UserProfile = {
-          id: authData.user?.id ?? `u-${Date.now()}`,
-          name,
-          role: selectedRole,
-          avatar: photo
-            ? URL.createObjectURL(photo)
-            : `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=FDE68A&color=111827&size=256`,
-          graduationYear: new Date().getFullYear(),
-          degree: `${specialization} - ${department}`,
-          bio: `Faculty member at ${collegeName}`,
-          skills: [],
-          email: email.trim(),
-          phone: phone.trim(),
-          linkedin: linkedin ? linkedin.trim() : undefined,
-          collegeName: collegeName.trim(),
-          department: department.trim(),
-          idProof: idProof ? idProof.name : undefined,
-          // Faculty-specific fields
-          facultyId: facultyId.trim(),
-          officeEmail: officeEmail.trim(),
-          designation: designation.trim(),
-          facultyType: facultyType as any,
-          yearsOfExperience: parseInt(yearsOfExperience),
-          specialization: specialization.trim(),
-          researchInterests: researchInterests ? researchInterests.split(',').map(interest => interest.trim()).filter(Boolean) : [],
-        };
-
-        await login(newUser);
-        navigate('/dashboard');
-        return;
-      }
-
-      // Upload ID Proof
-      const idProofFileName = `${Date.now()}-${idProof.name}`;
-
-      const { data: idProofUpload, error: idProofError } = await supabase.storage
-        .from('id-proofs')
-        .upload(idProofFileName, idProof);
-
-      if (idProofError) {
-        console.log(idProofError);
-        alert(idProofError.message);
-        return;
-      }
-
-      const { data: idProofUrlData } = supabase.storage
-        .from('id-proofs')
-        .getPublicUrl(idProofFileName);
-
-      const idProofUrl = idProofUrlData.publicUrl;
-
-      // Upload Photo
-      const photoFileName = `${Date.now()}-${photo.name}`;
-
-      const { data: photoUpload, error: photoError } = await supabase.storage
-        .from('profile-photos')
-        .upload(photoFileName, photo);
-
-if (photoError) {
-  alert('Failed to upload profile photo');
-  return;
-}
-
-const { data: photoUrlData } = supabase.storage
-  .from('profile-photos')
-  .getPublicUrl(photoFileName);
-
-const photoUrl = photoUrlData.publicUrl;
- 
-
-      const { error: profileError } = await supabase
-  .from('alumni_profiles')
-  .insert([
-    {
-      user_id: authData.user?.id,
-
-      First_Name: firstName,
-      Last_name: lastName,
-      Email_Address: email,
-      Phone_Number: phone,
-      LinkedIn_Profile_URL: linkedin,
-
-      College_Name: collegeName,
-      Department: department,
-      Year_of_Joining: yearOfJoining,
-      Passed_Out_Year: passedOutYear,
-      Roll_Number: rollNumber,
-
-      Current_Status: currentStatus,
-
-      Organization_Name: organization,
-      Role_Position: jobRole,
-      Package_CTC: package_,
-
-      University_Applied: university,
-      Country: country,
-      City: city,
-      Course: course,
-      Branch_Specialization: branch,
-      id_proof_url:idProofUrl,
-      photo_url:photoUrl,
-    }
-  ]);
-
-  if(profileError) {
-    console.log(profileError);
-    alert(profileError.message);
-    return;
-  }
-
-      const newUser: UserProfile = {
         id: authData.user?.id ?? `u-${Date.now()}`,
         name,
         role: selectedRole,
