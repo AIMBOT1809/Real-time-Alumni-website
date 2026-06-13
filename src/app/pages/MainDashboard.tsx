@@ -1,6 +1,8 @@
 import React, { useState , useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../../supabaseClient';
+import { createChat } from '@n8n/chat';
+import '@n8n/chat/style.css';
 import { 
   Bell, 
   User, 
@@ -82,6 +84,12 @@ export function MainDashboard() {
     console.log('[MainDashboard] AuthContext user change:', user);
     console.log('[MainDashboard] localStorage allumini_user:', (() => { try { return JSON.parse(localStorage.getItem('allumini_user')||'null'); } catch { return null; } })());
   }, [user]);
+
+  useEffect(() => {
+  createChat({
+    webhookUrl: 'https://shaaz-03.app.n8n.cloud/webhook/2c823375-ff32-43b7-b598-63fb73838f86/chat'
+  });
+}, []);
 
   const startEditing = () => {
     if (!user) return;
