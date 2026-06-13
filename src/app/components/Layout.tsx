@@ -23,6 +23,7 @@ export function Layout() {
 
   // Hide layout components on dashboard
   const isDashboard = location.pathname === '/dashboard';
+  const isAdminPage = location.pathname === '/admin';
   const isLandingPage = location.pathname === '/';
   const isLoginPage = location.pathname === '/login';
   const isRegisterPage = location.pathname === '/register';
@@ -48,8 +49,8 @@ export function Layout() {
 
           {/* User Controls */}
           <div className="hidden md:flex items-center space-x-4">
-            {isLandingPage || isLoginPage || isRegisterPage ? (
-              // Hide buttons on landing, login, and register pages
+            {isLandingPage || isLoginPage || isRegisterPage || isAdminPage ? (
+              // Hide buttons on landing, login, register, and admin dashboard pages
               <div className="flex items-center space-x-3">
               </div>
             ) : isAuthenticated ? (
@@ -114,7 +115,7 @@ export function Layout() {
                     key={link.path}
                     to={link.path}
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className={({ isActive }) =>
+                    className={({ isActive }: { isActive: boolean }) =>
                       clsx(
                         "text-base font-medium transition-colors duration-200 block py-2",
                         isActive ? "text-yellow-400" : "text-slate-300"
@@ -125,8 +126,8 @@ export function Layout() {
                   </NavLink>
                 ))}
                 <div className="border-t border-slate-700 pt-4 mt-4">
-                  {isLandingPage || isLoginPage || isRegisterPage ? (
-                    // Hide buttons on landing, login, and register pages mobile menu
+                  {isLandingPage || isLoginPage || isRegisterPage || isAdminPage ? (
+                    // Hide buttons on landing, login, register, and admin pages mobile menu
                     <div></div>
                   ) : isAuthenticated ? (
                     // Show profile info when authenticated
@@ -170,7 +171,7 @@ export function Layout() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-grow container mx-auto px-4 py-8">
+      <main className={`flex-grow container mx-auto px-4 ${isLandingPage ? 'py-0' : 'py-8'}`}>
         <Outlet />
       </main>
 
@@ -182,7 +183,7 @@ export function Layout() {
               <div className="bg-yellow-500 p-1 rounded-md text-slate-900">
                 <GraduationCap size={18} />
               </div>
-              <span>Allumini</span>
+              <span>Alumni</span>
             </div>
             <p className="text-sm leading-relaxed">
               Connecting alumni for a brighter future. Bridging the gap between education and professional success.
@@ -225,7 +226,7 @@ export function Layout() {
           </div>
         </div>
         <div className="container mx-auto px-4 mt-8 pt-8 border-t border-slate-800 text-center text-xs">
-          &copy; {new Date().getFullYear()} Allumini University Network. All rights reserved.
+          &copy; {new Date().getFullYear()} Alumni University Network. All rights reserved.
         </div>
       </footer>
     </div>

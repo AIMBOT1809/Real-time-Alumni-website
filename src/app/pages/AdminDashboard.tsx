@@ -131,7 +131,8 @@ const fetchAlumniProfiles = async () => {
 };
 
   useEffect(() => {
-    if (user?.role === 'admin' && user.email) {
+    const currentUserEmail = user?.email;
+    if (user?.role === 'admin' && currentUserEmail) {
       setAdminAccounts((prev) => {
         if (prev.some((admin) => admin.id === user.id)) {
           return prev;
@@ -139,7 +140,7 @@ const fetchAlumniProfiles = async () => {
         return [
           {
             id: user.id,
-            email: user.email,
+            email: currentUserEmail,
             password: '********',
             isCurrent: true,
           },
@@ -294,8 +295,12 @@ const fetchAlumniProfiles = async () => {
       return;
     }
 
-    if (currentRefreshToken) {
-      await supabase.auth.setSession({ refresh_token: currentRefreshToken });
+    const currentAccessToken = currentSession.data.session?.access_token;
+    if (currentRefreshToken && currentAccessToken) {
+      await supabase.auth.setSession({
+        access_token: currentAccessToken,
+        refresh_token: currentRefreshToken,
+      });
     }
 
     setNewAdminEmail('');
