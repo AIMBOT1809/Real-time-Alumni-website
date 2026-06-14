@@ -66,7 +66,7 @@ export function StudentRegistration({ onBack }: StudentRegistrationProps) {
     const phone = formData.get('phone') as string;
     const password = formData.get('password') as string;
     const confirmPassword = formData.get('confirmPassword') as string;
-    const idProof = formData.get('idProof') as File;
+    const memo = formData.get('memo') as File;
     const photo = formData.get('photo') as File;
     const collegeName = formData.get('collegeName') as string;
     const department = formData.get('department') as string;
@@ -99,21 +99,21 @@ export function StudentRegistration({ onBack }: StudentRegistrationProps) {
       }
     }
 
-    if (!idProof || idProof.size === 0) {
-      alert("Please upload valid ID proof");
+    if (!memo || memo.size === 0) {
+      alert("Please upload valid memo");
       return;
     }
 
-    if (idProof) {
+    if (memo) {
       const maxSize = 5 * 1024 * 1024;
-      if (idProof.size > maxSize) {
-        alert('ID Proof file size must be less than 5MB');
+      if (memo.size > maxSize) {
+        alert('Memo file size must be less than 5MB');
         return;
       }
 
-      const allowedIdTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
-      if (!allowedIdTypes.includes(idProof.type)) {
-        alert('ID Proof must be in JPG, PNG, or PDF format');
+      const allowedMemoTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+      if (!allowedMemoTypes.includes(memo.type)) {
+        alert('Memo must be in JPG, PNG, or PDF format');
         return;
       }
     }
@@ -190,23 +190,23 @@ export function StudentRegistration({ onBack }: StudentRegistrationProps) {
         return;
       }
 
-      // Upload ID Proof
-      const idProofFileName = `${Date.now()}-${idProof.name}`;
-      const { data: idProofUpload, error: idProofError } = await supabase.storage
-        .from('id-proofs')
-        .upload(idProofFileName, idProof);
+      // Upload Memo
+      const memoFileName = `${Date.now()}-${memo.name}`;
+      const { data: memoUpload, error: memoError } = await supabase.storage
+        .from('memos')
+        .upload(memoFileName, memo);
 
-      if (idProofError) {
-        console.log(idProofError);
-        alert(idProofError.message);
+      if (memoError) {
+        console.log(memoError);
+        alert(memoError.message);
         return;
       }
 
-      const { data: idProofUrlData } = supabase.storage
+      const { data: memoUrlData } = supabase.storage
         .from('id-proofs')
-        .getPublicUrl(idProofFileName);
+        .getPublicUrl(memoFileName);
 
-      const idProofUrl = idProofUrlData.publicUrl;
+      const memoUrl = memoUrlData.publicUrl;
 
       // Upload Photo
       let photoUrl = '';
@@ -244,7 +244,7 @@ export function StudentRegistration({ onBack }: StudentRegistrationProps) {
             Year_of_Joining: yearOfJoining,
             Passed_Out_Year: passedOutYear,
             Roll_Number: rollNumber,
-            id_proof_url: idProofUrl,
+            id_proof_url: memoUrl,
             photo_url: photoUrl,
           }
         ]);
@@ -272,7 +272,7 @@ export function StudentRegistration({ onBack }: StudentRegistrationProps) {
         collegeName: collegeName.trim(),
         department: department.trim(),
         rollNumber: rollNumber.trim(),
-        idProof: idProof ? idProof.name : undefined,
+        memo: memo ? memo.name : undefined,
       };
 
       await login(newUser);
@@ -391,10 +391,10 @@ export function StudentRegistration({ onBack }: StudentRegistrationProps) {
 
               <div className="mb-4">
                 <label className="block text-sm font-medium mb-1">
-                  ID Proof *
+                  Memo *
                 </label>
                 <input
-                  name="idProof"
+                  name="memo"
                   type="file"
                   accept=".jpg,.jpeg,.png,.pdf"
                   required

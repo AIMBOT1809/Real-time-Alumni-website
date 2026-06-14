@@ -70,7 +70,7 @@ export function AlumniRegistration({ onBack }: AlumniRegistrationProps) {
     const phone = formData.get('phone') as string;
     const password = formData.get('password') as string;
     const confirmPassword = formData.get('confirmPassword') as string;
-    const idProof = formData.get('idProof') as File;
+    const memo = formData.get('memo') as File;
     const photo = formData.get('photo') as File;
     const collegeName = formData.get('collegeName') as string;
     const department = formData.get('department') as string;
@@ -114,21 +114,21 @@ export function AlumniRegistration({ onBack }: AlumniRegistrationProps) {
       }
     }
 
-    if (!idProof || idProof.size === 0) {
-      alert("Please upload valid ID proof");
+    if (!memo || memo.size === 0) {
+      alert("Please upload valid  proof");
       return;
     }
 
-    if (idProof) {
+    if (memo) {
       const maxSize = 5 * 1024 * 1024;
-      if (idProof.size > maxSize) {
-        alert('ID Proof file size must be less than 5MB');
+      if (memo.size > maxSize) {
+        alert('Memo file size must be less than 5MB');
         return;
       }
 
       const allowedIdTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
-      if (!allowedIdTypes.includes(idProof.type)) {
-        alert('ID Proof must be in JPG, PNG, or PDF format');
+      if (!allowedIdTypes.includes(memo.type)) {
+        alert('Memo must be in JPG, PNG, or PDF format');
         return;
       }
     }
@@ -265,23 +265,23 @@ export function AlumniRegistration({ onBack }: AlumniRegistrationProps) {
         return;
       }
 
-      // Upload ID Proof
-      const idProofFileName = `${Date.now()}-${idProof.name}`;
-      const { data: idProofUpload, error: idProofError } = await supabase.storage
-        .from('id-proofs')
-        .upload(idProofFileName, idProof);
+      // Upload Memo
+      const memoFileName = `${Date.now()}-${memo.name}`;
+      const { data: memoUpload, error: memoError } = await supabase.storage
+        .from('memos')
+        .upload(memoFileName, memo);
 
-      if (idProofError) {
-        console.log(idProofError);
-        alert(idProofError.message);
+      if (memoError) {
+        console.log(memoError);
+        alert(memoError.message);
         return;
       }
 
-      const { data: idProofUrlData } = supabase.storage
-        .from('id-proofs')
-        .getPublicUrl(idProofFileName);
+      const { data: memoUrlData } = supabase.storage
+        .from('memos')
+        .getPublicUrl(memoFileName);
 
-      const idProofUrl = idProofUrlData.publicUrl;
+      const memoUrl = memoUrlData.publicUrl;
 
       // Upload Photo
       let photoUrl = '';
@@ -328,7 +328,7 @@ export function AlumniRegistration({ onBack }: AlumniRegistrationProps) {
             City: city,
             Course: course,
             Branch_Specialization: branch,
-            id_proof_url: idProofUrl,
+            id_proof_url: memoUrl,
             photo_url: photoUrl,
             Skills: skills,
             Resume_File_Name: currentStatus === 'career-aspirant' ? resumeUpload?.name : null,
@@ -385,7 +385,7 @@ export function AlumniRegistration({ onBack }: AlumniRegistrationProps) {
         year: yearOfJoining,
         yearOfJoining: parseInt(yearOfJoining),
         passedOutYear: parseInt(passedOutYear),
-        idProof: idProof ? idProof.name : undefined,
+        memo: memo ? memo.name : undefined,
         ...(currentStatus === 'working-professional' && {
           package: package_.trim()
         }),
@@ -500,12 +500,12 @@ export function AlumniRegistration({ onBack }: AlumniRegistrationProps) {
               </div>
 
               <div className="mb-4">
-                <label htmlFor="idProof" className="block text-sm font-medium text-slate-700 mb-1">
-                  ID Proof (College ID/Company ID) *
+                <label htmlFor="memo" className="block text-sm font-medium text-slate-700 mb-1">
+                  Memo *
                 </label>
                 <input
-                  id="idProof"
-                  name="idProof"
+                  id="memo"
+                  name="memo"
                   type="file"
                   accept=".jpg,.jpeg,.png,.pdf"
                   required

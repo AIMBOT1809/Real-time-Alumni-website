@@ -67,7 +67,7 @@ export function FacultyRegistration({ onBack }: FacultyRegistrationProps) {
     const phone = formData.get('phone') as string;
     const password = formData.get('password') as string;
     const confirmPassword = formData.get('confirmPassword') as string;
-    const idProof = formData.get('idProof') as File;
+    const id = formData.get('id') as File;
     const photo = formData.get('photo') as File;
     const collegeName = formData.get('collegeName') as string;
     const department = formData.get('department') as string;
@@ -104,21 +104,21 @@ export function FacultyRegistration({ onBack }: FacultyRegistrationProps) {
       }
     }
 
-    if (!idProof || idProof.size === 0) {
-      alert("Please upload valid ID proof");
+    if (!id || id.size === 0) {
+      alert("Please upload a valid id");
       return;
     }
 
-    if (idProof) {
+    if (id) {
       const maxSize = 5 * 1024 * 1024;
-      if (idProof.size > maxSize) {
-        alert('ID Proof file size must be less than 5MB');
+      if (id.size > maxSize) {
+        alert('id file size must be less than 5MB');
         return;
       }
 
-      const allowedIdTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
-      if (!allowedIdTypes.includes(idProof.type)) {
-        alert('ID Proof must be in JPG, PNG, or PDF format');
+      const allowedidTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+      if (!allowedidTypes.includes(id.type)) {
+        alert('id must be in JPG, PNG, or PDF format');
         return;
       }
     }
@@ -191,23 +191,23 @@ export function FacultyRegistration({ onBack }: FacultyRegistrationProps) {
         return;
       }
 
-      // Upload ID Proof
-      const idProofFileName = `${Date.now()}-${idProof.name}`;
-      const { data: idProofUpload, error: idProofError } = await supabase.storage
-        .from('id-proofs')
-        .upload(idProofFileName, idProof);
+      // Upload ID
+      const idFileName = `${Date.now()}-${id.name}`;
+      const { data: idUpload, error: idError } = await supabase.storage
+        .from('ids')
+        .upload(idFileName, id);
 
-      if (idProofError) {
-        console.log(idProofError);
-        alert(idProofError.message);
+      if (idError) {
+        console.log(idError);
+        alert(idError.message);
         return;
       }
 
-      const { data: idProofUrlData } = supabase.storage
-        .from('id-proofs')
-        .getPublicUrl(idProofFileName);
+      const { data: idUrlData } = supabase.storage
+        .from('ids')
+        .getPublicUrl(idFileName);
 
-      const idProofUrl = idProofUrlData.publicUrl;
+      const idUrl = idUrlData.publicUrl;
 
       // Upload Photo
       let photoUrl = '';
@@ -249,7 +249,7 @@ export function FacultyRegistration({ onBack }: FacultyRegistrationProps) {
             Years_Of_Experience: parseInt(yearsOfExperience),
             Specialization: specialization,
             Research_Interests: researchInterests || null,
-            id_proof_url: idProofUrl,
+            id_proof_url: idUrl,
             photo_url: photoUrl,
           }
         ]);
@@ -276,7 +276,7 @@ export function FacultyRegistration({ onBack }: FacultyRegistrationProps) {
         linkedin: linkedin ? linkedin.trim() : undefined,
         collegeName: collegeName.trim(),
         department: department.trim(),
-        idProof: idProof ? idProof.name : undefined,
+        memo: id ? id.name : undefined,
         facultyId: facultyId.trim(),
         officeEmail: officeEmail.trim(),
         designation: designation.trim(),
@@ -401,16 +401,15 @@ export function FacultyRegistration({ onBack }: FacultyRegistrationProps) {
               </div>
 
               <div className="mb-4">
-                <label htmlFor="idProof" className="block text-sm font-medium text-slate-700 mb-1">
+                <label htmlFor="memo" className="block text-sm font-medium text-slate-700 mb-1">
                   ID Proof (Faculty ID) *
                 </label>
                 <input
-                  id="idProof"
-                  name="idProof"
+                  id="idproof"
+                  name="idproof"
                   type="file"
                   accept=".jpg,.jpeg,.png,.pdf"
                   required
-                  onChange={handleDocumentValidation}
                   className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 file:mr-3 file:py-2 file:border-0 file:text-sm file:font-medium file:bg-yellow-50 file:text-yellow-700 hover:file:bg-yellow-100"   
                 />
                 <p className="mt-1 text-xs text-slate-500">

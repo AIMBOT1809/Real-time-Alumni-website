@@ -24,7 +24,7 @@ export interface UserProfile {
   github?: string;
   portfolio?: string;
   resume?: string;
-  idProof?: string;
+  memo?: string;
   links?: { title: string; url: string }[];
   cgpa?: string;
   phoneNumber?: string;
