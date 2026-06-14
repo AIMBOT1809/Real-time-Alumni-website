@@ -565,10 +565,12 @@ export function FacultyRegistration({ onBack }: FacultyRegistrationProps) {
                     className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
                   >
                     <option value="">Select Faculty Type</option>
-                    <option value="Full-Time">Full-Time</option>
-                    <option value="Part-Time">Part-Time</option>
-                    <option value="Visiting">Visiting</option>
-                    <option value="Contract">Contract</option>
+                    <option value="Full-Time">Professor</option>
+                    <option value="Part-Time">Associate Professor</option>
+                    <option value="Visiting">Assistant Professor</option>
+                    <option value="Contract">HoD</option>
+                    <option value="Visiting">Lecturer</option>
+                    <option value="Visiting">Other</option>
                   </select>
                 </div>
                 <div>
