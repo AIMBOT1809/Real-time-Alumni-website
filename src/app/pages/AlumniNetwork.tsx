@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Search, Briefcase, GraduationCap, Filter } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'motion/react';
+import { ConnectionButton } from '../components/ConnectionButton';
 
 export function AlumniNetwork() {
   const { alumni, isFollowing, follow, unfollow } = useAuth();
@@ -114,6 +115,7 @@ export function AlumniNetwork() {
               >
                 {isFollowing(alumni.id) ? 'Following' : 'Follow'}
               </button>
+              <ConnectionButton alumniId={alumni.id} />
             </div>
           </motion.div>
         ))}

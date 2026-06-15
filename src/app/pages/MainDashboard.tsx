@@ -18,6 +18,7 @@ import {
   MessageCircle,
 } from 'lucide-react';
 import { useNavigate } from 'react-router';
+import { Chat } from './Chat';
 
 export function MainDashboard() {
   const { user, role, logout, login, posts, jobs, events, following, getAlumniById, alumni, addPost } = useAuth();
@@ -364,8 +365,27 @@ export function MainDashboard() {
                   <Plus className="h-6 w-6 text-[#FFD700] group-hover:text-yellow-400" />
                 </button>
               )}
-              
-              
+              <button 
+                onClick={() => setActiveMenu('chat')}
+                className="p-2 hover:bg-slate-800 rounded-lg transition-colors relative"
+              >
+                <MessageCircle className="h-6 w-6 text-slate-300" />
+                <span className="absolute top-1 right-1 h-2 w-2 bg-[#FFD700] rounded-full"></span>
+              </button>
+              <button 
+                onClick={() => setActiveMenu('notifications')}
+                className="p-2 hover:bg-slate-800 rounded-lg transition-colors relative"
+              >
+                <Bell className="h-6 w-6 text-slate-300" />
+                <span className="absolute top-1 right-1 h-2 w-2 bg-[#FFD700] rounded-full"></span>
+              </button>
+              <button className="p-2 hover:bg-slate-800 rounded-lg transition-colors">
+                <img 
+                  src={user?.avatar || 'https://ui-avatars.com/api/?name=User&background=FDE68A&color=111827&size=256'} 
+                  alt={user?.name || 'User'}
+                  className="h-8 w-8 rounded-full object-cover border-2 border-[#FFD700]"
+                />
+              </button>
             </div>
           </div>
 
@@ -472,6 +492,12 @@ export function MainDashboard() {
 
           {/* Main Content Area */}
           <main className="lg:col-span-3 space-y-6">
+            {activeMenu === 'chat' && (
+              <div className="bg-slate-900 rounded-lg border border-slate-800 overflow-hidden h-[calc(100vh-12rem)]">
+                <Chat />
+              </div>
+            )}
+
             {activeMenu === 'home' && (
               <>
                 {/* Create Post (for Faculty and Alumni) */}
@@ -516,7 +542,14 @@ export function MainDashboard() {
                                 <p className="text-sm text-slate-400">
                                   {author.position || 'Alumni'} at {author.company || 'Company'}
                                 </p>
-                                <p className="text-xs text-slate-500">{post.timestamp}</p>
+                                <p className="text-xs text-slate-500">
+                                  {(() => {
+                                    try {
+                                      const d = new Date(post.timestamp);
+                                      return isNaN(d.getTime()) ? post.timestamp : d.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+                                    } catch { return post.timestamp; }
+                                  })()}
+                                </p>
                               </div>
                               {post.type === 'opportunity' && (
                                 <span className="px-3 py-1 bg-[#FFD700] text-black text-xs font-bold rounded-full">
@@ -788,7 +821,12 @@ export function MainDashboard() {
                           <div className="flex items-center space-x-4 text-sm text-slate-400 mb-4">
                             <span className="px-2 py-1 bg-slate-700 rounded">{job.type}</span>
                             <span>{job.location}</span>
-                            <span>Posted {job.postedDate}</span>
+                            <span>Posted {(() => {
+                              try {
+                                const d = new Date(job.postedDate);
+                                return isNaN(d.getTime()) ? job.postedDate : d.toLocaleDateString();
+                              } catch { return job.postedDate; }
+                            })()}</span>
                           </div>
                           <p className="text-slate-200">{job.description}</p>
                         </div>
@@ -1082,17 +1120,32 @@ export function MainDashboard() {
                   /* Profile View */
                   <div className="bg-slate-900 rounded-lg border border-slate-800 p-6 space-y-6">
                     {/* Profile Avatar and Basic Info */}
-                    <div className="flex items-center gap-4">
+                    <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
                       <img 
                         src={user?.avatar || 'https://ui-avatars.com/api/?name=User&background=FDE68A&color=111827&size=256'} 
                         alt={user?.name}
-                        className="h-24 w-24 rounded-full object-cover border-2 border-[#FFD700]"
+                        className="h-32 w-32 rounded-full object-cover border-4 border-[#FFD700]"
                       />
-                      <div>
-                        <h3 className="text-xl font-bold text-white">{user?.name}</h3>
-                        {user?.email && <p className="text-slate-400 text-sm">{user?.email}</p>}
-                        {user?.collegeName && <p className="text-slate-400">{user.collegeName}</p>}
-                        {user?.department && <p className="text-slate-400">{user.department} - {user?.year || ''}</p>}
+                      <div className="flex-1 w-full text-center md:text-left">
+                        <h3 className="text-2xl font-bold text-white mb-4">{user?.name}</h3>
+                        
+                        <div className="flex justify-center md:justify-start gap-8 mb-4 text-white text-lg">
+                          <div><span className="font-bold">{posts?.filter(p => p.alumniId === user?.id).length || 0}</span> posts</div>
+                          <div><span className="font-bold">{user?.id === 'admin' ? 124 : Math.floor(Math.random() * 50) + 10}</span> followers</div>
+                          <div><span className="font-bold">{following?.length || 0}</span> following</div>
+                        </div>
+
+                        <div className="text-sm">
+                          {user?.department && <p className="text-white font-medium text-base">{user.department} {user?.year ? `- ${user.year}` : ''}</p>}
+                          {user?.collegeName && <p className="text-slate-300">{user.collegeName}</p>}
+                          {user?.about && <p className="text-slate-200 mt-2 whitespace-pre-wrap">{user.about}</p>}
+                          {user?.email && <p className="text-slate-400 mt-1">{user.email}</p>}
+                          {user?.linkedin && (
+                            <a href={user.linkedin.startsWith('http') ? user.linkedin : `https://${user.linkedin}`} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 hover:underline mt-1 block">
+                              {user.linkedin.replace(/^https?:\/\/(www\.)?/, '')}
+                            </a>
+                          )}
+                        </div>
                       </div>
                     </div>
 
@@ -1127,7 +1180,7 @@ export function MainDashboard() {
                       {user?.linkedin && (
                         <div className="rounded-lg bg-slate-800 p-4">
                           <p className="text-sm text-slate-400">LinkedIn</p>
-                          <a href={user.linkedin} target="_blank" rel="noopener noreferrer" className="text-[#FFD700] hover:underline block truncate">
+                          <a href={user.linkedin.startsWith('http') ? user.linkedin : `https://${user.linkedin}`} target="_blank" rel="noopener noreferrer" className="text-[#FFD700] hover:underline block truncate">
                             View Profile
                           </a>
                         </div>

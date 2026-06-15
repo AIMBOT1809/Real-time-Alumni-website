@@ -142,7 +142,7 @@ export function Register() {
     );
   }
 
-  if (selectedRole === "student") {
+  if (selectedRole === 'student') {
     return <StudentRegistration onBack={() => setSelectedRole(null)} />;
   }
 

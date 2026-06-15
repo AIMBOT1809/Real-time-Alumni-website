@@ -23,8 +23,7 @@ declare module 'react-router/*' {
   export = anything;
 }
 
-<<<<<<< Updated upstream
-=======
+
 declare module 'lucide-react' {
   export const Home: any;
   export const FileText: any;
@@ -45,7 +44,7 @@ declare module 'lucide-react' {
   export const Bell: any;
   export const MapPin: any;
   export const Filter: any;
+  export const MessageCircle: any;
   const _default: any;
   export default _default;
 }
->>>>>>> Stashed changes
