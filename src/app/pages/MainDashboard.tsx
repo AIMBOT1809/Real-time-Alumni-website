@@ -365,7 +365,6 @@ export function MainDashboard() {
                   <Plus className="h-6 w-6 text-[#FFD700] group-hover:text-yellow-400" />
                 </button>
               )}
-<<<<<<< HEAD
               <button 
                 onClick={() => setActiveMenu('chat')}
                 className="p-2 hover:bg-slate-800 rounded-lg transition-colors relative"
@@ -387,10 +386,6 @@ export function MainDashboard() {
                   className="h-8 w-8 rounded-full object-cover border-2 border-[#FFD700]"
                 />
               </button>
-=======
-              
-              
->>>>>>> 87145ccc75d32615ebf1d3f69adfe87388a747f3
             </div>
           </div>
 
