@@ -109,7 +109,11 @@ const fetchAlumniProfiles = async () => {
       Email_Address,
       Phone_Number,
       Passed_Out_Year,
+<<<<<<< HEAD
       role
+=======
+      Year_of_Joining
+>>>>>>> 87145ccc75d32615ebf1d3f69adfe87388a747f3
     `);
 
   if (error) {
@@ -126,7 +130,12 @@ const fetchAlumniProfiles = async () => {
       email: item.Email_Address || "",
       phone: item.Phone_Number || "",
       graduationYear: String(item.Passed_Out_Year || ""),
+<<<<<<< HEAD
       role: validRoles.has(item.role) ? item.role as CommunityAlumniRecord['role'] : "alumni",
+=======
+      year: String(item.Year_of_Joining || ""),
+      role: "alumni",
+>>>>>>> 87145ccc75d32615ebf1d3f69adfe87388a747f3
     })
   );
 
@@ -134,7 +143,8 @@ const fetchAlumniProfiles = async () => {
 };
 
   useEffect(() => {
-    if (user?.role === 'admin' && user.email) {
+    const currentUserEmail = user?.email;
+    if (user?.role === 'admin' && currentUserEmail) {
       setAdminAccounts((prev) => {
         if (prev.some((admin) => admin.id === user.id)) {
           return prev;
@@ -142,7 +152,7 @@ const fetchAlumniProfiles = async () => {
         return [
           {
             id: user.id,
-            email: user.email,
+            email: currentUserEmail,
             password: '********',
             isCurrent: true,
           },
@@ -297,8 +307,12 @@ const fetchAlumniProfiles = async () => {
       return;
     }
 
-    if (currentRefreshToken) {
-      await supabase.auth.setSession({ refresh_token: currentRefreshToken });
+    const currentAccessToken = currentSession.data.session?.access_token;
+    if (currentRefreshToken && currentAccessToken) {
+      await supabase.auth.setSession({
+        access_token: currentAccessToken,
+        refresh_token: currentRefreshToken,
+      });
     }
 
     setNewAdminEmail('');
@@ -1058,6 +1072,7 @@ const fetchAlumniProfiles = async () => {
                       <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">Role</th>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">Email Address</th>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">Phone Number</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">Year of Joining</th>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">Passed Out Year</th>
                     </tr>
                   </thead>
@@ -1065,6 +1080,7 @@ const fetchAlumniProfiles = async () => {
                     {reportAlumni.length === 0 ? (
                       <tr>
                         <td colSpan={5} className="px-6 py-8 text-center text-slate-500">
+<<<<<<< HEAD
                           No registered users found
                         </td>
                       </tr>
@@ -1107,6 +1123,34 @@ const fetchAlumniProfiles = async () => {
                       <tr>
                         <td colSpan={5} className="px-6 py-8 text-center text-slate-500">
                           No users found matching your search criteria
+=======
+                          No registered alumni found
+                        </td>
+                      </tr>
+                    ) : filteredAlumni.length > 0 ? (
+                      filteredAlumni.map((alumnus) => (
+                        <tr key={alumnus.id} className="hover:bg-slate-50 transition-colors">
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-3">
+                              <img
+                                src={alumnus.avatar}
+                                alt={alumnus.name}
+                                className="h-8 w-8 rounded-full object-cover"
+                              />
+                              <span className="font-medium text-slate-900">{alumnus.name}</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-slate-600">{alumnus.email || '—'}</td>
+                          <td className="px-6 py-4 text-sm text-slate-600">{alumnus.phone || '—'}</td>
+                          <td className="px-6 py-4 text-sm text-slate-600">{alumnus.year || '—'}</td>
+                          <td className="px-6 py-4 text-sm text-slate-600">{alumnus.graduationYear || '—'}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={5} className="px-6 py-8 text-center text-slate-500">
+                          No alumni found matching your search criteria
+>>>>>>> 87145ccc75d32615ebf1d3f69adfe87388a747f3
                         </td>
                       </tr>
                     )}

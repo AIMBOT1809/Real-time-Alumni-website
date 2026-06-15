@@ -1,6 +1,8 @@
 import React, { useState , useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../../supabaseClient';
+import { createChat } from '@n8n/chat';
+import '@n8n/chat/style.css';
 import { 
   Bell, 
   User, 
@@ -19,7 +21,7 @@ import { useNavigate } from 'react-router';
 import { Chat } from './Chat';
 
 export function MainDashboard() {
-  const { user, role, logout, login, posts, jobs, events, following, getAlumniById, alumni } = useAuth();
+  const { user, role, logout, login, posts, jobs, events, following, getAlumniById, alumni, addPost } = useAuth();
   const navigate = useNavigate();
   const [activeMenu, setActiveMenu] = useState('home');
   const [eventView, setEventView] = useState('upcoming');
@@ -28,11 +30,18 @@ export function MainDashboard() {
   
   // Profile editing state
   const [isEditing, setIsEditing] = useState(false);
+  const [postContent, setPostContent] = useState('');
+  const [postType, setPostType] = useState<'general'|'opportunity'|'event'>('general');
+  const [postImage, setPostImage] = useState<string | null>(null);
+  const [postFileName, setPostFileName] = useState<string | null>(null);
+  const [postTitle, setPostTitle] = useState<string>('');
   const [formData, setFormData] = useState({
     collegeName: user?.collegeName || '',
     rollNumber: user?.rollNumber || '',
     department: user?.department || '',
     year: user?.year || '',
+    yearOfJoining: user?.yearOfJoining || undefined,
+    passedOutYear: user?.passedOutYear || undefined,
     about: user?.about || '',
     linkedin: user?.linkedin || '',
     resume: user?.resume || '',
@@ -50,6 +59,8 @@ export function MainDashboard() {
       rollNumber: user?.rollNumber || '',
       department: user?.department || '',
       year: user?.year || '',
+      yearOfJoining: user?.yearOfJoining || undefined,
+      passedOutYear: user?.passedOutYear || undefined,
       about: user?.about || '',
       linkedin: user?.linkedin || '',
       resume: user?.resume || '',
@@ -74,6 +85,12 @@ export function MainDashboard() {
     console.log('[MainDashboard] AuthContext user change:', user);
     console.log('[MainDashboard] localStorage allumini_user:', (() => { try { return JSON.parse(localStorage.getItem('allumini_user')||'null'); } catch { return null; } })());
   }, [user]);
+
+  useEffect(() => {
+  createChat({
+    webhookUrl: 'https://shaaz-03.app.n8n.cloud/webhook/2c823375-ff32-43b7-b598-63fb73838f86/chat'
+  });
+}, []);
 
   const startEditing = () => {
     if (!user) return;
@@ -236,6 +253,8 @@ export function MainDashboard() {
       rollNumber: user?.rollNumber || '',
       department: user?.department || '',
       year: user?.year || '',
+      yearOfJoining: user?.yearOfJoining || undefined,
+      passedOutYear: user?.passedOutYear || undefined,
       about: user?.about || '',
       linkedin: user?.linkedin || '',
       resume: user?.resume || '',
@@ -307,7 +326,7 @@ export function MainDashboard() {
   }
 */    
 
-  const canPost = role === 'admin';
+  const canPost = !!role && role !== 'student';
   const followedPosts = posts?.filter(
     post => following?.includes(post.alumniId) || post.alumniId === 'admin'
   ) || [];
@@ -346,6 +365,7 @@ export function MainDashboard() {
                   <Plus className="h-6 w-6 text-[#FFD700] group-hover:text-yellow-400" />
                 </button>
               )}
+<<<<<<< HEAD
               <button 
                 onClick={() => setActiveMenu('chat')}
                 className="p-2 hover:bg-slate-800 rounded-lg transition-colors relative"
@@ -367,6 +387,10 @@ export function MainDashboard() {
                   className="h-8 w-8 rounded-full object-cover border-2 border-[#FFD700]"
                 />
               </button>
+=======
+              
+              
+>>>>>>> 87145ccc75d32615ebf1d3f69adfe87388a747f3
             </div>
           </div>
 
@@ -386,7 +410,7 @@ export function MainDashboard() {
       </header>
 
       <nav className="mt-4 bg-white border border-slate-200 rounded-3xl shadow-sm max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-        <div className="grid grid-cols-5 gap-1">
+        <div className={`grid ${role === 'student' ? 'grid-cols-5' : 'grid-cols-6'} gap-1`}>
           <button
             onClick={() => setActiveMenu('home')}
             className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[0.72rem] transition ${
@@ -396,6 +420,17 @@ export function MainDashboard() {
             <Home className="h-5 w-5" />
             <span>Home</span>
           </button>
+          {role !== 'student' && (
+          <button
+            onClick={() => setActiveMenu('post')}
+            className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[0.72rem] transition ${
+              activeMenu === 'post' ? 'bg-[#FFD700] text-black' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            <Plus className="h-5 w-5" />
+            <span>Post</span>
+          </button>
+          )}
           <button
             onClick={() => setActiveMenu('status')}
             className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[0.72rem] transition ${
@@ -537,6 +572,7 @@ export function MainDashboard() {
 
                         {/* Post Content */}
                         <div className="px-4 pb-3">
+                          {post.title && <h3 className="text-lg font-semibold text-slate-100">{post.title}</h3>}
                           <p className="text-slate-200">{post.content}</p>
                         </div>
 
@@ -583,6 +619,111 @@ export function MainDashboard() {
                   )}
                 </div>
               </>
+            )}
+
+            {activeMenu === 'post' && (
+              <div className="space-y-6">
+                <h2 className="text-2xl font-bold text-white">Create Post</h2>
+
+                {!canPost ? (
+                  <div className="text-center py-12 bg-slate-800 rounded-lg border border-slate-700">
+                    <p className="text-slate-400">You do not have permission to create posts.</p>
+                  </div>
+                ) : (
+                  <div className="bg-slate-900 rounded-lg border border-slate-800 p-6">
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-1">Type</label>
+                        <select
+                          value={postType}
+                          onChange={(e) => setPostType(e.target.value as any)}
+                          className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white"
+                        >
+                          <option value="general">General</option>
+                          <option value="opportunity">Opportunity</option>
+                          <option value="event">Event</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-1">Title</label>
+                        <input
+                          type="text"
+                          value={postTitle}
+                          onChange={(e) => setPostTitle(e.target.value)}
+                          placeholder="Post title (optional)"
+                          className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-400"
+                        />
+                        <label className="block text-sm font-medium text-slate-300 mb-1 mt-3">Content</label>
+                        <textarea
+                          value={postContent}
+                          onChange={(e) => setPostContent(e.target.value)}
+                          rows={6}
+                          className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-400"
+                          placeholder="Write your post here..."
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-1">Attach file / image (optional)</label>
+                        <label className="mt-2 flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-4 cursor-pointer transition-colors bg-slate-800 border-slate-700 hover:border-yellow-500">
+                          <input
+                            type="file"
+                            accept="image/*,.pdf,.doc,.docx"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              setPostFileName(file.name);
+                              const reader = new FileReader();
+                              reader.onload = (ev) => setPostImage((ev.target?.result as string) || null);
+                              reader.readAsDataURL(file);
+                            }}
+                            className="hidden"
+                          />
+                          <div className="text-slate-400 text-sm">Click to choose a file, or drop it here</div>
+                          {postFileName && <div className="text-slate-200 text-sm mt-2">{postFileName}</div>}
+                        </label>
+                        {postImage && (
+                          <div className="mt-3">
+                            <img src={postImage} alt="preview" className="max-h-48 rounded-md object-contain" />
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex items-center space-x-3">
+                        <button
+                          onClick={() => {
+                            if (!postContent.trim()) return;
+                            addPost({
+                              title: postTitle || undefined,
+                              alumniId: user?.id || 'unknown',
+                              content: postContent.trim(),
+                              type: postType,
+                              likes: 0,
+                              comments: 0,
+                              image: postImage || undefined,
+                            });
+                            setPostTitle('');
+                            setPostContent('');
+                            setPostType('general');
+                            setPostImage(null);
+                            setActiveMenu('home');
+                          }}
+                          className="px-4 py-2 bg-[#FFD700] text-black rounded-lg font-semibold hover:bg-yellow-600"
+                        >
+                          Publish
+                        </button>
+                        <button
+                          onClick={() => { setPostContent(''); setPostType('general'); setPostImage(null); }}
+                          className="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
 
             {activeMenu === 'events' && (
@@ -820,8 +961,35 @@ export function MainDashboard() {
                         />
                       </div>
 
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-sm font-medium text-slate-300 mb-1">Year of Joining</label>
+                          <input
+                            type="number"
+                            min="1950"
+                            max={new Date().getFullYear()}
+                            placeholder="e.g., 2020"
+                            value={user?.yearOfJoining || ''}
+                            onChange={(e) => setFormData(prev => ({ ...prev, yearOfJoining: parseInt(e.target.value) }))}
+                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-slate-300 mb-1">Year of Passing Out</label>
+                          <input
+                            type="number"
+                            min="1950"
+                            max={new Date().getFullYear() + 10}
+                            placeholder="e.g., 2024"
+                            value={user?.passedOutYear || ''}
+                            onChange={(e) => setFormData(prev => ({ ...prev, passedOutYear: parseInt(e.target.value) }))}
+                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
+                          />
+                        </div>
+                      </div>
+
                       <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1">Year *</label>
+                        <label className="block text-sm font-medium text-slate-300 mb-1">Study Year *</label>
                         <input
                           type="text"
                           placeholder="Your year (e.g., 2nd Year)"
@@ -998,8 +1166,20 @@ export function MainDashboard() {
                       )}
                       {user?.year && (
                         <div className="rounded-lg bg-slate-800 p-4">
-                          <p className="text-sm text-slate-400">Year</p>
+                          <p className="text-sm text-slate-400">Study Year</p>
                           <p className="text-white">{user.year}</p>
+                        </div>
+                      )}
+                      {user?.yearOfJoining && (
+                        <div className="rounded-lg bg-slate-800 p-4">
+                          <p className="text-sm text-slate-400">Year of Joining</p>
+                          <p className="text-white">{user.yearOfJoining}</p>
+                        </div>
+                      )}
+                      {user?.passedOutYear && (
+                        <div className="rounded-lg bg-slate-800 p-4">
+                          <p className="text-sm text-slate-400">Year of Passing Out</p>
+                          <p className="text-white">{user.passedOutYear}</p>
                         </div>
                       )}
                       {user?.linkedin && (

@@ -17,16 +17,26 @@ export interface UserProfile {
   collegeName?: string;
   rollNumber?: string;
   year?: string;
+  yearOfJoining?: number;
+  passedOutYear?: number;
   department?: string;
   linkedin?: string;
   github?: string;
   portfolio?: string;
   resume?: string;
-  idProof?: string;
+  memo?: string;
   links?: { title: string; url: string }[];
   cgpa?: string;
   phoneNumber?: string;
   profileComplete?: boolean;
+  // Faculty-specific fields
+  facultyId?: string;
+  designation?: string;
+  facultyType?: 'Professor' | 'Associate Professor' | 'Assistant Professor' | 'HOD' | 'Lecturer' | 'Other';
+  officeEmail?: string;
+  yearsOfExperience?: number;
+  specialization?: string;
+  researchInterests?: string[];
 }
 
 export interface Job {
@@ -54,10 +64,29 @@ export interface Event {
 export interface Post {
   id: string;
   alumniId: string;
+  title?: string;
   content: string;
   timestamp: string;
-  type: 'general' | 'opportunity' | 'event';
+  type: 'general' | 'opportunity' | 'event' | 'community';
   likes: number;
   comments: number;
   image?: string;
+  attachmentUrl?: string;
+  attachmentName?: string;
+  attachmentType?: string;
+  file?: string;
+}
+
+export interface Event {
+  id: string;
+  title: string;
+  date: string;
+  time: string;
+  location: string;
+  type: 'Networking' | 'Workshop' | 'Webinar';
+  alumniId: string;
+  image: string;
+  attachmentUrl?: string;
+  attachmentName?: string;
+  attachmentType?: string;
 }

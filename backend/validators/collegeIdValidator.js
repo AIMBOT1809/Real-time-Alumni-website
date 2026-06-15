@@ -1,6 +1,4 @@
-const pdf = require("pdf-parse");
-const pdfParse =
-  pdf.default || pdf;
+const { PDFParse } = require("pdf-parse");
 const Tesseract = require("tesseract.js");
 const sharp = require("sharp");
 const fs = require("fs");
@@ -18,12 +16,11 @@ if (ext === ".pdf") {
 
   const pdfBuffer =
     fs.readFileSync(filePath);
+  const parser = new PDFParse({ data: pdfBuffer });
 
-  const pdfData =
-    await pdfParse(pdfBuffer);
+const pdfData = await parser.getText();
 
-  extractedText =
-    pdfData.text.toLowerCase();
+extractedText = pdfData.text.toLowerCase();
 }
   // IMAGE
   else if (
@@ -62,81 +59,65 @@ if (ext === ".pdf") {
       .replace(/\s+/g, "")
       .replace(/[^a-z0-9]/g, "");
 
-  const keywords = [
-    "tkr",
-    "college",
-    "university",
-    "engineering",
-    "student",
-    "faculty",
-    "id card",
-    "idcard",
-    "company",
-    "employee",
-    "name",
-    "employee name",
-    "emp id",
-    "staff id",
-    "designation",
-    "department",
-    "rollno",
-    "validity",
-    "private limited",
-    "pvt ltd",
-    "corporation",
-    "technologies",
-    "valid till",
-    "authorized",
-    "access card",
-    "human resources",
-    "barcode",
-    "qr code",
-    "office address",
-    "employee code",
-    "phone"
-  ];
+  const requiredKeywords = [
+  "tkrcollegeofengineeringandtechnology",
+  "memorandumofgrade",
+  "hallticketno",
+  "branchspecialization",
+  "semesterregularexaminations",
+  "sgpa",
+  "cgpa",
+  "controllerofexaminations"
+];
 
-  const matchedKeywords = [];
+const subjectKeywords = [
+  "subjectcode",
+  "subjecttitle",
+  "grade",
+  "credits",
+  "passed",
+  "appeared"
+];
 
-  keywords.forEach(keyword => {
+const matchedRequired = [];
+const matchedSubject = [];
 
-    const normalizedKeyword =
-      keyword.replace(/\s+/g, "");
+requiredKeywords.forEach(keyword => {
+  if (normalizedText.includes(keyword)) {
+    matchedRequired.push(keyword);
+  }
+});
 
-    if (
-      normalizedText.includes(
-        normalizedKeyword
-      )
-    ) {
+subjectKeywords.forEach(keyword => {
+  if (normalizedText.includes(keyword)) {
+    matchedSubject.push(keyword);
+  }
+});
 
-      matchedKeywords.push(keyword);
-    }
-  });
+console.log("Matched Required:", matchedRequired);
+console.log("Matched Subject:", matchedSubject);
 
-  console.log(
-  "Matched Keywords:",
-  matchedKeywords
-);
+// Accept only TKR marks memo type document
+const isTKRCollege =
+  normalizedText.includes("tkrcollegeofengineeringandtechnology") ||
+  normalizedText.includes("tkrcollege") ||
+  normalizedText.includes("tkrcet");
 
-// ACCEPT ONLY IF 2 OR MORE KEYWORDS MATCH
-if (matchedKeywords.length >= 2) {
+const isMemo =
+  matchedRequired.length >= 4 &&
+  matchedSubject.length >= 3;
 
+if (isTKRCollege && isMemo) {
   return {
-
     success: true,
-
-    matchedKeywords,
-
+    matchedKeywords: [...matchedRequired, ...matchedSubject],
     extractedText
   };
 }
 
 return {
-
   success: false,
-
-  matchedKeywords: [],
-
+  matchedKeywords: [...matchedRequired, ...matchedSubject],
   extractedText
 };
 };

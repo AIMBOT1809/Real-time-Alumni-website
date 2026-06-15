@@ -76,7 +76,12 @@ export function Community() {
                     />
                     <div>
                       <h4 className="font-semibold text-slate-900">{author.name}</h4>
-                      <p className="text-xs text-slate-500 capitalize">{author.role} • {post.timestamp}</p>
+                      <p className="text-xs text-slate-500 capitalize">
+                        {author.role}
+                        {author.passedOutYear && ` • Class of ${author.passedOutYear}`}
+                        {author.collegeName && ` • ${author.collegeName}`}
+                        {' • ' + post.timestamp}
+                      </p>
                     </div>
                   </div>
                   <div className="flex space-x-2">
@@ -86,6 +91,9 @@ export function Community() {
                   </div>
                 </div>
                 
+                {post.title && (
+                  <h3 className="text-lg font-semibold text-slate-900 mb-2">{post.title}</h3>
+                )}
                 <p className="text-slate-600 mb-4">{post.content}</p>
                 
                 {post.image && (
