@@ -182,7 +182,7 @@ export function FacultyRegistration({ onBack }: FacultyRegistrationProps) {
 
         photoUrl = photoUrlData.publicUrl;
       }
-      //hello
+      //hellooo
       const { error: profileError } = await supabase
         .from('faculty_profiles')
         .insert([
