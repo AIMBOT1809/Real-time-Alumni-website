@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../../supabaseClient';
@@ -108,13 +108,16 @@ const fetchAlumniProfiles = async () => {
       First_Name,
       Email_Address,
       Phone_Number,
-      Passed_Out_Year
+      Passed_Out_Year,
+      role
     `);
 
   if (error) {
     console.error("Error fetching alumni:", error);
     return;
   }
+
+  const validRoles = new Set(['alumni', 'graduate', 'higher-education', 'faculty']);
 
   const formattedData: CommunityAlumniRecord[] = (data || []).map(
     (item, index) => ({
@@ -123,7 +126,7 @@ const fetchAlumniProfiles = async () => {
       email: item.Email_Address || "",
       phone: item.Phone_Number || "",
       graduationYear: String(item.Passed_Out_Year || ""),
-      role: "alumni",
+      role: validRoles.has(item.role) ? item.role as CommunityAlumniRecord['role'] : "alumni",
     })
   );
 
@@ -1052,6 +1055,7 @@ const fetchAlumniProfiles = async () => {
                   <thead className="bg-slate-50 border-b border-slate-200">
                     <tr>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">Name</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">Role</th>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">Email Address</th>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">Phone Number</th>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">Passed Out Year</th>
@@ -1060,32 +1064,49 @@ const fetchAlumniProfiles = async () => {
                   <tbody className="divide-y divide-slate-200">
                     {reportAlumni.length === 0 ? (
                       <tr>
-                        <td colSpan={7} className="px-6 py-8 text-center text-slate-500">
-                          No registered alumni found
+                        <td colSpan={5} className="px-6 py-8 text-center text-slate-500">
+                          No registered users found
                         </td>
                       </tr>
                     ) : filteredAlumni.length > 0 ? (
-                      filteredAlumni.map((alumnus) => (
-                        <tr key={alumnus.id} className="hover:bg-slate-50 transition-colors">
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-3">
-                              <img
-                                src={alumnus.avatar}
-                                alt={alumnus.name}
-                                className="h-8 w-8 rounded-full object-cover"
-                              />
-                              <span className="font-medium text-slate-900">{alumnus.name}</span>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 text-sm text-slate-600">{alumnus.email || '—'}</td>
-                          <td className="px-6 py-4 text-sm text-slate-600">{alumnus.phone || '—'}</td>
-                          <td className="px-6 py-4 text-sm text-slate-600">{alumnus.graduationYear || '—'}</td>
-                        </tr>
-                      ))
+                      filteredAlumni.map((alumnus) => {
+                        const roleBadge: Record<string, string> = {
+                          alumni: 'bg-blue-100 text-blue-800',
+                          faculty: 'bg-emerald-100 text-emerald-800',
+                          'higher-education': 'bg-violet-100 text-violet-800',
+                          graduate: 'bg-amber-100 text-amber-800',
+                        };
+                        const badgeClass = roleBadge[alumnus.role] ?? 'bg-slate-100 text-slate-700';
+                        const roleLabel = alumnus.role === 'higher-education'
+                          ? 'Higher Education'
+                          : alumnus.role.charAt(0).toUpperCase() + alumnus.role.slice(1);
+                        return (
+                          <tr key={alumnus.id} className="hover:bg-slate-50 transition-colors">
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-3">
+                                <img
+                                  src={alumnus.avatar ?? `https://ui-avatars.com/api/?name=${encodeURIComponent(alumnus.name)}&background=e2e8f0&color=475569&size=64`}
+                                  alt={alumnus.name}
+                                  className="h-8 w-8 rounded-full object-cover"
+                                />
+                                <span className="font-medium text-slate-900">{alumnus.name}</span>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${badgeClass}`}>
+                                {roleLabel}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-sm text-slate-600">{alumnus.email || '—'}</td>
+                            <td className="px-6 py-4 text-sm text-slate-600">{alumnus.phone || '—'}</td>
+                            <td className="px-6 py-4 text-sm text-slate-600">{alumnus.graduationYear || '—'}</td>
+                          </tr>
+                        );
+                      })
                     ) : (
                       <tr>
-                        <td colSpan={7} className="px-6 py-8 text-center text-slate-500">
-                          No alumni found matching your search criteria
+                        <td colSpan={5} className="px-6 py-8 text-center text-slate-500">
+                          No users found matching your search criteria
                         </td>
                       </tr>
                     )}
@@ -1094,7 +1115,7 @@ const fetchAlumniProfiles = async () => {
               </div>
               <div className="bg-slate-50 border-t border-slate-200 px-6 py-3 flex items-center justify-between">
                 <span className="text-sm text-slate-600">
-                  Showing <span className="font-semibold">{filteredAlumni.length}</span> of <span className="font-semibold">{reportAlumni.length}</span> alumni
+                  Showing <span className="font-semibold">{filteredAlumni.length}</span> of <span className="font-semibold">{reportAlumni.length}</span> users
                 </span>
               </div>
             </div>

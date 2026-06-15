@@ -439,6 +439,8 @@ const photoUrl = photoUrlData.publicUrl;
     {
       user_id: authData.user?.id,
 
+      role: selectedRole,
+
       First_Name: firstName,
       Last_name: lastName,
       Email_Address: email,
@@ -571,6 +573,107 @@ const photoUrl = photoUrlData.publicUrl;
         'Registration error:',
         error
       );
+    }
+  };
+
+  // Dedicated submit handler for faculty registration
+  const handleFacultySubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+
+    const firstName = formData.get('firstName') as string;
+    const lastName = formData.get('lastName') as string;
+    const email = formData.get('email') as string;
+    const phone = formData.get('phone') as string;
+    const password = formData.get('password') as string;
+    const confirmPassword = formData.get('confirmPassword') as string;
+    const collegeName = formData.get('collegeName') as string;
+    const department = formData.get('department') as string;
+
+    // Validation
+    if (!firstName || !lastName) {
+      alert('Please enter both first and last name');
+      return;
+    }
+    if (!email || !email.includes('@')) {
+      alert('Please enter a valid email address');
+      return;
+    }
+    if (!phone || phone.length < 10) {
+      alert('Please enter a valid phone number');
+      return;
+    }
+    if (!password || password.length < 8) {
+      alert('Password must be at least 8 characters long');
+      return;
+    }
+    if (password !== confirmPassword) {
+      alert('Passwords do not match');
+      return;
+    }
+    if (!collegeName) {
+      alert('Please enter your college name');
+      return;
+    }
+    if (!department) {
+      alert('Please enter your department');
+      return;
+    }
+
+    const name = `${firstName} ${lastName}`.trim();
+
+    try {
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: email.trim(),
+        password,
+        options: { data: { role: 'faculty' } },
+      });
+
+      if (authError) {
+        alert(authError.message);
+        return;
+      }
+
+      const { error: profileError } = await supabase
+        .from('alumni_profiles')
+        .insert([{
+          user_id: authData.user?.id,
+          role: 'faculty',
+          First_Name: firstName,
+          Last_name: lastName,
+          Email_Address: email,
+          Phone_Number: phone,
+          College_Name: collegeName,
+          Department: department,
+        }]);
+
+      if (profileError) {
+        console.log(profileError);
+        alert(profileError.message);
+        return;
+      }
+
+      const newUser: UserProfile = {
+        id: authData.user?.id ?? `u-${Date.now()}`,
+        name,
+        role: 'faculty',
+        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=10b981&color=ffffff&size=256`,
+        bio: 'Faculty registered user',
+        skills: [],
+        email: email.trim(),
+        phone: phone.trim(),
+        collegeName: collegeName.trim(),
+        department: department.trim(),
+      };
+
+      await login(newUser);
+      navigate('/dashboard');
+
+    } catch (error) {
+      alert('Registration failed. Please try again.');
+      console.error('Faculty registration error:', error);
     }
   };
 
@@ -1460,7 +1563,7 @@ className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-non
           </div>
 
           <div className="bg-white py-8 px-6 shadow-xl rounded-xl">
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleFacultySubmit} className="space-y-6">
               {/* Personal Details Section */}
               <div className="bg-slate-50 border border-slate-200 rounded-lg p-6 mb-6">
                 <div className="flex items-center mb-4">
