@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../../supabaseClient';
 import { Link, useNavigate } from 'react-router';
-import { validateUploadedDocument } from "../../documentValidation";
 import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import type { UserProfile } from '../data/types';
@@ -11,8 +10,6 @@ interface FacultyRegistrationProps {
 }
 
 export function FacultyRegistration({ onBack }: FacultyRegistrationProps) {
-  const [isDocumentVerified, setIsDocumentVerified] = useState(false);
-  const [verifiedDocument, setVerifiedDocument] = useState<File | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -25,34 +22,6 @@ export function FacultyRegistration({ onBack }: FacultyRegistrationProps) {
 
   const toggleConfirmPassword = () => {
     setShowConfirmPassword((prev) => !prev);
-  };
-
-  const handleDocumentValidation = async (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-      const validationResult = await validateUploadedDocument(file);
-
-      if (!validationResult.valid) {
-        alert(validationResult.reason || "Invalid document.");
-        setIsDocumentVerified(false);
-        setVerifiedDocument(null);
-        e.target.value = "";
-        return;
-      }
-
-      setIsDocumentVerified(true);
-      setVerifiedDocument(file);
-    } catch (error) {
-      console.error(error);
-      alert("Unable to validate document");
-      setIsDocumentVerified(false);
-      setVerifiedDocument(null);
-      e.target.value = "";
-    }
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -103,26 +72,7 @@ export function FacultyRegistration({ onBack }: FacultyRegistrationProps) {
         return;
       }
     }
-
-    if (!id || id.size === 0) {
-      alert("Please upload a valid id");
-      return;
-    }
-
-    if (id) {
-      const maxSize = 5 * 1024 * 1024;
-      if (id.size > maxSize) {
-        alert('id file size must be less than 5MB');
-        return;
-      }
-
-      const allowedidTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
-      if (!allowedidTypes.includes(id.type)) {
-        alert('id must be in JPG, PNG, or PDF format');
-        return;
-      }
-    }
-
+      
     if (!password || password.length < 8) {
       alert('Password must be at least 8 characters long');
       return;
@@ -191,23 +141,26 @@ export function FacultyRegistration({ onBack }: FacultyRegistrationProps) {
         return;
       }
 
-      // Upload ID
-      const idFileName = `${Date.now()}-${id.name}`;
-      const { data: idUpload, error: idError } = await supabase.storage
-        .from('ids')
-        .upload(idFileName, id);
+      // Upload ID (optional)
+      let idUrl = '';
+      if (id && id.size > 0) {
+        const idFileName = `${Date.now()}-${id.name}`;
+        const { data: idUpload, error: idError } = await supabase.storage
+          .from('faculty-id-proofs')
+          .upload(idFileName, id);
 
-      if (idError) {
-        console.log(idError);
-        alert(idError.message);
-        return;
+        if (idError) {
+          console.log(idError);
+          alert(idError.message);
+          return;
+        }
+
+        const { data: idUrlData } = supabase.storage
+          .from('faculty-id-proofs')
+          .getPublicUrl(idFileName);
+
+        idUrl = idUrlData.publicUrl;
       }
-
-      const { data: idUrlData } = supabase.storage
-        .from('ids')
-        .getPublicUrl(idFileName);
-
-      const idUrl = idUrlData.publicUrl;
 
       // Upload Photo
       let photoUrl = '';
@@ -401,19 +354,18 @@ export function FacultyRegistration({ onBack }: FacultyRegistrationProps) {
               </div>
 
               <div className="mb-4">
-                <label htmlFor="memo" className="block text-sm font-medium text-slate-700 mb-1">
-                  ID Proof (Faculty ID) *
+                <label htmlFor="id" className="block text-sm font-medium text-slate-700 mb-1">
+                  ID Proof (Faculty ID)
                 </label>
                 <input
-                  id="idproof"
-                  name="idproof"
+                  id="id"
+                  name="id"
                   type="file"
                   accept=".jpg,.jpeg,.png,.pdf"
-                  required
                   className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 file:mr-3 file:py-2 file:border-0 file:text-sm file:font-medium file:bg-yellow-50 file:text-yellow-700 hover:file:bg-yellow-100"   
                 />
                 <p className="mt-1 text-xs text-slate-500">
-                  Accepted formats: JPG, JPEG, PNG, PDF (Max 5MB)
+                  Accepted formats: JPG, JPEG, PNG, PDF
                 </p>
               </div>
 
