@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { PieChart, Pie, Cell, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, AreaChart, Area, ComposedChart, Line, FunnelChart, Funnel, LabelList } from 'recharts';
 import { Link } from 'react-router';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../../supabaseClient';
@@ -39,6 +40,7 @@ type CommunityAlumniRecord = {
   year?: string;
   graduationYear?: string;
   currentStatus?: string;
+  createdAt?: string;
 };
 
 export function AdminDashboard() {
@@ -136,7 +138,8 @@ const fetchAllProfiles = async () => {
       Phone_Number,
       Passed_Out_Year,
       Year_of_Joining,
-      role
+      role,
+      created_at
     `);
 
   if (alumniError) {
@@ -150,7 +153,8 @@ const fetchAllProfiles = async () => {
       First_Name,
       Email_Address,
       Phone_Number,
-      Department
+      Department,
+      Created_At
     `);
 
   if (facultyError) {
@@ -169,6 +173,7 @@ const fetchAllProfiles = async () => {
       graduationYear: String(item.Passed_Out_Year || ""),
       year: String(item.Year_of_Joining || ""),
       role: validRoles.has(item.role) ? item.role as CommunityAlumniRecord['role'] : "alumni",
+      createdAt: item.created_at,
     })
   );
 
@@ -181,6 +186,7 @@ const fetchAllProfiles = async () => {
       phone: item.Phone_Number || "",
       graduationYear: "",
       role: "faculty" as const,
+      createdAt: item.Created_At,
     })
   );
 
@@ -430,6 +436,40 @@ const fetchAllProfiles = async () => {
       return segmentWithOffset;
     });
   }, [analyticsCounts]);
+
+  const timelineData = useMemo(() => {
+    const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+    
+    // Initialize monthly data
+    const monthlyData = months.map(month => ({
+      name: month,
+      timelineAlumni: 0,
+      timelineStudents: 0,
+      timelineFaculties: 0,
+      timelineHigherEd: 0
+    }));
+
+    reportAlumni.forEach(profile => {
+      if (!profile.createdAt) return;
+      const date = new Date(profile.createdAt);
+      if (isNaN(date.getTime())) return;
+      
+      const monthIndex = date.getMonth(); // 0-11
+      const role = profile.role;
+      
+      if (role === 'alumni') {
+        monthlyData[monthIndex].timelineAlumni++;
+      } else if (role === 'faculty') {
+        monthlyData[monthIndex].timelineFaculties++;
+      } else if (role === 'higher-education') {
+        monthlyData[monthIndex].timelineHigherEd++;
+      } else if (role === 'graduate') {
+        monthlyData[monthIndex].timelineStudents++; // using students key for graduate
+      }
+    });
+
+    return monthlyData;
+  }, [reportAlumni]);
 
   if (!user) {
     return null;
@@ -1185,7 +1225,7 @@ const fetchAllProfiles = async () => {
         )}
 
         {activeTab === 'analytics' && (
-          <div className="space-y-6">
+          <div className="bg-gradient-to-br from-[#1c4e40] to-[#0f2a22] rounded-[32px] p-6 lg:p-8 text-white shadow-2xl">
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
               {[
                 { title: 'Total Registrations', value: analyticsCounts.totalRegistrations, subtitle: 'All registered users', accent: 'from-sky-400 via-cyan-300 to-slate-100', detail: 'Overall network size' },
@@ -1196,76 +1236,91 @@ const fetchAllProfiles = async () => {
               ].map((card) => (
                 <div
                   key={card.title}
-                  className="group flex flex-col justify-between min-h-[220px] rounded-[28px] border border-slate-200/60 bg-white/95 p-6 shadow-[0_16px_40px_rgba(15,23,42,0.08)] transition-transform duration-300 hover:-translate-y-1 hover:shadow-[0_24px_60px_rgba(15,23,42,0.18)]"
+                  className="group flex flex-col justify-between min-h-[220px] rounded-[28px] border border-white/10 bg-white/5 p-6 shadow-xl backdrop-blur-md transition-transform duration-300 hover:-translate-y-1 hover:shadow-2xl"
                 >
-                  <div className={`h-1.5 w-24 rounded-full bg-gradient-to-r ${card.accent} shadow-[0_12px_30px_rgba(56,189,248,0.12)]`} />
+                  <div className={`h-1.5 w-24 rounded-full bg-gradient-to-r ${card.accent} shadow-lg`} />
 
                   <div className="flex flex-col justify-between h-full gap-4 pt-4">
                     <div className="min-w-0">
-                      <p className="text-sm uppercase tracking-[0.22em] text-slate-700 font-semibold truncate">{card.title}</p>
+                      <p className="text-sm uppercase tracking-[0.22em] text-white/70 font-semibold truncate">{card.title}</p>
                     </div>
 
                     <div className="flex items-center justify-between gap-4">
                       <div className="min-w-0">
-                        <p className="text-sm text-slate-600 truncate">{card.subtitle}</p>
+                        <p className="text-sm text-white/50 truncate">{card.subtitle}</p>
                       </div>
                       <div className="flex-shrink-0">
-                        <p className="text-4xl font-bold text-slate-950 leading-tight sm:text-3xl md:text-4xl truncate">{card.value}</p>
+                        <p className="text-4xl font-bold text-white leading-tight sm:text-3xl md:text-4xl truncate">{card.value}</p>
                       </div>
                     </div>
 
                     <div>
-                      <p className="text-sm font-medium text-slate-700 truncate">{card.detail}</p>
+                      <p className="text-sm font-medium text-white/60 truncate">{card.detail}</p>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
 
-            <div className="grid gap-6 xl:grid-cols-[1.4fr_0.9fr]">
-              <div className="rounded-[32px] border border-slate-200/70 bg-white/95 p-6 shadow-[0_24px_60px_rgba(15,23,42,0.12)] backdrop-blur-sm">
+            <div className="grid gap-6 xl:grid-cols-[1.4fr_0.9fr] mt-6">
+              <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-xl backdrop-blur-md">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <p className="text-base font-semibold text-slate-950">Registration breakdown</p>
-                    <p className="mt-1 text-sm text-slate-600">Live distribution across all user types.</p>
+                    <p className="text-base font-semibold text-white">Registration breakdown</p>
+                    <p className="mt-1 text-sm text-white/60">Live distribution across all user types.</p>
                   </div>
-                  <span className="inline-flex items-center rounded-full border border-slate-200/50 bg-slate-100/95 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-slate-700 shadow-[0_10px_30px_rgba(15,23,42,0.08)]">
+                  <span className="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-white/80 shadow-md">
                     Updated now
                   </span>
                 </div>
                 <div className="mt-6 grid gap-6 lg:grid-cols-[0.95fr_0.8fr] xl:grid-cols-[0.8fr_0.9fr]">
-                  <div className="relative flex items-center justify-center rounded-[28px] bg-slate-50/90 p-4">
-                    <div className="absolute inset-0 rounded-full bg-slate-950/5 blur-2xl" />
-                    <svg viewBox="0 0 200 200" className="relative h-72 w-72">
-                      {registrationSegments.map((segment) => (
-                        <circle
-                          key={segment.label}
-                          cx="100"
-                          cy="100"
-                          r="64"
-                          fill="none"
-                          stroke={segment.dashColor}
-                          strokeWidth="28"
-                          strokeLinecap="round"
-                          strokeDasharray={`${segment.percent} ${100 - segment.percent}`}
-                          strokeDashoffset={100 - segment.offset}
-                          transform="rotate(-90 100 100)"
-                          className="transition-all duration-700 ease-out"
-                          style={{ opacity: segment.count === 0 ? 0.25 : 1 }}
-                          onMouseEnter={() => setHoveredSegment(segment.label)}
-                          onMouseLeave={() => setHoveredSegment(null)}
-                        />
-                      ))}
-                      <circle cx="100" cy="100" r="44" fill="rgba(255,255,255,0.9)" />
-                    </svg>
+                  <div className="relative flex items-center justify-center rounded-[28px] bg-black/20 p-4">
+                    <div className="relative h-72 w-72">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={registrationSegments}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={70}
+                            outerRadius={100}
+                            paddingAngle={5}
+                            dataKey="count"
+                            nameKey="label"
+                            onMouseEnter={(_, index) => setHoveredSegment(registrationSegments[index].label)}
+                            onMouseLeave={() => setHoveredSegment(null)}
+                            stroke="none"
+                          >
+                            {registrationSegments.map((entry, index) => (
+                              <Cell 
+                                key={`cell-${index}`} 
+                                fill={entry.dashColor} 
+                                style={{
+                                  transition: 'all 0.3s ease',
+                                  filter: hoveredSegment === entry.label ? 'brightness(1.2) drop-shadow(0px 0px 10px rgba(255,255,255,0.3))' : hoveredSegment ? 'opacity(0.3)' : 'none',
+                                  transformOrigin: 'center',
+                                  transform: hoveredSegment === entry.label ? 'scale(1.05)' : 'scale(1)',
+                                  cursor: 'pointer'
+                                }}
+                              />
+                            ))}
+                          </Pie>
+                          <RechartsTooltip 
+                            formatter={(value: number, name: string) => [`${value} users`, name]}
+                            contentStyle={{ borderRadius: '12px', border: 'none', backgroundColor: 'rgba(15, 23, 42, 0.9)', color: '#fff' }}
+                            itemStyle={{ fontWeight: 600 }}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
                     <div className="absolute inset-x-0 top-1/2 flex translate-y-[-50%] flex-col items-center text-center">
-                      <p className="text-xs uppercase tracking-[0.24em] text-slate-500">{hoveredSegment || 'Total'}</p>
-                      <p className="mt-2 text-3xl font-semibold text-slate-950">
+                      <p className="text-xs uppercase tracking-[0.24em] text-white/50">{hoveredSegment || 'Total'}</p>
+                      <p className="mt-2 text-3xl font-semibold text-white">
                         {hoveredSegment
                           ? registrationSegments.find((segment) => segment.label === hoveredSegment)?.count
                           : analyticsCounts.totalRegistrations}
                       </p>
-                      <p className="text-sm text-slate-500">
+                      <p className="text-sm text-white/50">
                         {hoveredSegment
                           ? `${registrationSegments.find((segment) => segment.label === hoveredSegment)?.percent}%`
                           : '100%'}
@@ -1279,17 +1334,17 @@ const fetchAllProfiles = async () => {
                         type="button"
                         onMouseEnter={() => setHoveredSegment(segment.label)}
                         onMouseLeave={() => setHoveredSegment(null)}
-                        className="group w-full rounded-3xl border border-slate-200/60 bg-white/95 p-4 text-left transition hover:border-slate-300/80 hover:bg-slate-50"
+                        className="group w-full rounded-3xl border border-white/5 bg-white/5 p-4 text-left transition hover:border-white/20 hover:bg-white/10"
                       >
                         <div className="flex items-center justify-between gap-3">
                           <div className="flex items-center gap-3 min-w-0">
                             <span className={`inline-flex h-3.5 w-3.5 rounded-full bg-gradient-to-r ${segment.color}`} />
                             <div className="min-w-0">
-                              <p className="truncate text-sm font-semibold text-slate-950">{segment.label}</p>
-                              <p className="text-xs text-slate-500">{segment.count} users</p>
+                              <p className="truncate text-sm font-semibold text-white">{segment.label}</p>
+                              <p className="text-xs text-white/60">{segment.count} users</p>
                             </div>
                           </div>
-                          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-slate-700">
+                          <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-white">
                             {segment.percent}%
                           </span>
                         </div>
@@ -1298,34 +1353,95 @@ const fetchAllProfiles = async () => {
                   </div>
                 </div>
               </div>
-              <div className="rounded-[32px] border border-slate-200/60 bg-white/85 p-6 shadow-[0_24px_60px_rgba(15,23,42,0.12)] backdrop-blur-sm">
-                <p className="text-base font-semibold text-slate-950">Engagement overview</p>
+              <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-xl backdrop-blur-md">
+                <p className="text-base font-semibold text-white">Engagement overview</p>
                 <div className="mt-5 grid gap-4">
-                  <div className="rounded-[24px] bg-slate-50/90 p-4 ring-1 ring-slate-200/60">
-                    <p className="text-xs uppercase tracking-[0.22em] text-slate-500">Registration velocity</p>
-                    <div className="mt-4 flex items-end gap-2">
-                      {[60, 80, 50, 90, 70].map((value, index) => (
-                        <div key={index} className="w-3 rounded-full bg-gradient-to-t from-yellow-400 via-orange-400 to-amber-300" style={{ height: `${value}px` }} />
-                      ))}
+                  <div className="rounded-[24px] bg-black/20 p-4 ring-1 ring-white/10">
+                    <p className="text-xs uppercase tracking-[0.22em] text-white/60">Registration velocity</p>
+                    <div className="mt-4 h-32 w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={registrationSegments} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.1)" />
+                          <XAxis 
+                            dataKey="label" 
+                            axisLine={false} 
+                            tickLine={false} 
+                            tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.6)' }} 
+                            interval={0}
+                          />
+                          <YAxis 
+                            axisLine={false} 
+                            tickLine={false} 
+                            tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.6)' }} 
+                            width={30}
+                          />
+                          <RechartsTooltip
+                            formatter={(value: number, name: string) => [`${value} users`, name]}
+                            contentStyle={{ borderRadius: '8px', border: 'none', backgroundColor: 'rgba(15, 23, 42, 0.9)', color: '#fff', fontSize: '12px' }}
+                            cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                          />
+                          <Bar 
+                            dataKey="count" 
+                            radius={[4, 4, 0, 0]}
+                            animationDuration={1000}
+                          >
+                            {registrationSegments.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.dashColor} />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
                     </div>
                   </div>
-                  <div className="rounded-[24px] bg-slate-50/90 p-4 ring-1 ring-slate-200/60">
-                    <p className="text-xs uppercase tracking-[0.22em] text-slate-500">Summary</p>
-                    <p className="mt-3 text-sm text-slate-600">Monitor total registrations and user type mix for a strategic view of network growth.</p>
+                  <div className="rounded-[24px] bg-black/20 p-4 ring-1 ring-white/10">
+                    <p className="text-xs uppercase tracking-[0.22em] text-white/60">Summary</p>
+                    <p className="mt-3 text-sm text-white/70">Monitor total registrations and user type mix for a strategic view of network growth.</p>
                     <div className="mt-4 grid gap-3">
-                      <div className="flex items-center justify-between rounded-3xl bg-slate-100/90 p-3 text-sm text-slate-900 ring-1 ring-slate-200/70">
+                      <div className="flex items-center justify-between rounded-3xl bg-white/5 p-3 text-sm text-white ring-1 ring-white/10">
                         <span>High-growth segment</span>
-                        <span className="font-semibold">{analyticsCounts.alumniRatio}%</span>
+                        <span className="font-semibold text-cyan-400">{analyticsCounts.alumniRatio}%</span>
                       </div>
-                      <div className="flex items-center justify-between rounded-3xl bg-slate-100/90 p-3 text-sm text-slate-900 ring-1 ring-slate-200/70">
+                      <div className="flex items-center justify-between rounded-3xl bg-white/5 p-3 text-sm text-white ring-1 ring-white/10">
                         <span>Balanced faculty representation</span>
-                        <span className="font-semibold">{analyticsCounts.facultyRatio}%</span>
+                        <span className="font-semibold text-emerald-400">{analyticsCounts.facultyRatio}%</span>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
+
+            <div className="mt-6 rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-xl backdrop-blur-md">
+              <p className="text-base font-semibold text-white">Monthly Registrations</p>
+              <div className="mt-4 h-64 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={timelineData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.1)" />
+                    <XAxis 
+                      dataKey="name" 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.6)' }} 
+                    />
+                    <YAxis 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.6)' }} 
+                      width={30}
+                    />
+                    <RechartsTooltip
+                      contentStyle={{ borderRadius: '8px', border: 'none', backgroundColor: 'rgba(15, 23, 42, 0.9)', color: '#fff', fontSize: '12px' }}
+                      cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                    />
+                    <Bar dataKey="timelineAlumni" name="Alumni" stackId="a" fill="#0ea5e9" radius={[0, 0, 0, 0]} animationDuration={1000} />
+                    <Bar dataKey="timelineFaculties" name="Faculty" stackId="a" fill="#10b981" radius={[0, 0, 0, 0]} animationDuration={1000} />
+                    <Bar dataKey="timelineHigherEd" name="Higher Education" stackId="a" fill="#8b5cf6" radius={[0, 0, 0, 0]} animationDuration={1000} />
+                    <Bar dataKey="timelineStudents" name="Graduate" stackId="a" fill="#f59e0b" radius={[4, 4, 0, 0]} animationDuration={1000} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
           </div>
         )}
 
