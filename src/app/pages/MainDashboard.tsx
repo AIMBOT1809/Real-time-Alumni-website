@@ -327,9 +327,7 @@ export function MainDashboard() {
 */    
 
   const canPost = !!role && role !== 'student';
-  const followedPosts = posts?.filter(
-    post => following?.includes(post.alumniId) || post.alumniId === 'admin'
-  ) || [];
+  const followedPosts = posts ||[];
   
   // Filter events
   const now = new Date();
