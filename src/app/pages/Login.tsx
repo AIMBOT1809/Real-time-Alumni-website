@@ -48,6 +48,8 @@ export function Login() {
     e.preventDefault();
     setErrorMessage(null);
 
+
+/*
     const predefinedAdminEmail = 'alumniconnect03@gmail.com';
     const predefinedAdminPassword = 'Alumni123@';
 
@@ -68,7 +70,7 @@ export function Login() {
       navigate('/admin');
       return;
     }
-
+*/
     const { data, error } = await supabase.auth.signInWithPassword({
       email: email,
       password: password,
@@ -154,7 +156,11 @@ export function Login() {
       name: fullName
         ? fullName
         : (metadata.name as string) || signedInUser.email?.split('@')[0] || 'User',
-      role: (metadata.role as any) || 'alumni',
+      //role: (metadata.role as any) || 'alumni',
+      role:
+  signedInUser.email === 'alumniconnect03@gmail.com'
+    ? 'admin'
+    : ((metadata.role as any) || 'alumni'),
       avatar:
         profile?.Photo_URL || profile?.photo_url ||
         (metadata.avatar_url as string) ||

@@ -691,10 +691,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         comments: postData.comments ?? 0,
         image: imageUrl ?? postData.image ?? null,
         file: fileUrl ?? null,
-        timestamp: new Date().toISOString(),
+        created_at: new Date().toISOString(),
       };
 
       const { data, error } = await supabase.from('posts').insert([insertRow]).select();
+
+      console.log("INSERT ROW:", insertRow);
+      console.log("SUPABASE ERROR:", error);
+
       if (error) {
         console.error('[AuthContext] Error inserting post into DB:', error.message, error);
         // fallback to local state
