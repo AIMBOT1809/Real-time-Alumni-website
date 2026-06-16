@@ -23,7 +23,7 @@ export function Dashboard() {
     );
   }
 
-  const isAlumni = role === 'alumni' || role === 'graduate';
+  const isAlumni = role === 'alumni' || role === 'career-aspirant';
 
   // Filter data based on who the user follows plus admin-managed content
   const followedPosts = posts.filter(

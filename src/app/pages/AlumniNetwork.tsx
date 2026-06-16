@@ -33,7 +33,7 @@ export function AlumniNetwork() {
     <div className="max-w-7xl mx-auto">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-slate-900 mb-4">Alumni Directory</h1>
-        <p className="text-slate-600 mb-8">Connect with graduates who are making an impact in their fields.</p>
+        <p className="text-slate-600 mb-8">Connect with career aspirants who are making an impact in their fields.</p>
         
         <div className="flex flex-col md:flex-row gap-4 bg-white p-4 rounded-lg shadow-sm border border-slate-200">
           <div className="relative flex-grow">
@@ -56,7 +56,7 @@ export function AlumniNetwork() {
             >
               <option value="all">All Roles</option>
               <option value="alumni">Alumni</option>
-              <option value="graduate">Recent Graduate</option>
+              <option value="career-aspirant">Career Aspirant</option>
             </select>
           </div>
         </div>

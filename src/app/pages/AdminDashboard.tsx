@@ -31,7 +31,7 @@ type CommunityAlumniRecord = {
   name: string;
   email: string;
   avatar?: string;
-  role: 'alumni' | 'graduate' | 'higher-education' | 'faculty';
+  role: 'alumni' | 'career-aspirant' | 'higher-education';
   company?: string;
   position?: string;
   experience?: string;
@@ -103,19 +103,12 @@ export function AdminDashboard() {
     // Initial fetch
     fetchAllProfiles();
 
-    // Real-time subscription: re-fetch whenever alumni_profiles or faculty_profiles changes
+    // Real-time subscription: re-fetch whenever alumni_profiles changes
     const channel = supabase
       .channel('profiles_realtime')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'alumni_profiles' },
-        () => {
-          fetchAllProfiles();
-        }
-      )
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'faculty_profiles' },
         () => {
           fetchAllProfiles();
         }
@@ -146,22 +139,7 @@ const fetchAllProfiles = async () => {
     console.error("Error fetching alumni:", alumniError);
   }
 
-  // Fetch faculty profiles
-  const { data: facultyData, error: facultyError } = await supabase
-    .from("faculty_profiles")
-    .select(`
-      First_Name,
-      Email_Address,
-      Phone_Number,
-      Department,
-      Created_At
-    `);
-
-  if (facultyError) {
-    console.error("Error fetching faculty:", facultyError);
-  }
-
-  const validRoles = new Set(['alumni', 'graduate', 'higher-education', 'faculty']);
+  const validRoles = new Set(['alumni', 'career-aspirant', 'higher-education']);
 
   // Format alumni/student records
   const alumniRecords: CommunityAlumniRecord[] = (alumniData || []).map(
@@ -177,21 +155,8 @@ const fetchAllProfiles = async () => {
     })
   );
 
-  // Format faculty records
-  const facultyRecords: CommunityAlumniRecord[] = (facultyData || []).map(
-    (item, index) => ({
-      id: `f-${index}`,
-      name: item.First_Name || "",
-      email: item.Email_Address || "",
-      phone: item.Phone_Number || "",
-      graduationYear: "",
-      role: "faculty" as const,
-      createdAt: item.Created_At,
-    })
-  );
-
-  // Merge both lists
-  setReportAlumni([...alumniRecords, ...facultyRecords]);
+  // Update lists
+  setReportAlumni(alumniRecords);
 };
 
   useEffect(() => {
@@ -397,30 +362,26 @@ const fetchAllProfiles = async () => {
   const analyticsCounts = useMemo(() => {
     const totalRegistrations = reportAlumni.length;
     const alumniCount = reportAlumni.filter((item) => item.role === 'alumni').length;
-    const facultyCount = reportAlumni.filter((item) => item.role === 'faculty').length;
     const higherEducationCount = reportAlumni.filter((item) => item.role === 'higher-education').length;
-    const graduateCount = reportAlumni.filter((item) => item.role === 'graduate').length;
+    const careerAspirantCount = reportAlumni.filter((item) => item.role === 'career-aspirant').length;
     const effectiveTotal = totalRegistrations || 1;
 
     return {
       totalRegistrations,
       alumniCount,
-      facultyCount,
       higherEducationCount,
-      graduateCount,
+      careerAspirantCount,
       alumniRatio: Math.round((alumniCount / effectiveTotal) * 100),
-      facultyRatio: Math.round((facultyCount / effectiveTotal) * 100),
       higherEducationRatio: Math.round((higherEducationCount / effectiveTotal) * 100),
-      graduateRatio: Math.round((graduateCount / effectiveTotal) * 100),
+      careerAspirantRatio: Math.round((careerAspirantCount / effectiveTotal) * 100),
     };
   }, [reportAlumni]);
 
   const registrationSegments = useMemo(() => {
     const segments = [
       { label: 'Alumni', count: analyticsCounts.alumniCount, color: 'from-blue-500 to-sky-400', dashColor: '#0ea5e9' },
-      { label: 'Faculty', count: analyticsCounts.facultyCount, color: 'from-emerald-400 to-teal-300', dashColor: '#10b981' },
       { label: 'Higher Education', count: analyticsCounts.higherEducationCount, color: 'from-violet-500 to-fuchsia-400', dashColor: '#8b5cf6' },
-      { label: 'Graduate', count: analyticsCounts.graduateCount, color: 'from-amber-400 to-orange-300', dashColor: '#f59e0b' },
+      { label: 'Graduate', count: analyticsCounts.careerAspirantCount, color: 'from-amber-400 to-orange-300', dashColor: '#f59e0b' },
     ];
     const total = analyticsCounts.totalRegistrations || 1;
     let offset = 0;
@@ -445,7 +406,6 @@ const fetchAllProfiles = async () => {
       name: month,
       timelineAlumni: 0,
       timelineStudents: 0,
-      timelineFaculties: 0,
       timelineHigherEd: 0
     }));
 
@@ -459,11 +419,9 @@ const fetchAllProfiles = async () => {
       
       if (role === 'alumni') {
         monthlyData[monthIndex].timelineAlumni++;
-      } else if (role === 'faculty') {
-        monthlyData[monthIndex].timelineFaculties++;
       } else if (role === 'higher-education') {
         monthlyData[monthIndex].timelineHigherEd++;
-      } else if (role === 'graduate') {
+      } else if (role === 'career-aspirant') {
         monthlyData[monthIndex].timelineStudents++; // using students key for graduate
       }
     });
@@ -1084,8 +1042,7 @@ const fetchAllProfiles = async () => {
                     >
                       <option value="all">All Roles</option>
                       <option value="alumni">Alumni</option>
-                      <option value="graduate">Graduate</option>
-                      <option value="faculty">Faculty</option>
+                      <option value="career-aspirant">Career Aspirant</option>
                       <option value="higher-education">Higher Education</option>
                     </select>
                   </div>
@@ -1173,9 +1130,8 @@ const fetchAllProfiles = async () => {
                       filteredAlumni.map((alumnus) => {
                         const roleBadge: Record<string, string> = {
                           alumni: 'bg-blue-100 text-blue-800',
-                          faculty: 'bg-emerald-100 text-emerald-800',
                           'higher-education': 'bg-violet-100 text-violet-800',
-                          graduate: 'bg-amber-100 text-amber-800',
+                          'career-aspirant': 'bg-amber-100 text-amber-800',
                         };
                         const badgeClass = roleBadge[alumnus.role] ?? 'bg-slate-100 text-slate-700';
                         const roleLabel = alumnus.role === 'higher-education'
@@ -1230,9 +1186,9 @@ const fetchAllProfiles = async () => {
               {[
                 { title: 'Total Registrations', value: analyticsCounts.totalRegistrations, subtitle: 'All registered users', accent: 'from-sky-400 via-cyan-300 to-slate-100', detail: 'Overall network size' },
                 { title: 'Alumni', value: analyticsCounts.alumniCount, subtitle: `${analyticsCounts.alumniRatio}% of total`, accent: 'from-blue-500 via-sky-400 to-cyan-400', detail: 'Core alumni growth' },
-                { title: 'Faculty', value: analyticsCounts.facultyCount, subtitle: `${analyticsCounts.facultyRatio}% of total`, accent: 'from-emerald-400 via-teal-300 to-cyan-200', detail: 'Academic representation' },
+
                 { title: 'Higher Education', value: analyticsCounts.higherEducationCount, subtitle: `${analyticsCounts.higherEducationRatio}% of total`, accent: 'from-violet-500 via-fuchsia-400 to-pink-300', detail: 'Institutional partners' },
-                { title: 'Graduate', value: analyticsCounts.graduateCount, subtitle: `${analyticsCounts.graduateRatio}% of total`, accent: 'from-amber-400 via-orange-300 to-rose-200', detail: 'Postgraduate network' },
+                { title: 'Career Aspirant', value: analyticsCounts.careerAspirantCount, subtitle: `${analyticsCounts.careerAspirantRatio}% of total`, accent: 'from-amber-400 via-orange-300 to-rose-200', detail: 'Postgraduate network' },
               ].map((card) => (
                 <div
                   key={card.title}
@@ -1401,10 +1357,6 @@ const fetchAllProfiles = async () => {
                         <span>High-growth segment</span>
                         <span className="font-semibold text-cyan-400">{analyticsCounts.alumniRatio}%</span>
                       </div>
-                      <div className="flex items-center justify-between rounded-3xl bg-white/5 p-3 text-sm text-white ring-1 ring-white/10">
-                        <span>Balanced faculty representation</span>
-                        <span className="font-semibold text-emerald-400">{analyticsCounts.facultyRatio}%</span>
-                      </div>
                     </div>
                   </div>
                 </div>
@@ -1434,9 +1386,9 @@ const fetchAllProfiles = async () => {
                       cursor={{ fill: 'rgba(255,255,255,0.05)' }}
                     />
                     <Bar dataKey="timelineAlumni" name="Alumni" stackId="a" fill="#0ea5e9" radius={[0, 0, 0, 0]} animationDuration={1000} />
-                    <Bar dataKey="timelineFaculties" name="Faculty" stackId="a" fill="#10b981" radius={[0, 0, 0, 0]} animationDuration={1000} />
+
                     <Bar dataKey="timelineHigherEd" name="Higher Education" stackId="a" fill="#8b5cf6" radius={[0, 0, 0, 0]} animationDuration={1000} />
-                    <Bar dataKey="timelineStudents" name="Graduate" stackId="a" fill="#f59e0b" radius={[4, 4, 0, 0]} animationDuration={1000} />
+                    <Bar dataKey="timelineStudents" name="Career Aspirant" stackId="a" fill="#f59e0b" radius={[4, 4, 0, 0]} animationDuration={1000} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>

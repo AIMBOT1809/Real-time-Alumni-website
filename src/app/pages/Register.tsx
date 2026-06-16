@@ -93,7 +93,7 @@ export function Register() {
                 </div>
                 <h2 className="text-2xl font-bold text-white text-center mb-3 drop-shadow-lg">Alumni</h2>
                 <p className="text-orange-50 text-center mb-6 leading-relaxed">
-                  Connect with fellow graduates, share your achievements.
+                  Connect with fellow career aspirants, share your achievements.
                 </p>
                 <div className="flex items-center justify-center">
                   <span className="relative bg-gradient-to-r from-orange-100/85 to-orange-100/65 text-orange-900 px-6 py-2 rounded-lg font-bold shadow-lg backdrop-blur-md hover:from-orange-100 hover:to-orange-200 hover:shadow-xl transform transition-all duration-300 hover:scale-105 border border-orange-300/60 hover:border-orange-400/80 hover:ring-2 hover:ring-orange-500/30">

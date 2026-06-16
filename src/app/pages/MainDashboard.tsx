@@ -16,6 +16,9 @@ import {
   Eye,
   MessageSquare,
   MessageCircle,
+  ArrowLeft,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { Chat } from './Chat';
@@ -27,6 +30,7 @@ export function MainDashboard() {
   const [eventView, setEventView] = useState('upcoming');
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [chatTheme, setChatTheme] = useState<'dark' | 'light'>('dark');
   
   // Profile editing state
   const [isEditing, setIsEditing] = useState(false);
@@ -114,7 +118,7 @@ export function MainDashboard() {
       const statusValue = (row.Current_Status ?? row.current_status ?? row.currentStatus ?? '').toString().toLowerCase();
 
       if (roleValue.includes('faculty')) return 'faculty';
-      if (statusValue === 'job') return 'graduate';
+      if (statusValue === 'job') return 'career-aspirant';
       if (statusValue === 'higher-education' || statusValue === 'higher education') return 'higher-education';
       return 'alumni';
     };
@@ -347,6 +351,31 @@ export function MainDashboard() {
   // Filter jobs to only show from followed alumni
   const followedJobs = jobs?.filter(job => job.alumniId && following?.includes(job.alumniId)) || [];
 
+  if (activeMenu === 'chat') {
+    const isDark = chatTheme === 'dark';
+    return (
+      <div className={`fixed inset-0 z-50 flex flex-col ${isDark ? 'bg-black' : 'bg-white'}`}>
+        <div className={`h-16 px-6 border-b flex items-center justify-between ${isDark ? 'bg-black border-[#262626]' : 'bg-white border-gray-200'}`}>
+          <button onClick={() => setActiveMenu('home')} className={`flex items-center gap-2 transition-colors ${isDark ? 'text-white hover:text-[#FFD700]' : 'text-black hover:text-yellow-600'}`}>
+            <ArrowLeft size={20} />
+            <span className="font-semibold text-sm">Back to Dashboard</span>
+          </button>
+          
+          <button 
+            onClick={() => setChatTheme(isDark ? 'light' : 'dark')} 
+            className={`p-2 rounded-full transition-colors ${isDark ? 'bg-[#1a1a1a] text-white hover:bg-[#262626]' : 'bg-gray-100 text-black hover:bg-gray-200'}`}
+            title="Toggle theme"
+          >
+             {isDark ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
+        </div>
+        <div className="flex-1 overflow-hidden w-full">
+          <Chat theme={chatTheme} />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-white text-slate-900">
       {/* Top Navbar */}
@@ -492,12 +521,6 @@ export function MainDashboard() {
 
           {/* Main Content Area */}
           <main className="lg:col-span-3 space-y-6">
-            {activeMenu === 'chat' && (
-              <div className="bg-slate-900 rounded-lg border border-slate-800 overflow-hidden h-[calc(100vh-12rem)]">
-                <Chat />
-              </div>
-            )}
-
             {activeMenu === 'home' && (
               <>
                 {/* Create Post (for Faculty and Alumni) */}
