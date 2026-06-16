@@ -381,7 +381,7 @@ const fetchAllProfiles = async () => {
     const segments = [
       { label: 'Alumni', count: analyticsCounts.alumniCount, color: 'from-blue-500 to-sky-400', dashColor: '#0ea5e9' },
       { label: 'Higher Education', count: analyticsCounts.higherEducationCount, color: 'from-violet-500 to-fuchsia-400', dashColor: '#8b5cf6' },
-      { label: 'Graduate', count: analyticsCounts.careerAspirantCount, color: 'from-amber-400 to-orange-300', dashColor: '#f59e0b' },
+      { label: 'Career Aspirant', count: analyticsCounts.careerAspirantCount, color: 'from-amber-400 to-orange-300', dashColor: '#f59e0b' },
     ];
     const total = analyticsCounts.totalRegistrations || 1;
     let offset = 0;
