@@ -322,7 +322,7 @@ export function AlumniRegistration({ onBack }: AlumniRegistrationProps) {
             Current_Status: currentStatus,
             Organization_Name: organization,
             Role_Position: jobRole,
-            Package_CTC: package_,
+            Package_CTC: package_, 
             University_Applied: university,
             Country: country,
             City: city,

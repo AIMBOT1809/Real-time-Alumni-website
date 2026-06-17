@@ -232,7 +232,7 @@ const fetchAllProfiles = async () => {
     setNewPostFile(null);
   };
 
-  const handleSubmitCreateEvent = () => {
+  const handleSubmitCreateEvent = async () => {
     if (!user || role !== 'admin') return;
     const title = newEventTitle.trim();
     const description = newEventDescription.trim();
@@ -261,7 +261,29 @@ const fetchAllProfiles = async () => {
       attachmentType,
     } as any;
 
-    addEvent(eventData);
+    const { error } = await supabase
+  .from('events')
+  .insert([
+    {
+      title: title,
+      event_date: newEventDate,
+      event_time: newEventTime,
+      location: newEventLocation.trim(),
+      type: newEventType,
+      description: description,
+      image_url: imageUrl,
+      file_url: attachmentUrl,
+      created_by: user.id
+    }
+  ]);
+
+if (error) {
+  console.error(error);
+  alert(error.message);
+  return;
+}
+
+alert('Event published successfully');
     setNewEventTitle('');
     setNewEventDescription('');
     setNewEventFile(null);
