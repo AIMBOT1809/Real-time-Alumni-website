@@ -729,8 +729,6 @@ export function Chat({ theme = 'dark' }: { theme?: 'dark' | 'light' }) {
                   </div>
                 </div>
                 <div className="ig-chat-actions">
-                  <button className="ig-icon-btn" onClick={() => startCall(otherUserId!, false)}><Phone size={20} /></button>
-                  <button className="ig-icon-btn" onClick={() => startCall(otherUserId!, true)}><Video size={20} /></button>
                   <button className="ig-icon-btn"><Info size={20} /></button>
                 </div>
               </div>
