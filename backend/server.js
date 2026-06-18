@@ -31,6 +31,131 @@ app.use("/", validateRoutes);
 // Chat API routes
 app.use("/api", chatRoutes);
 
+// Delete post
+app.delete("/api/posts/:id", async (req, res) => {
+  const { id } = req.params;
+  const { error } = await supabase.from("posts").delete().eq("id", id);
+  if (error) return res.status(500).json({ error: error.message });
+  if (req.app.get("io")) req.app.get("io").emit("delete_post", { id });
+  res.status(204).end();
+});
+
+// Like post (increment likes)
+app.post("/api/posts/:id/like", async (req, res) => {
+  const { id } = req.params;
+  const { data, error } = await supabase
+    .from("posts")
+    .update({ likes: supabase.raw("likes + 1") })
+    .eq("id", id)
+    .select()
+    .single();
+  if (error) return res.status(500).json({ error: error.message });
+  if (req.app.get("io")) req.app.get("io").emit("update_post", data);
+  res.json(data);
+});
+
+// Comment on post
+app.post("/api/posts/:id/comment", async (req, res) => {
+  const { id } = req.params;
+  const { content, userId } = req.body;
+  // Insert comment record (assumes a comments table exists)
+  const { data: commentData, error: commentError } = await supabase
+    .from("comments")
+    .insert({ post_id: id, user_id: userId, content })
+    .select()
+    .single();
+  if (commentError) return res.status(500).json({ error: commentError.message });
+  // Increment comment count on post
+  await supabase.from("posts").update({ comments: supabase.raw("comments + 1") }).eq("id", id);
+  if (req.app.get("io")) req.app.get("io").emit("new_comment", commentData);
+  res.json(commentData);
+});
+
+// Share post (increment share count)
+app.post("/api/posts/:id/share", async (req, res) => {
+  const { id } = req.params;
+  const { data, error } = await supabase
+    .from("posts")
+    .update({ shares: supabase.raw("shares + 1") })
+    .eq("id", id)
+    .select()
+    .single();
+  if (error) return res.status(500).json({ error: error.message });
+  if (req.app.get("io")) req.app.get("io").emit("update_post", data);
+  res.json(data);
+});
+
+// Edit post (partial update)
+app.patch("/api/posts/:id", async (req, res) => {
+  const { id } = req.params;
+  const updates = req.body;
+  const { data, error } = await supabase.from("posts").update(updates).eq("id", id).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  if (req.app.get("io")) req.app.get("io").emit("update_post", data);
+  res.json(data);
+});
+
+// Delete event
+app.delete("/api/events/:id", async (req, res) => {
+  const { id } = req.params;
+  const { error } = await supabase.from("events").delete().eq("id", id);
+  if (error) return res.status(500).json({ error: error.message });
+  if (req.app.get("io")) req.app.get("io").emit("delete_event", { id });
+  res.status(204).end();
+});
+
+// Like event
+app.post("/api/events/:id/like", async (req, res) => {
+  const { id } = req.params;
+  const { data, error } = await supabase
+    .from("events")
+    .update({ likes: supabase.raw("likes + 1") })
+    .eq("id", id)
+    .select()
+    .single();
+  if (error) return res.status(500).json({ error: error.message });
+  if (req.app.get("io")) req.app.get("io").emit("update_event", data);
+  res.json(data);
+});
+
+// Edit event (partial)
+app.patch("/api/events/:id", async (req, res) => {
+  const { id } = req.params;
+  const updates = req.body;
+  const { data, error } = await supabase.from("events").update(updates).eq("id", id).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  if (req.app.get("io")) req.app.get("io").emit("update_event", data);
+  res.json(data);
+});
+app.get("/api/posts", async (req, res) => {
+  const { data, error } = await supabase.from("posts").select("*").order("created_at", { ascending: false });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+app.post("/api/posts", async (req, res) => {
+  const { title, content, role } = req.body;
+  const userId = req.userId;
+  const { data, error } = await supabase.from("posts").insert({ title, content, user_id: userId, role }).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  if (req.app.get("io")) req.app.get("io").emit("new_post", data);
+  res.status(201).json(data);
+});
+
+// Events API routes
+app.get("/api/events", async (req, res) => {
+  const { data, error } = await supabase.from("events").select("*").order("created_at", { ascending: false });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+app.post("/api/events", async (req, res) => {
+  const { title, description, location, start_time, end_time, role } = req.body;
+  const userId = req.userId;
+  const { data, error } = await supabase.from("events").insert({ title, description, location, start_time, end_time, user_id: userId, role }).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  if (req.app.get("io")) req.app.get("io").emit("new_event", data);
+  res.status(201).json(data);
+});
+
 // ──────────────────────────────────────
 // SOCKET.IO EVENT HANDLERS
 // ──────────────────────────────────────

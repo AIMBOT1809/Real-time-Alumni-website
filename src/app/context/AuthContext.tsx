@@ -21,6 +21,10 @@ interface AuthContextType {
   addPost: (post: Omit<Post, 'id' | 'timestamp'>) => Promise<void>;
   addJob: (job: Omit<Job, 'id' | 'postedDate'>) => void;
   addEvent: (event: Omit<Event, 'id'>) => void;
+  likePost: (postId: string) => Promise<void>;
+  commentPost: (postId: string, commentText: string) => Promise<void>;
+  sharePost: (postId: string) => Promise<void>;
+  editPost: (postId: string, updates: Partial<Post>) => Promise<void>;
   deletePost: (id: string) => void;
   deleteJob: (id: string) => void;
   deleteEvent: (id: string) => void;
@@ -765,13 +769,102 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setEvents(newEvents);
     localStorage.setItem('allumini_events', JSON.stringify(newEvents));
   };
+  
+  // Interaction functions for posts
+  const likePost = async (postId: string) => {
+    if (!user) return;
+    const post = posts.find(p => p.id === postId);
+    if (!post) return;
+    try {
+        const { data, error } = await supabase
+          .from('posts')
+          .update({ likes: supabase.raw('likes + 1') })
+          .eq('id', postId)
+          .select()
+          .single();
+        if (!error && data) {
+          setPosts(prev => prev.map(p => p.id === postId ? { ...p, likes: data.likes } : p));
+        }
+    } catch (e) {
+      console.error('[AuthContext] likePost error:', e);
+    }
+  };
+
+  const commentPost = async (postId: string, commentText: string) => {
+    if (!user) return;
+    const post = posts.find(p => p.id === postId);
+    if (!post) return;
+    try {
+        const { error } = await supabase.from('comments').insert({
+          post_id: postId,
+          user_id: user.id,
+          content: commentText,
+        });
+        if (!error) {
+          // Increment comment count on post
+          const { data, error: incError } = await supabase
+            .from('posts')
+            .update({ comments: supabase.raw('comments + 1') })
+            .eq('id', postId)
+            .select()
+            .single();
+          if (!incError && data) {
+            setPosts(prev => prev.map(p => p.id === postId ? { ...p, comments: data.comments } : p));
+          }
+        }
+    } catch (e) {
+      console.error('[AuthContext] commentPost error:', e);
+    }
+  };
+
+  const sharePost = async (postId: string) => {
+    if (!user) return;
+    const post = posts.find(p => p.id === postId);
+    if (!post) return;
+    try {
+      // Increment share count directly on posts table
+      const { data, error } = await supabase
+        .from('posts')
+        .update({ shares: supabase.raw('shares + 1') })
+        .eq('id', postId)
+        .select()
+        .single();
+      if (!error && data) {
+        setPosts(prev => prev.map(p => p.id === postId ? { ...p, shares: data.shares } : p));
+      }
+    } catch (e) {
+      console.error('[AuthContext] sharePost error:', e);
+    }
+  };
+
+  const editPost = async (postId: string, updates: Partial<Post>) => {
+    if (!user) return;
+    const post = posts.find(p => p.id === postId);
+    if (!post) return;
+    if (user.role !== 'admin' && post.alumniId !== user.id) return;
+    try {
+      const { error } = await supabase.from('posts').update(updates).eq('id', postId);
+      if (!error) {
+        setPosts(prev => prev.map(p => p.id === postId ? { ...p, ...updates } : p));
+      }
+    } catch (e) {
+      console.error('[AuthContext] editPost error:', e);
+    }
+  };
 
   const deletePost = (id: string) => {
-    if (user?.role !== 'admin') return;
+    if (!user) return;
+    // Admin can delete any; alumni can delete own posts
+    const target = posts.find(p => p.id === id);
+    if (!target) return;
+    if (user.role !== 'admin' && target.alumniId !== user.id) return;
     const newPosts = posts.filter(post => post.id !== id);
     setPosts(newPosts);
     localStorage.setItem('allumini_posts', JSON.stringify(newPosts));
   };
+
+  // Duplicate deletePost removed (permission-aware version retained above)
+    // Duplicate deletePost implementation removed
 
   const deleteJob = (id: string) => {
     if (user?.role !== 'admin') return;
@@ -821,6 +914,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       addPost,
       addJob,
       addEvent,
+      likePost,
+      commentPost,
+      sharePost,
+      editPost,
       deletePost,
       deleteJob,
       deleteEvent,

@@ -70,6 +70,7 @@ export interface Post {
   type: 'general' | 'opportunity' | 'event' | 'community';
   likes: number;
   comments: number;
+  shares: number;
   image?: string;
   attachmentUrl?: string;
   attachmentName?: string;

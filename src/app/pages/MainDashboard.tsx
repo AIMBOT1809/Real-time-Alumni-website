@@ -349,10 +349,25 @@ console.log("ADMIN POSTS:", data);
   }
 */    
 
-  const canPost = !!role && role !== 'student';
+ // const canPost = !!role && role !== 'student';
  // const followedPosts = posts ||[];
- const followedPosts = adminPosts;
-  
+ //const followedPosts = adminPosts;
+  const canPost = role === 'faculty' || role === 'alumni';
+
+// Show admin posts + faculty/alumni posts to everyone
+const followedPosts = [
+  ...(adminPosts || []).map((post) => ({
+    ...post,
+    source: 'admin',
+  })),
+  ...(posts || []).map((post) => ({
+    ...post,
+    source: 'user',
+    description: post.content,
+    created_at: post.timestamp,
+    file_url: post.image,
+  })),
+];
   // Filter events
   const now = new Date();
   const upcomingEvents = events?.filter(event => new Date(event.date) > now) || [];
@@ -568,10 +583,24 @@ console.log("ADMIN POSTS:", data);
                     /*const author = getAlumniById(post.alumniId);
                     if (!author) return null;
                     */
-                   const author = {
-  name: "Admin",
-  avatar: "https://ui-avatars.com/api/?name=Admin"
-};
+                  // const author = {
+ // name: "Admin",
+ // avatar: "https://ui-avatars.com/api/?name=Admin"
+//};
+const author =
+  post.source === 'admin'
+    ? {
+        name: 'Admin',
+        avatar: 'https://ui-avatars.com/api/?name=Admin',
+        position: 'Admin',
+        company: 'Alumni Connect',
+      }
+    : getAlumniById(post.alumniId) || {
+        name: 'Unknown User',
+        avatar: 'https://ui-avatars.com/api/?name=User',
+        position: 'Faculty/Alumni',
+        company: 'TKR College',
+      };
                     return (
                       <article key={post.id} className="bg-slate-900 rounded-lg border border-slate-800 overflow-hidden">
                         {/* Post Header */}
@@ -736,14 +765,15 @@ console.log("ADMIN POSTS:", data);
                           onClick={() => {
                             if (!postContent.trim()) return;
                             addPost({
-                              title: postTitle || undefined,
-                              alumniId: user?.id || 'unknown',
-                              content: postContent.trim(),
-                              type: postType,
-                              likes: 0,
-                              comments: 0,
-                              image: postImage || undefined,
-                            });
+  title: postTitle || undefined,
+  alumniId: user?.id || 'unknown',
+  authorRole: role,
+  content: postContent.trim(),
+  type: postType,
+  likes: 0,
+  comments: 0,
+  image: postImage || undefined,
+});
                             setPostTitle('');
                             setPostContent('');
                             setPostType('general');
