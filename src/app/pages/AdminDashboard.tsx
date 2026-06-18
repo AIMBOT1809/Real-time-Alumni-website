@@ -200,7 +200,9 @@ const fetchAllProfiles = async () => {
     }).format(new Date(parsed));
   };
 
-  const handleSubmitCreatePost = () => {
+  const handleSubmitCreatePost = async() => {
+    console.log("Publish button clicked");
+    alert("Publish button clicked");
     if (!user || role !== 'admin') return;
     const title = newPostTitle.trim();
     const description = newPostDescription.trim();
@@ -226,7 +228,27 @@ const fetchAllProfiles = async () => {
       attachmentType,
     } as any;
 
-    addPost(postData);
+    const { error } = await supabase
+  .from('admin_posts')
+  .insert([
+    {
+      title,
+      description,
+      created_by: user.id,
+      created_at: new Date().toISOString(),
+      file_url: attachmentUrl
+    }
+  ]);
+
+if (error) {
+  console.error(error);
+  alert(error.message);
+  return;
+}
+
+alert('Post published successfully');
+
+    //addPost(postData);
     setNewPostTitle('');
     setNewPostDescription('');
     setNewPostFile(null);

@@ -31,6 +31,7 @@ export function MainDashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [chatTheme, setChatTheme] = useState<'dark' | 'light'>('dark');
+  const [adminPosts, setAdminPosts] = useState<any[]>([]);
   
   // Profile editing state
   const [isEditing, setIsEditing] = useState(false);
@@ -237,6 +238,24 @@ export function MainDashboard() {
     };
   }, []);
 
+  useEffect(() => {
+  fetchAdminPosts();
+}, []);
+
+const fetchAdminPosts = async () => {
+  const { data, error } = await supabase
+    .from('admin_posts')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+console.log("ADMIN POSTS:", data);
+  setAdminPosts(data || []);
+};
+
   if (!user) return null;
 
   // Profile handlers
@@ -331,7 +350,8 @@ export function MainDashboard() {
 */    
 
   const canPost = !!role && role !== 'student';
-  const followedPosts = posts ||[];
+ // const followedPosts = posts ||[];
+ const followedPosts = adminPosts;
   
   // Filter events
   const now = new Date();
@@ -544,9 +564,14 @@ export function MainDashboard() {
                 {/* Posts Feed */}
                 <div className="space-y-4">
                   {followedPosts.map((post) => {
-                    const author = getAlumniById(post.alumniId);
-                    if (!author) return null;
                     
+                    /*const author = getAlumniById(post.alumniId);
+                    if (!author) return null;
+                    */
+                   const author = {
+  name: "Admin",
+  avatar: "https://ui-avatars.com/api/?name=Admin"
+};
                     return (
                       <article key={post.id} className="bg-slate-900 rounded-lg border border-slate-800 overflow-hidden">
                         {/* Post Header */}
@@ -566,7 +591,7 @@ export function MainDashboard() {
                                 <p className="text-xs text-slate-500">
                                   {(() => {
                                     try {
-                                      const d = new Date(post.timestamp);
+                                      const d = new Date(post.created_at);
                                       return isNaN(d.getTime()) ? post.timestamp : d.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
                                     } catch { return post.timestamp; }
                                   })()}
@@ -589,13 +614,13 @@ export function MainDashboard() {
                         {/* Post Content */}
                         <div className="px-4 pb-3">
                           {post.title && <h3 className="text-lg font-semibold text-slate-100">{post.title}</h3>}
-                          <p className="text-slate-200">{post.content}</p>
+                          <p className="text-slate-200">{post.description}</p>
                         </div>
 
                         {/* Post Image */}
-                        {post.image && (
+                        {post.file_url && (
                           <img 
-                            src={post.image} 
+                            src={post.file_url} 
                             alt="Post content"
                             className="w-full h-64 object-cover"
                           />
