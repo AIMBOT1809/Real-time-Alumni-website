@@ -60,7 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
               if (parsed.id) {
                 const res = await supabase
-                  .from('alumni_profiles')
+                  .from(parsed.role === 'student' ? 'student_profiles' : 'alumni_profiles')
                   .select('*')
                   .eq('user_id', parsed.id)
                   .maybeSingle();
@@ -70,10 +70,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               }
 
               if (!profileData && parsed.email) {
+                const emailField = parsed.role === 'student' ? 'Email_Address' : 'Email_Address';
                 const res2 = await supabase
-                  .from('alumni_profiles')
+                  .from(parsed.role === 'student' ? 'student_profiles' : 'alumni_profiles')
                   .select('*')
-                  .ilike('Email_Address', parsed.email)
+                  .ilike(emailField, parsed.email)
                   .maybeSingle();
                 profileData = res2.data;
                 profileError = res2.error;
@@ -105,6 +106,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     profileData.LinkedIn_Profile_URL || profileData.linkedin || parsed.linkedin,
                   resume: profileData.Resume_URL || profileData.resume || parsed.resume,
                   links: parsed.links || [],
+                  // Student career interest fields
+                  careerInterest: profileData.career_interest || parsed.careerInterest,
+                  jobInterest: profileData.job_interest || parsed.jobInterest,
+                  businessInterest: profileData.business_interest || parsed.businessInterest,
+                  higherCourse: profileData.higher_course || parsed.higherCourse,
+                  higherCountry: profileData.higher_country || parsed.higherCountry,
                 };
 
                 setUser(reconciled);

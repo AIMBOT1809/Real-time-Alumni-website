@@ -1595,6 +1595,52 @@ const author =
                       </>
                     )}
 
+                    {/* Career Interest Section - Students Only */}
+                    {role === 'student' && user?.careerInterest && (
+                      <>
+                        <hr className="border-slate-700" />
+                        <div>
+                          <p className="text-sm text-slate-400 mb-3">Career Interest</p>
+                          <div className="space-y-3">
+                            <div>
+                              <p className="text-slate-300 text-sm">Interest</p>
+                              <p className="text-white font-medium">
+                                {user.careerInterest === 'HigherEducation' ? 'Higher Education' : user.careerInterest}
+                              </p>
+                            </div>
+                            {user.careerInterest === 'Job' && user?.jobInterest && (
+                              <div>
+                                <p className="text-slate-300 text-sm">Interested Job</p>
+                                <p className="text-white font-medium">{user.jobInterest}</p>
+                              </div>
+                            )}
+                            {user.careerInterest === 'Business' && user?.businessInterest && (
+                              <div>
+                                <p className="text-slate-300 text-sm">Business Type</p>
+                                <p className="text-white font-medium">{user.businessInterest}</p>
+                              </div>
+                            )}
+                            {user.careerInterest === 'HigherEducation' && (
+                              <>
+                                {user?.higherCourse && (
+                                  <div>
+                                    <p className="text-slate-300 text-sm">Course</p>
+                                    <p className="text-white font-medium">{user.higherCourse}</p>
+                                  </div>
+                                )}
+                                {user?.higherCountry && (
+                                  <div>
+                                    <p className="text-slate-300 text-sm">Country</p>
+                                    <p className="text-white font-medium">{user.higherCountry}</p>
+                                  </div>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </>
+                    )}
+
                     {/* Other Links */}
                     {(user?.links?.length! > 0) && (
                       <>
