@@ -36,6 +36,24 @@ export default function IntroVideo({ onFinish }: IntroVideoProps) {
     onFinish();
   };
 
+  const handleSkip = () => {
+    const v = videoRef.current;
+    try {
+      sessionStorage.setItem('introPlayed', '1');
+    } catch (e) {
+      /* ignore */
+    }
+    try {
+      if (v) {
+        v.pause();
+      }
+    } catch (e) {
+      /* ignore */
+    }
+    onFinish();
+  };
+
+
   return (
     <div
       style={{
