@@ -489,15 +489,6 @@ const followedPosts = [
           </button>
           )}
           <button
-            onClick={() => setActiveMenu('status')}
-            className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[0.72rem] transition ${
-              activeMenu === 'status' ? 'bg-[#FFD700] text-black' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
-            }`}
-          >
-            <Settings className="h-5 w-5" />
-            <span>Activity</span>
-          </button>
-          <button
             onClick={() => setActiveMenu('events')}
             className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[0.72rem] transition ${
               activeMenu === 'events' ? 'bg-[#FFD700] text-black' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
@@ -920,41 +911,6 @@ const author =
                       <p className="text-slate-400">Check back later for new opportunities.</p>
                     </div>
                   )}
-                </div>
-              </div>
-            )}
-
-            {activeMenu === 'status' && (
-              <div className="space-y-6">
-                <h2 className="text-2xl font-bold text-white">Activity</h2>
-                
-                <div className="bg-slate-900 rounded-lg border border-slate-800 p-6">
-                  <h3 className="text-xl font-bold text-white mb-4">Your Activity</h3>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 bg-slate-800 rounded-lg">
-                      <div>
-                        <h4 className="font-semibold text-white">Posts Created</h4>
-                        <p className="text-sm text-slate-400">Content you've shared</p>
-                      </div>
-                      <span className="text-2xl font-bold text-[#FFD700]">0</span>
-                    </div>
-                    
-                    <div className="flex items-center justify-between p-4 bg-slate-800 rounded-lg">
-                      <div>
-                        <h4 className="font-semibold text-white">Following</h4>
-                        <p className="text-sm text-slate-400">Alumni you follow</p>
-                      </div>
-                      <span className="text-2xl font-bold text-[#FFD700]">{following?.length || 0}</span>
-                    </div>
-                    
-                    <div className="flex items-center justify-between p-4 bg-slate-800 rounded-lg">
-                      <div>
-                        <h4 className="font-semibold text-white">Events Attended</h4>
-                        <p className="text-sm text-slate-400">Events you've participated in</p>
-                      </div>
-                      <span className="text-2xl font-bold text-[#FFD700]">0</span>
-                    </div>
-                  </div>
                 </div>
               </div>
             )}
