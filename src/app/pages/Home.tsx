@@ -166,6 +166,90 @@ export function Home() {
         </div>
       </section>
 
+      {/* Statistics Circles Section - Small circles below banner */}
+      <section className="relative py-8 px-4 sm:px-6 lg:px-8 bg-slate-50">
+        <div className="max-w-5xl mx-auto">
+          <div className="grid grid-cols-3 gap-4 sm:gap-6 md:gap-8">
+            
+            {/* Circle 1: Total Registrations */}
+            <div className="flex justify-center">
+              <div className="group relative">
+                <div className="w-28 h-28 sm:w-32 sm:h-32 md:w-36 md:h-36 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg hover:shadow-blue-500/40 transition-all duration-300 hover:scale-105 flex flex-col items-center justify-center text-white">
+                  {/* Icon */}
+                  <div className="mb-1 p-1.5 bg-white/20 rounded-full backdrop-blur-sm group-hover:bg-white/30 transition-all duration-300">
+                    <UserCheck className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={2.5} />
+                  </div>
+                  
+                  {/* Count */}
+                  <div className="text-xl sm:text-2xl md:text-3xl font-bold mb-0.5 group-hover:scale-110 transition-transform duration-300">
+                    2,450+
+                  </div>
+                  
+                  {/* Label */}
+                  <div className="text-[9px] sm:text-[10px] md:text-xs font-semibold uppercase tracking-wide px-1 text-center leading-tight">
+                    Registrations
+                  </div>
+                  
+                  {/* Decorative pulse ring */}
+                  <div className="absolute inset-0 rounded-full border border-blue-300 opacity-20 animate-pulse"></div>
+                </div>
+              </div>
+            </div>
+
+            {/* Circle 2: Total Posts */}
+            <div className="flex justify-center">
+              <div className="group relative">
+                <div className="w-28 h-28 sm:w-32 sm:h-32 md:w-36 md:h-36 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 shadow-lg hover:shadow-purple-500/40 transition-all duration-300 hover:scale-105 flex flex-col items-center justify-center text-white">
+                  {/* Icon */}
+                  <div className="mb-1 p-1.5 bg-white/20 rounded-full backdrop-blur-sm group-hover:bg-white/30 transition-all duration-300">
+                    <FileText className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={2.5} />
+                  </div>
+                  
+                  {/* Count */}
+                  <div className="text-xl sm:text-2xl md:text-3xl font-bold mb-0.5 group-hover:scale-110 transition-transform duration-300">
+                    8,750+
+                  </div>
+                  
+                  {/* Label */}
+                  <div className="text-[9px] sm:text-[10px] md:text-xs font-semibold uppercase tracking-wide px-1 text-center leading-tight">
+                    Posts
+                  </div>
+                  
+                  {/* Decorative pulse ring */}
+                  <div className="absolute inset-0 rounded-full border border-purple-300 opacity-20 animate-pulse"></div>
+                </div>
+              </div>
+            </div>
+
+            {/* Circle 3: Total Alumni */}
+            <div className="flex justify-center">
+              <div className="group relative">
+                <div className="w-28 h-28 sm:w-32 sm:h-32 md:w-36 md:h-36 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 shadow-lg hover:shadow-amber-500/40 transition-all duration-300 hover:scale-105 flex flex-col items-center justify-center text-white">
+                  {/* Icon */}
+                  <div className="mb-1 p-1.5 bg-white/20 rounded-full backdrop-blur-sm group-hover:bg-white/30 transition-all duration-300">
+                    <Award className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={2.5} />
+                  </div>
+                  
+                  {/* Count */}
+                  <div className="text-xl sm:text-2xl md:text-3xl font-bold mb-0.5 group-hover:scale-110 transition-transform duration-300">
+                    1,890+
+                  </div>
+                  
+                  {/* Label */}
+                  <div className="text-[9px] sm:text-[10px] md:text-xs font-semibold uppercase tracking-wide px-1 text-center leading-tight">
+                    Alumni
+                  </div>
+                  
+                  {/* Decorative pulse ring */}
+                  <div className="absolute inset-0 rounded-full border border-amber-300 opacity-20 animate-pulse"></div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
       {/* Features Section */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
