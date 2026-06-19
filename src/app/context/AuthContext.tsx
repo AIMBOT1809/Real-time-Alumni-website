@@ -263,7 +263,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const fetchPosts = async () => {
       try {
         console.log('[AuthContext] Fetching posts from Supabase...');
+        
         const { data, error } = await supabase.from('posts').select('*').order('timestamp', { ascending: false });
+        
         if (error) {
           console.error('[AuthContext] Error fetching posts:', error.message, error);
           if (mounted) {
@@ -295,7 +297,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           file: r.file ?? undefined,
         }));
 
-          if (mounted) {
+        if (mounted) {
           setPosts(mapped as Post[]);
           try { localStorage.setItem('allumini_posts', JSON.stringify(mapped)); } catch {}
           console.log('[AuthContext] posts loaded, count =', mapped.length);
@@ -700,12 +702,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const { data, error } = await supabase.from('posts').insert([insertRow]).select();
 
-      console.log("INSERT ROW:", insertRow);
-      console.log("SUPABASE ERROR:", error);
+      console.log("[AuthContext] Post creation - INSERT ROW:", insertRow);
+      console.log("[AuthContext] Post creation - SUPABASE ERROR:", error);
 
       if (error) {
         console.error('[AuthContext] Error inserting post into DB:', error.message, error);
-        // fallback to local state
         const fallbackPost: Post = {
           id: `p-${Date.now()}`,
           alumniId: user.id,
@@ -722,7 +723,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      // Successfully inserted; fetchPosts real-time subscription will sync. Still update local state optimistically
       if (data && data[0]) {
         const row = data[0];
         const newPost: Post = {
