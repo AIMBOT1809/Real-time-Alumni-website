@@ -60,7 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
               if (parsed.id) {
                 const res = await supabase
-                  .from(parsed.role === 'student' ? 'student_profiles' : 'alumni_profiles')
+                  .from('alumni_profiles')
                   .select('*')
                   .eq('user_id', parsed.id)
                   .maybeSingle();
@@ -70,11 +70,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               }
 
               if (!profileData && parsed.email) {
-                const emailField = parsed.role === 'student' ? 'Email_Address' : 'Email_Address';
                 const res2 = await supabase
-                  .from(parsed.role === 'student' ? 'student_profiles' : 'alumni_profiles')
+                  .from('alumni_profiles')
                   .select('*')
-                  .ilike(emailField, parsed.email)
+                  .ilike('Email_Address', parsed.email)
                   .maybeSingle();
                 profileData = res2.data;
                 profileError = res2.error;
@@ -106,12 +105,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     profileData.LinkedIn_Profile_URL || profileData.linkedin || parsed.linkedin,
                   resume: profileData.Resume_URL || profileData.resume || parsed.resume,
                   links: parsed.links || [],
-                  // Student career interest fields
-                  careerInterest: profileData.career_interest || parsed.careerInterest,
-                  jobInterest: profileData.job_interest || parsed.jobInterest,
-                  businessInterest: profileData.business_interest || parsed.businessInterest,
-                  higherCourse: profileData.higher_course || parsed.higherCourse,
-                  higherCountry: profileData.higher_country || parsed.higherCountry,
                 };
 
                 setUser(reconciled);
@@ -302,11 +295,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           comments: Number(r.comments ?? 0),
           image: r.image ?? r.image_url ?? undefined,
           file: r.file ?? undefined,
+          status : r.status,
         }));
 
         if (mounted) {
           setPosts(mapped as Post[]);
-          try { localStorage.setItem('allumini_posts', JSON.stringify(mapped)); } catch {}
+          //try { localStorage.setItem('allumini_posts', JSON.stringify(mapped)); } catch {}
           console.log('[AuthContext] posts loaded, count =', mapped.length);
         }
       } catch (err) {
@@ -707,7 +701,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         created_at: new Date().toISOString(),
       };
 
-      const { data, error } = await supabase.from('posts').insert([insertRow]).select();
+      //const { data, error } = await supabase.from('posts').insert([insertRow]).select();
+      const { data, error } = await supabase
+  .from('pending_posts')
+  .insert([{
+    title: insertRow.title,
+    content: insertRow.content,
+    image_url: insertRow.image,
+    created_by: user.id,
+    status: 'pending'
+  }])
+  .select();
+  console.log("DATA:",data);
+  console.log("ERROR",error);
+   
 
       console.log("[AuthContext] Post creation - INSERT ROW:", insertRow);
       console.log("[AuthContext] Post creation - SUPABASE ERROR:", error);
@@ -725,12 +732,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           comments: postData.comments ?? 0,
           image: imageUrl ?? (postData.image as any) ?? undefined,
         };
-        setPosts(prev => [fallbackPost, ...prev]);
+        //setPosts(prev => [fallbackPost, ...prev]);
         try { localStorage.setItem('allumini_posts', JSON.stringify([fallbackPost, ...posts])); } catch {}
         return;
       }
 
-      if (data && data[0]) {
+      /*if (data && data[0]) {
         const row = data[0];
         const newPost: Post = {
           id: String(row.id ?? `p-${Date.now()}`),
@@ -746,7 +753,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         };
         setPosts(prev => [newPost, ...prev]);
         try { localStorage.setItem('allumini_posts', JSON.stringify([newPost, ...posts])); } catch {}
-      }
+      } */
+     if (data && data[0]) {
+  alert("Post submitted for admin approval.");
+  return;
+}
     } catch (err) {
       console.error('[AuthContext] addPost unexpected error:', err);
     }
