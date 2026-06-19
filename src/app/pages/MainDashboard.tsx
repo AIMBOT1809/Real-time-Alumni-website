@@ -915,8 +915,6 @@ const author =
               </div>
             )}
 
-<<<<<<< HEAD
-=======
             {activeMenu === 'status' && (
               <div className="space-y-6">
                 <h2 className="text-2xl font-bold text-white">Activity</h2>
@@ -946,7 +944,6 @@ const author =
               </div>
             )}
 
->>>>>>> f9126fb2f3ec274fe1cfe8367f838570061325e6
             {activeMenu === 'profile' && (
               <div className="space-y-6 pb-24">
                 {/* Profile Header */}
