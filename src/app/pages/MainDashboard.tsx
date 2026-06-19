@@ -19,6 +19,7 @@ import {
   ArrowLeft,
   Sun,
   Moon,
+  Activity,
 } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { Chat } from './Chat';
@@ -32,6 +33,9 @@ export function MainDashboard() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [chatTheme, setChatTheme] = useState<'dark' | 'light'>('dark');
   const [adminPosts, setAdminPosts] = useState<any[]>([]);
+  const [registeredEvents, setRegisteredEvents] = useState<any[]>([]);
+  const [attendedEvents, setAttendedEvents] = useState<any[]>([]);
+  const [selectedActivityCard, setSelectedActivityCard] = useState<string | null>(null);
   
   // Profile editing state
   const [isEditing, setIsEditing] = useState(false);
@@ -256,6 +260,85 @@ console.log("ADMIN POSTS:", data);
   setAdminPosts(data || []);
 };
 
+useEffect(() => {
+  if (!user?.id) return;
+  fetchEventRegistrations();
+}, [user?.id]);
+
+const fetchEventRegistrations = async () => {
+  try {
+    if (!user?.id) return;
+
+    // Fetch event registrations for the current user
+    const { data: registrations, error: regError } = await supabase
+      .from('event_registrations')
+      .select(`
+        id,
+        event_id,
+        status,
+        attended,
+        created_at,
+        events:event_id(
+          id,
+          title,
+          date,
+          time,
+          location,
+          description,
+          image
+        )
+      `)
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (regError) {
+      console.error('[MainDashboard] Error fetching event registrations:', regError);
+      setRegisteredEvents([]);
+      setAttendedEvents([]);
+      return;
+    }
+
+    if (!registrations) {
+      console.log('[MainDashboard] No event registrations found');
+      setRegisteredEvents([]);
+      setAttendedEvents([]);
+      return;
+    }
+
+    console.log('[MainDashboard] Event registrations:', registrations);
+
+    // Filter registered and attended events
+    const registered: any[] = [];
+    const attended: any[] = [];
+
+    registrations.forEach((reg: any) => {
+      if (reg.events) {
+        const eventData = {
+          ...reg.events,
+          registrationId: reg.id,
+          status: reg.status,
+          attended: reg.attended,
+          registeredAt: reg.created_at,
+        };
+
+        registered.push(eventData);
+
+        // If attended, also add to attended list
+        if (reg.attended) {
+          attended.push(eventData);
+        }
+      }
+    });
+
+    setRegisteredEvents(registered);
+    setAttendedEvents(attended);
+  } catch (err) {
+    console.error('[MainDashboard] Unexpected error fetching event registrations:', err);
+    setRegisteredEvents([]);
+    setAttendedEvents([]);
+  }
+};
+
   if (!user) return null;
 
   // Profile handlers
@@ -384,6 +467,9 @@ const followedPosts = [
   // Filter jobs to only show from followed alumni
   const followedJobs = jobs?.filter(job => job.alumniId && following?.includes(job.alumniId)) || [];
 
+  // Get user's own posts
+  const userPosts = posts?.filter(p => p.alumniId === user?.id) || [];
+
   if (activeMenu === 'chat') {
     const isDark = chatTheme === 'dark';
     return (
@@ -467,7 +553,7 @@ const followedPosts = [
       </header>
 
       <nav className="mt-4 bg-white border border-slate-200 rounded-3xl shadow-sm max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-        <div className={`grid ${role === 'student' ? 'grid-cols-5' : 'grid-cols-6'} gap-1`}>
+        <div className={`grid ${role === 'student' ? 'grid-cols-6' : 'grid-cols-7'} gap-1`}>
           <button
             onClick={() => setActiveMenu('home')}
             className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[0.72rem] transition ${
@@ -504,7 +590,16 @@ const followedPosts = [
             }`}
           >
             <Users className="h-5 w-5" />
-            <span>Community Discussion</span>
+            <span>Community</span>
+          </button>
+          <button
+            onClick={() => setActiveMenu('activity')}
+            className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[0.72rem] transition ${
+              activeMenu === 'activity' ? 'bg-[#FFD700] text-black' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            <Eye className="h-5 w-5" />
+            <span>Activity</span>
           </button>
           <button
             onClick={() => setActiveMenu('profile')}
@@ -915,14 +1010,42 @@ const author =
               </div>
             )}
 
-            {activeMenu === 'status' && (
+            {activeMenu === 'activity' && (
               <div className="space-y-6">
                 <h2 className="text-2xl font-bold text-white">Activity</h2>
                 
-                <div className="bg-slate-900 rounded-lg border border-slate-800 p-6">
-                  <h3 className="text-xl font-bold text-white mb-4">Your Activity</h3>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 bg-slate-800 rounded-lg">
+                {/* Activity Cards - Top Row */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {(role === "alumni" || role === "faculty") && (
+                    <div
+                      onClick={() => setSelectedActivityCard("postsCreated")}
+                      className={`cursor-pointer transition rounded-lg border p-6 ${
+                        selectedActivityCard === "postsCreated"
+                          ? "border-yellow-400 bg-yellow-400/10"
+                          : "border-slate-800 bg-slate-900 hover:border-slate-700"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="font-semibold text-white">Posts Created</h4>
+                          <p className="text-sm text-slate-400">Your contributions</p>
+                        </div>
+                        <span className="text-2xl font-bold text-[#FFD700]">
+                          {posts?.filter(p => p.alumniId === user?.id).length || 0}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div
+                    onClick={() => setSelectedActivityCard("following")}
+                    className={`cursor-pointer transition rounded-lg border p-6 ${
+                      selectedActivityCard === "following"
+                        ? "border-yellow-400 bg-yellow-400/10"
+                        : "border-slate-800 bg-slate-900 hover:border-slate-700"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
                       <div>
                         <h4 className="font-semibold text-white">Following</h4>
                         <p className="text-sm text-slate-400">Alumni you follow</p>
@@ -931,16 +1054,204 @@ const author =
                         {following?.length || 0}
                       </span>
                     </div>
-                    
-                    <div className="flex items-center justify-between p-4 bg-slate-800 rounded-lg">
-                      <div>
-                        <h4 className="font-semibold text-white">Events Attended</h4>
-                        <p className="text-sm text-slate-400">Events you've participated in</p>
-                      </div>
-                      <span className="text-2xl font-bold text-[#FFD700]">0</span>
-                    </div>
                   </div>
+
+                  {(role === "alumni" || role === "student") && (
+                    <>
+                      <div
+                        onClick={() => setSelectedActivityCard("registeredEvents")}
+                        className={`cursor-pointer transition rounded-lg border p-6 ${
+                          selectedActivityCard === "registeredEvents"
+                            ? "border-yellow-400 bg-yellow-400/10"
+                            : "border-slate-800 bg-slate-900 hover:border-slate-700"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="font-semibold text-white">Registered Events</h4>
+                            <p className="text-sm text-slate-400">Events joined</p>
+                          </div>
+                          <span className="text-2xl font-bold text-[#FFD700]">
+                            {registeredEvents?.length || 0}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div
+                        onClick={() => setSelectedActivityCard("attendedEvents")}
+                        className={`cursor-pointer transition rounded-lg border p-6 ${
+                          selectedActivityCard === "attendedEvents"
+                            ? "border-yellow-400 bg-yellow-400/10"
+                            : "border-slate-800 bg-slate-900 hover:border-slate-700"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="font-semibold text-white">Attended Events</h4>
+                            <p className="text-sm text-slate-400">Events attended</p>
+                          </div>
+                          <span className="text-2xl font-bold text-[#FFD700]">
+                            {attendedEvents?.length || 0}
+                          </span>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
+
+                {/* Activity Details Section */}
+                {!selectedActivityCard ? (
+                  <div className="text-center py-12 bg-slate-800 rounded-lg border border-slate-700">
+                    <p className="text-slate-400 text-lg">Select an activity card to view details</p>
+                  </div>
+                ) : (
+                  <>
+                    {/* Posts Created Details */}
+                    {selectedActivityCard === "postsCreated" && (role === "alumni" || role === "faculty") && (
+                      <div className="bg-slate-900 rounded-lg border border-slate-800 p-6">
+                        <h3 className="text-xl font-bold text-white mb-4">Your Posts</h3>
+                        <div className="space-y-4">
+                          {posts?.filter(p => p.alumniId === user?.id).length > 0 ? (
+                            posts?.filter(p => p.alumniId === user?.id).map((post) => (
+                              <div key={post.id} className="bg-slate-800 rounded-lg p-4 border border-slate-700 hover:border-[#FFD700] transition-colors">
+                                <div className="flex items-start justify-between mb-2">
+                                  <div className="flex-1">
+                                    <h4 className="font-semibold text-white">{post.title || 'Untitled Post'}</h4>
+                                    <p className="text-sm text-slate-400 mt-1">{post.content?.substring(0, 150) || 'No content'}...</p>
+                                  </div>
+                                  <span className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ml-2 ${
+                                    post.status === 'approved' ? 'bg-green-900 text-green-200' :
+                                    post.status === 'rejected' ? 'bg-red-900 text-red-200' :
+                                    'bg-yellow-900 text-yellow-200'
+                                  }`}>
+                                    {post.status || 'pending'}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-slate-500 mt-2">
+                                  {(() => {
+                                    try {
+                                      const d = new Date(post.created_at || post.timestamp);
+                                      return isNaN(d.getTime()) ? 'Recently' : d.toLocaleDateString();
+                                    } catch { return 'Recently'; }
+                                  })()}
+                                </p>
+                              </div>
+                            ))
+                          ) : (
+                            <p className="text-slate-400 text-center py-8">You haven't created any posts yet.</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Following Details */}
+                    {selectedActivityCard === "following" && (
+                      <div className="bg-slate-900 rounded-lg border border-slate-800 p-6">
+                        <h3 className="text-xl font-bold text-white mb-4">Following</h3>
+                        <div className="space-y-4">
+                          {following && following.length > 0 ? (
+                            following.map((alumnusId) => {
+                              const alumnusData = getAlumniById(alumnusId);
+                              if (!alumnusData) return null;
+                              return (
+                                <div key={alumnusId} className="bg-slate-800 rounded-lg p-4 border border-slate-700 hover:border-[#FFD700] transition-colors">
+                                  <div className="flex items-center justify-between">
+                                    <div>
+                                      <h4 className="font-semibold text-white">{alumnusData.name}</h4>
+                                      <p className="text-sm text-slate-400 mt-1">
+                                        {alumnusData.role && alumnusData.role.charAt(0).toUpperCase() + alumnusData.role.slice(1)}
+                                        {alumnusData.department && ` • ${alumnusData.department}`}
+                                      </p>
+                                    </div>
+                                    <span className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-900 text-blue-200">
+                                      Following
+                                    </span>
+                                  </div>
+                                </div>
+                              );
+                            })
+                          ) : (
+                            <p className="text-slate-400 text-center py-8">You're not following anyone yet.</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Registered Events Details */}
+                    {selectedActivityCard === "registeredEvents" && (role === "alumni" || role === "student") && (
+                      <div className="bg-slate-900 rounded-lg border border-slate-800 p-6">
+                        <h3 className="text-xl font-bold text-white mb-4">Registered Events</h3>
+                        <div className="space-y-4">
+                          {registeredEvents && registeredEvents.length > 0 ? (
+                            registeredEvents.map((event) => (
+                              <div key={event.registrationId || event.id} className="bg-slate-800 rounded-lg p-4 border border-slate-700 hover:border-[#FFD700] transition-colors">
+                                <div className="flex items-start justify-between mb-2">
+                                  <div className="flex-1">
+                                    <h4 className="font-semibold text-white">{event.title}</h4>
+                                    <p className="text-sm text-slate-400 mt-1">{event.location}</p>
+                                  </div>
+                                  <span className="px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ml-2 bg-blue-900 text-blue-200">
+                                    Registered
+                                  </span>
+                                </div>
+                                <div className="flex items-center justify-between text-sm">
+                                  <div className="text-slate-400">
+                                    {(() => {
+                                      try {
+                                        const d = new Date(event.date);
+                                        const t = event.time ? ` at ${event.time}` : '';
+                                        return isNaN(d.getTime()) ? event.date + t : d.toLocaleDateString() + t;
+                                      } catch { return event.date; }
+                                    })()}
+                                  </div>
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <p className="text-slate-400 text-center py-8">No registered events yet</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Attended Events Details */}
+                    {selectedActivityCard === "attendedEvents" && (role === "alumni" || role === "student") && (
+                      <div className="bg-slate-900 rounded-lg border border-slate-800 p-6">
+                        <h3 className="text-xl font-bold text-white mb-4">Attended Events</h3>
+                        <div className="space-y-4">
+                          {attendedEvents && attendedEvents.length > 0 ? (
+                            attendedEvents.map((event) => (
+                              <div key={event.registrationId || event.id} className="bg-slate-800 rounded-lg p-4 border border-slate-700 hover:border-[#FFD700] transition-colors">
+                                <div className="flex items-start justify-between mb-2">
+                                  <div className="flex-1">
+                                    <h4 className="font-semibold text-white">{event.title}</h4>
+                                    <p className="text-sm text-slate-400 mt-1">{event.location}</p>
+                                  </div>
+                                  <span className="px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ml-2 bg-green-900 text-green-200">
+                                    Attended
+                                  </span>
+                                </div>
+                                <div className="flex items-center justify-between text-sm">
+                                  <div className="text-slate-400">
+                                    {(() => {
+                                      try {
+                                        const d = new Date(event.date);
+                                        const t = event.time ? ` at ${event.time}` : '';
+                                        return isNaN(d.getTime()) ? event.date + t : d.toLocaleDateString() + t;
+                                      } catch { return event.date; }
+                                    })()}
+                                  </div>
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <p className="text-slate-400 text-center py-8">No attended events yet</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             )}
 
@@ -1279,6 +1590,52 @@ const author =
                                 {skill}
                               </span>
                             ))}
+                          </div>
+                        </div>
+                      </>
+                    )}
+
+                    {/* Career Interest Section - Students Only */}
+                    {role === 'student' && user?.careerInterest && (
+                      <>
+                        <hr className="border-slate-700" />
+                        <div>
+                          <p className="text-sm text-slate-400 mb-3">Career Interest</p>
+                          <div className="space-y-3">
+                            <div>
+                              <p className="text-slate-300 text-sm">Interest</p>
+                              <p className="text-white font-medium">
+                                {user.careerInterest === 'HigherEducation' ? 'Higher Education' : user.careerInterest}
+                              </p>
+                            </div>
+                            {user.careerInterest === 'Job' && user?.jobInterest && (
+                              <div>
+                                <p className="text-slate-300 text-sm">Interested Job</p>
+                                <p className="text-white font-medium">{user.jobInterest}</p>
+                              </div>
+                            )}
+                            {user.careerInterest === 'Business' && user?.businessInterest && (
+                              <div>
+                                <p className="text-slate-300 text-sm">Business Type</p>
+                                <p className="text-white font-medium">{user.businessInterest}</p>
+                              </div>
+                            )}
+                            {user.careerInterest === 'HigherEducation' && (
+                              <>
+                                {user?.higherCourse && (
+                                  <div>
+                                    <p className="text-slate-300 text-sm">Course</p>
+                                    <p className="text-white font-medium">{user.higherCourse}</p>
+                                  </div>
+                                )}
+                                {user?.higherCountry && (
+                                  <div>
+                                    <p className="text-slate-300 text-sm">Country</p>
+                                    <p className="text-white font-medium">{user.higherCountry}</p>
+                                  </div>
+                                )}
+                              </>
+                            )}
                           </div>
                         </div>
                       </>

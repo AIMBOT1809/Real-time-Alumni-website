@@ -29,6 +29,12 @@ export interface UserProfile {
   cgpa?: string;
   phoneNumber?: string;
   profileComplete?: boolean;
+  // Student career interest fields
+  careerInterest?: 'Job' | 'Business' | 'HigherEducation';
+  jobInterest?: string;
+  businessInterest?: string;
+  higherCourse?: string;
+  higherCountry?: string;
   // Faculty-specific fields
   facultyId?: string;
   designation?: string;
