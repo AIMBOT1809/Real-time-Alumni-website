@@ -152,7 +152,11 @@ export function StudentRegistration({ onBack }: StudentRegistrationProps) {
       alert('Please enter your roll number');
       return;
     }
-
+  const rollRegex = /^[0-9]{2}K9.*$/i;
+  if (!rollRegex.test(rollNumber.trim())) {
+  alert('Please enter a valid roll number ');
+  return;
+}
     const joiningYear = parseInt(yearOfJoining);
     const graduationYear = parseInt(passedOutYear);
     const currentYear = new Date().getFullYear();

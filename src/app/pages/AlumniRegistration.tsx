@@ -167,7 +167,12 @@ export function AlumniRegistration({ onBack }: AlumniRegistrationProps) {
       alert('Please enter your roll number');
       return;
     }
+const rollRegex = /^[0-9]{2}K9.*$/i;
 
+if (!rollRegex.test(rollNumber.trim())) {
+  alert('Please enter a valid roll number');
+  return;
+}
     if (linkedin && !linkedin.includes('linkedin.com')) {
       alert('Please enter a valid LinkedIn URL');
       return;
@@ -664,7 +669,7 @@ export function AlumniRegistration({ onBack }: AlumniRegistrationProps) {
                   id="rollNumber"
                   name="rollNumber"
                   type="text"
-                  placeholder="e.g., CS12345"
+                  placeholder="e.g., 23K91A6737"
                   required
                   className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
                 />
