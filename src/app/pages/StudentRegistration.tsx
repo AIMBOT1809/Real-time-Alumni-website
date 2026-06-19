@@ -94,7 +94,7 @@ export function StudentRegistration({ onBack }: StudentRegistrationProps) {
     const passedOutYear = formData.get('passedOutYear') as string;
     const rollNumber = formData.get('rollNumber') as string;
     const linkedin = formData.get('linkedin') as string;
-
+    
     // Validation
     if (!firstName || !lastName) {
       alert('Please enter both first and last name');
