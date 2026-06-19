@@ -653,16 +653,16 @@ const author =
                             <span>{post.comments || 0} comments</span>
                           </div>
                           <div className="flex items-center justify-around border-t border-slate-800 pt-2">
-                            <button className="flex items-center space-x-2 px-4 py-2 text-slate-300 hover:text-[#FFD700] hover:bg-slate-800 rounded-lg transition-colors">
-                              <Eye className="h-5 w-5" />
+                            <button className="flex items-center space-x-2 px-4 py-2 text-slate-300 hover:text-red-500 hover:bg-slate-800 rounded-lg transition-colors">
+                              <span className="text-lg">♥</span>
                               <span>Like</span>
                             </button>
-                            <button className="flex items-center space-x-2 px-4 py-2 text-slate-300 hover:text-[#FFD700] hover:bg-slate-800 rounded-lg transition-colors">
-                              <Bell className="h-5 w-5" />
+                            <button className="flex items-center space-x-2 px-4 py-2 text-slate-300 hover:text-blue-500 hover:bg-slate-800 rounded-lg transition-colors">
+                              <span className="text-lg">💬</span>
                               <span>Comment</span>
                             </button>
-                            <button className="flex items-center space-x-2 px-4 py-2 text-slate-300 hover:text-[#FFD700] hover:bg-slate-800 rounded-lg transition-colors">
-                              <Settings className="h-5 w-5" />
+                            <button className="flex items-center space-x-2 px-4 py-2 text-slate-300 hover:text-green-500 hover:bg-slate-800 rounded-lg transition-colors">
+                              <span className="text-lg">↗</span>
                               <span>Share</span>
                             </button>
                           </div>
@@ -915,6 +915,38 @@ const author =
               </div>
             )}
 
+<<<<<<< HEAD
+=======
+            {activeMenu === 'status' && (
+              <div className="space-y-6">
+                <h2 className="text-2xl font-bold text-white">Activity</h2>
+                
+                <div className="bg-slate-900 rounded-lg border border-slate-800 p-6">
+                  <h3 className="text-xl font-bold text-white mb-4">Your Activity</h3>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-4 bg-slate-800 rounded-lg">
+                      <div>
+                        <h4 className="font-semibold text-white">Following</h4>
+                        <p className="text-sm text-slate-400">Alumni you follow</p>
+                      </div>
+                      <span className="text-2xl font-bold text-[#FFD700]">
+                        {following?.length || 0}
+                      </span>
+                    </div>
+                    
+                    <div className="flex items-center justify-between p-4 bg-slate-800 rounded-lg">
+                      <div>
+                        <h4 className="font-semibold text-white">Events Attended</h4>
+                        <p className="text-sm text-slate-400">Events you've participated in</p>
+                      </div>
+                      <span className="text-2xl font-bold text-[#FFD700]">0</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+>>>>>>> f9126fb2f3ec274fe1cfe8367f838570061325e6
             {activeMenu === 'profile' && (
               <div className="space-y-6 pb-24">
                 {/* Profile Header */}
