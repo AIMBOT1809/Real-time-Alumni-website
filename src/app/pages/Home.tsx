@@ -174,24 +174,24 @@ export function Home() {
             {/* Circle 1: Total Registrations */}
             <div className="flex justify-center">
               <div className="group relative">
-                <div className="w-28 h-28 sm:w-32 sm:h-32 md:w-36 md:h-36 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg hover:shadow-blue-500/40 transition-all duration-300 hover:scale-105 flex flex-col items-center justify-center text-white">
+                <div className="w-40 h-40 sm:w-44 sm:h-44 md:w-48 md:h-48 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 shadow-xl hover:shadow-blue-500/40 transition-all duration-500 hover:scale-105 flex flex-col items-center justify-center text-white">
                   {/* Icon */}
-                  <div className="mb-1 p-1.5 bg-white/20 rounded-full backdrop-blur-sm group-hover:bg-white/30 transition-all duration-300">
-                    <UserCheck className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={2.5} />
+                  <div className="mb-2 p-2 bg-white/20 rounded-full backdrop-blur-sm group-hover:bg-white/30 transition-all duration-300">
+                    <UserCheck className="h-7 w-7 sm:h-8 sm:w-8" strokeWidth={2.5} />
                   </div>
                   
                   {/* Count */}
-                  <div className="text-xl sm:text-2xl md:text-3xl font-bold mb-0.5 group-hover:scale-110 transition-transform duration-300">
+                  <div className="text-3xl sm:text-4xl font-bold mb-1 group-hover:scale-110 transition-transform duration-300">
                     2,450+
                   </div>
                   
                   {/* Label */}
-                  <div className="text-[9px] sm:text-[10px] md:text-xs font-semibold uppercase tracking-wide px-1 text-center leading-tight">
-                    Registrations
+                  <div className="text-xs sm:text-sm font-semibold uppercase tracking-wide px-2 text-center">
+                    Total Registrations
                   </div>
                   
                   {/* Decorative pulse ring */}
-                  <div className="absolute inset-0 rounded-full border border-blue-300 opacity-20 animate-pulse"></div>
+                  <div className="absolute inset-0 rounded-full border-2 border-blue-300 opacity-20 animate-pulse"></div>
                 </div>
               </div>
             </div>
@@ -199,24 +199,24 @@ export function Home() {
             {/* Circle 2: Total Posts */}
             <div className="flex justify-center">
               <div className="group relative">
-                <div className="w-28 h-28 sm:w-32 sm:h-32 md:w-36 md:h-36 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 shadow-lg hover:shadow-purple-500/40 transition-all duration-300 hover:scale-105 flex flex-col items-center justify-center text-white">
+                <div className="w-40 h-40 sm:w-44 sm:h-44 md:w-48 md:h-48 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 shadow-xl hover:shadow-purple-500/40 transition-all duration-500 hover:scale-105 flex flex-col items-center justify-center text-white">
                   {/* Icon */}
-                  <div className="mb-1 p-1.5 bg-white/20 rounded-full backdrop-blur-sm group-hover:bg-white/30 transition-all duration-300">
-                    <FileText className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={2.5} />
+                  <div className="mb-2 p-2 bg-white/20 rounded-full backdrop-blur-sm group-hover:bg-white/30 transition-all duration-300">
+                    <FileText className="h-7 w-7 sm:h-8 sm:w-8" strokeWidth={2.5} />
                   </div>
                   
                   {/* Count */}
-                  <div className="text-xl sm:text-2xl md:text-3xl font-bold mb-0.5 group-hover:scale-110 transition-transform duration-300">
+                  <div className="text-3xl sm:text-4xl font-bold mb-1 group-hover:scale-110 transition-transform duration-300">
                     8,750+
                   </div>
                   
                   {/* Label */}
-                  <div className="text-[9px] sm:text-[10px] md:text-xs font-semibold uppercase tracking-wide px-1 text-center leading-tight">
-                    Posts
+                  <div className="text-xs sm:text-sm font-semibold uppercase tracking-wide px-2 text-center">
+                    Total Posts
                   </div>
                   
                   {/* Decorative pulse ring */}
-                  <div className="absolute inset-0 rounded-full border border-purple-300 opacity-20 animate-pulse"></div>
+                  <div className="absolute inset-0 rounded-full border-2 border-purple-300 opacity-20 animate-pulse"></div>
                 </div>
               </div>
             </div>
@@ -224,24 +224,24 @@ export function Home() {
             {/* Circle 3: Total Alumni */}
             <div className="flex justify-center">
               <div className="group relative">
-                <div className="w-28 h-28 sm:w-32 sm:h-32 md:w-36 md:h-36 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 shadow-lg hover:shadow-amber-500/40 transition-all duration-300 hover:scale-105 flex flex-col items-center justify-center text-white">
+                <div className="w-40 h-40 sm:w-44 sm:h-44 md:w-48 md:h-48 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 shadow-xl hover:shadow-amber-500/40 transition-all duration-500 hover:scale-105 flex flex-col items-center justify-center text-white">
                   {/* Icon */}
-                  <div className="mb-1 p-1.5 bg-white/20 rounded-full backdrop-blur-sm group-hover:bg-white/30 transition-all duration-300">
-                    <Award className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={2.5} />
+                  <div className="mb-3 p-3 bg-white/20 rounded-full backdrop-blur-sm group-hover:bg-white/30 transition-all duration-300">
+                    <Award className="h-10 w-10 sm:h-12 sm:w-12" strokeWidth={2.5} />
                   </div>
                   
                   {/* Count */}
-                  <div className="text-xl sm:text-2xl md:text-3xl font-bold mb-0.5 group-hover:scale-110 transition-transform duration-300">
+                  <div className="text-3xl sm:text-4xl font-bold mb-1 group-hover:scale-110 transition-transform duration-300">
                     1,890+
                   </div>
                   
                   {/* Label */}
-                  <div className="text-[9px] sm:text-[10px] md:text-xs font-semibold uppercase tracking-wide px-1 text-center leading-tight">
-                    Alumni
+                  <div className="text-xs sm:text-sm font-semibold uppercase tracking-wide px-2 text-center">
+                    Total Alumni
                   </div>
                   
                   {/* Decorative pulse ring */}
-                  <div className="absolute inset-0 rounded-full border border-amber-300 opacity-20 animate-pulse"></div>
+                  <div className="absolute inset-0 rounded-full border-2 border-amber-300 opacity-20 animate-pulse"></div>
                 </div>
               </div>
             </div>
