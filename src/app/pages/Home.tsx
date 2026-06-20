@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router';
-import { ArrowRight, Users, Briefcase, Calendar, GraduationCap, ChevronLeft, ChevronRight, UserCheck, FileText, Award } from 'lucide-react';
+import { Users, Briefcase, Calendar, GraduationCap, ChevronLeft, ChevronRight, UserCheck, FileText, Award } from 'lucide-react';
 import collegeLogo from '../../assests/college-logo.png';
 
 // Banner images configuration - You can replace these URLs with your own images
@@ -34,6 +34,7 @@ const bannerImages = [
 export function Home() {
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Auto-rotate banners every 5 seconds
   useEffect(() => {
@@ -69,8 +70,118 @@ export function Home() {
 
   return (
     <div className="flex flex-col min-h-[calc(100vh-4rem)]">
+      {/* Top Navigation Menu */}
+      <nav className="sticky top-0 z-40 bg-white shadow-md">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            {/* Logo/Brand */}
+            <div className="flex items-center">
+              <Link to="/" className="flex items-center space-x-2">
+                <GraduationCap className="h-8 w-8 text-yellow-500" />
+                <span className="text-xl font-bold text-slate-900">Alumni Connect</span>
+              </Link>
+            </div>
+            
+            {/* Navigation Links */}
+            <div className="hidden md:flex items-center space-x-8">
+              <a 
+                href="#home" 
+                className="text-slate-700 hover:text-yellow-500 font-medium transition-colors duration-200 border-b-2 border-transparent hover:border-yellow-500"
+              >
+                Home
+              </a>
+              <a 
+                href="#gallery" 
+                className="text-slate-700 hover:text-yellow-500 font-medium transition-colors duration-200 border-b-2 border-transparent hover:border-yellow-500"
+              >
+                Gallery
+              </a>
+              <a 
+                href="#about" 
+                className="text-slate-700 hover:text-yellow-500 font-medium transition-colors duration-200 border-b-2 border-transparent hover:border-yellow-500"
+              >
+                About Us
+              </a>
+            </div>
+
+            {/* Auth Buttons */}
+            <div className="hidden md:flex items-center space-x-4">
+              <Link
+                to="/login"
+                className="px-4 py-2 text-slate-700 hover:text-yellow-500 font-medium transition-colors duration-200"
+              >
+                Login
+              </Link>
+              <Link
+                to="/register"
+                className="px-6 py-2 bg-yellow-500 text-white rounded-lg font-semibold hover:bg-yellow-600 transition-all duration-200 shadow-md hover:shadow-lg"
+              >
+                Register
+              </Link>
+            </div>
+
+            {/* Mobile Menu Button */}
+            <div className="md:hidden">
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="p-2 rounded-lg text-slate-700 hover:bg-slate-100 transition-colors"
+              >
+                {isMobileMenuOpen ? (
+                  <ChevronLeft className="h-6 w-6" />
+                ) : (
+                  <ChevronRight className="h-6 w-6" />
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Mobile Menu */}
+          {isMobileMenuOpen && (
+            <div className="md:hidden py-4 border-t border-slate-200">
+              <div className="flex flex-col space-y-4">
+                <a 
+                  href="#home" 
+                  className="text-slate-700 hover:text-yellow-500 font-medium transition-colors px-2"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Home
+                </a>
+                <a 
+                  href="#gallery" 
+                  className="text-slate-700 hover:text-yellow-500 font-medium transition-colors px-2"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Gallery
+                </a>
+                <a 
+                  href="#about" 
+                  className="text-slate-700 hover:text-yellow-500 font-medium transition-colors px-2"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  About Us
+                </a>
+                <div className="flex flex-col space-y-2 pt-4 border-t border-slate-200">
+                  <Link
+                    to="/login"
+                    className="px-4 py-2 text-center text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 font-medium transition-colors"
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    to="/register"
+                    className="px-4 py-2 text-center bg-yellow-500 text-white rounded-lg font-semibold hover:bg-yellow-600 transition-colors"
+                  >
+                    Register
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </nav>
+
       {/* Hero Banner Carousel Section */}
-      <section className="relative bg-slate-900 text-white overflow-hidden">
+      <section id="home" className="relative bg-slate-900 text-white overflow-hidden">
         <div className="relative h-[500px] md:h-[600px] lg:h-[700px]">
           {/* Banner Images */}
           {bannerImages.map((banner, index) => (
@@ -162,6 +273,90 @@ export function Home() {
                 aria-label={`Go to banner ${index + 1}`}
               />
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Statistics Circles Section - Small circles below banner */}
+      <section className="relative py-8 px-4 sm:px-6 lg:px-8 bg-slate-50">
+        <div className="max-w-5xl mx-auto">
+          <div className="grid grid-cols-3 gap-4 sm:gap-6 md:gap-8">
+            
+            {/* Circle 1: Total Registrations */}
+            <div className="flex justify-center">
+              <div className="group relative">
+                <div className="w-40 h-40 sm:w-44 sm:h-44 md:w-48 md:h-48 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 shadow-xl hover:shadow-blue-500/40 transition-all duration-500 hover:scale-105 flex flex-col items-center justify-center text-white">
+                  {/* Icon */}
+                  <div className="mb-2 p-2 bg-white/20 rounded-full backdrop-blur-sm group-hover:bg-white/30 transition-all duration-300">
+                    <UserCheck className="h-7 w-7 sm:h-8 sm:w-8" strokeWidth={2.5} />
+                  </div>
+                  
+                  {/* Count */}
+                  <div className="text-3xl sm:text-4xl font-bold mb-1 group-hover:scale-110 transition-transform duration-300">
+                    2,450+
+                  </div>
+                  
+                  {/* Label */}
+                  <div className="text-xs sm:text-sm font-semibold uppercase tracking-wide px-2 text-center">
+                    Total Registrations
+                  </div>
+                  
+                  {/* Decorative pulse ring */}
+                  <div className="absolute inset-0 rounded-full border-2 border-blue-300 opacity-20 animate-pulse"></div>
+                </div>
+              </div>
+            </div>
+
+            {/* Circle 2: Total Posts */}
+            <div className="flex justify-center">
+              <div className="group relative">
+                <div className="w-40 h-40 sm:w-44 sm:h-44 md:w-48 md:h-48 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 shadow-xl hover:shadow-purple-500/40 transition-all duration-500 hover:scale-105 flex flex-col items-center justify-center text-white">
+                  {/* Icon */}
+                  <div className="mb-2 p-2 bg-white/20 rounded-full backdrop-blur-sm group-hover:bg-white/30 transition-all duration-300">
+                    <FileText className="h-7 w-7 sm:h-8 sm:w-8" strokeWidth={2.5} />
+                  </div>
+                  
+                  {/* Count */}
+                  <div className="text-3xl sm:text-4xl font-bold mb-1 group-hover:scale-110 transition-transform duration-300">
+                    8,750+
+                  </div>
+                  
+                  {/* Label */}
+                  <div className="text-xs sm:text-sm font-semibold uppercase tracking-wide px-2 text-center">
+                    Total Posts
+                  </div>
+                  
+                  {/* Decorative pulse ring */}
+                  <div className="absolute inset-0 rounded-full border-2 border-purple-300 opacity-20 animate-pulse"></div>
+                </div>
+              </div>
+            </div>
+
+            {/* Circle 3: Total Alumni */}
+            <div className="flex justify-center">
+              <div className="group relative">
+                <div className="w-40 h-40 sm:w-44 sm:h-44 md:w-48 md:h-48 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 shadow-xl hover:shadow-amber-500/40 transition-all duration-500 hover:scale-105 flex flex-col items-center justify-center text-white">
+                  {/* Icon */}
+                  <div className="mb-3 p-3 bg-white/20 rounded-full backdrop-blur-sm group-hover:bg-white/30 transition-all duration-300">
+                    <Award className="h-10 w-10 sm:h-12 sm:w-12" strokeWidth={2.5} />
+                  </div>
+                  
+                  {/* Count */}
+                  <div className="text-3xl sm:text-4xl font-bold mb-1 group-hover:scale-110 transition-transform duration-300">
+                    1,890+
+                  </div>
+                  
+                  {/* Label */}
+                  <div className="text-xs sm:text-sm font-semibold uppercase tracking-wide px-2 text-center">
+                    Total Alumni
+                  </div>
+                  
+                  {/* Decorative pulse ring */}
+                  <div className="absolute inset-0 rounded-full border-2 border-amber-300 opacity-20 animate-pulse"></div>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
       </section>
@@ -258,6 +453,224 @@ export function Home() {
           </div>
         </div>
       </section>
+
+      {/* Gallery Section */}
+      <section id="gallery" className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold text-slate-900 sm:text-4xl mb-4">Gallery</h2>
+            <p className="text-xl text-slate-600">Explore moments from our alumni community</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Gallery Image 1 */}
+            <div className="group relative overflow-hidden rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300">
+              <img
+                src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=600&auto=format&fit=crop"
+                alt="Campus Life"
+                className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <div className="absolute bottom-4 left-4 right-4">
+                  <h3 className="text-white font-semibold text-lg">Campus Life</h3>
+                  <p className="text-white/80 text-sm">Beautiful campus memories</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Gallery Image 2 */}
+            <div className="group relative overflow-hidden rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300">
+              <img
+                src="https://images.unsplash.com/photo-1541339907198-e08756dedf3f?q=80&w=600&auto=format&fit=crop"
+                alt="Graduation Day"
+                className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <div className="absolute bottom-4 left-4 right-4">
+                  <h3 className="text-white font-semibold text-lg">Graduation Day</h3>
+                  <p className="text-white/80 text-sm">Celebrating achievements</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Gallery Image 3 */}
+            <div className="group relative overflow-hidden rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300">
+              <img
+                src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?q=80&w=600&auto=format&fit=crop"
+                alt="Students Collaboration"
+                className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <div className="absolute bottom-4 left-4 right-4">
+                  <h3 className="text-white font-semibold text-lg">Collaboration</h3>
+                  <p className="text-white/80 text-sm">Working together</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Gallery Image 4 */}
+            <div className="group relative overflow-hidden rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300">
+              <img
+                src="https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?q=80&w=600&auto=format&fit=crop"
+                alt="Networking Event"
+                className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <div className="absolute bottom-4 left-4 right-4">
+                  <h3 className="text-white font-semibold text-lg">Networking Event</h3>
+                  <p className="text-white/80 text-sm">Building connections</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Gallery Image 5 */}
+            <div className="group relative overflow-hidden rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300">
+              <img
+                src="https://images.unsplash.com/photo-1515187029135-18ee286d815b?q=80&w=600&auto=format&fit=crop"
+                alt="Mentorship Session"
+                className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <div className="absolute bottom-4 left-4 right-4">
+                  <h3 className="text-white font-semibold text-lg">Mentorship</h3>
+                  <p className="text-white/80 text-sm">Guiding the next generation</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Gallery Image 6 */}
+            <div className="group relative overflow-hidden rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300">
+              <img
+                src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=600&auto=format&fit=crop"
+                alt="Alumni Reunion"
+                className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <div className="absolute bottom-4 left-4 right-4">
+                  <h3 className="text-white font-semibold text-lg">Alumni Reunion</h3>
+                  <p className="text-white/80 text-sm">Reconnecting with friends</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* About Us Section */}
+      <section id="about" className="py-20 bg-slate-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold text-slate-900 sm:text-4xl mb-4">About Us</h2>
+            <p className="text-xl text-slate-600">Building a stronger alumni community together</p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            {/* About Content */}
+            <div className="space-y-6">
+              <h3 className="text-2xl font-bold text-slate-900">Our Mission</h3>
+              <p className="text-lg text-slate-600 leading-relaxed">
+                Alumni Connect is dedicated to fostering lifelong connections between graduates, current students, and faculty members. We believe that a strong alumni network is essential for personal and professional growth.
+              </p>
+              
+              <h3 className="text-2xl font-bold text-slate-900 mt-8">What We Offer</h3>
+              <ul className="space-y-4">
+                <li className="flex items-start">
+                  <div className="flex-shrink-0 h-6 w-6 rounded-full bg-yellow-500 flex items-center justify-center mt-1">
+                    <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <div className="ml-4">
+                    <h4 className="text-lg font-semibold text-slate-900">Networking Opportunities</h4>
+                    <p className="text-slate-600">Connect with alumni across various industries and locations.</p>
+                  </div>
+                </li>
+                <li className="flex items-start">
+                  <div className="flex-shrink-0 h-6 w-6 rounded-full bg-yellow-500 flex items-center justify-center mt-1">
+                    <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <div className="ml-4">
+                    <h4 className="text-lg font-semibold text-slate-900">Career Development</h4>
+                    <p className="text-slate-600">Access exclusive job postings, mentorship programs, and career resources.</p>
+                  </div>
+                </li>
+                <li className="flex items-start">
+                  <div className="flex-shrink-0 h-6 w-6 rounded-full bg-yellow-500 flex items-center justify-center mt-1">
+                    <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <div className="ml-4">
+                    <h4 className="text-lg font-semibold text-slate-900">Community Events</h4>
+                    <p className="text-slate-600">Participate in reunions, workshops, and networking events throughout the year.</p>
+                  </div>
+                </li>
+              </ul>
+
+              <div className="pt-8">
+                <Link
+                  to="/register"
+                  className="inline-block px-8 py-3 bg-yellow-500 text-white rounded-lg font-semibold hover:bg-yellow-600 transition-colors shadow-lg hover:shadow-xl"
+                >
+                  Join Our Community
+                </Link>
+              </div>
+            </div>
+
+            {/* About Image */}
+            <div className="relative">
+              <div className="absolute -top-4 -left-4 w-72 h-72 bg-yellow-200 rounded-full opacity-20 blur-3xl"></div>
+              <img
+                src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=800&auto=format&fit=crop"
+                alt="Team Collaboration"
+                className="relative rounded-2xl shadow-2xl"
+              />
+              <div className="absolute -bottom-6 -right-6 bg-white p-6 rounded-xl shadow-xl">
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-yellow-500">10,000+</div>
+                  <div className="text-slate-600 font-medium">Active Members</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-slate-900 text-white py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div>
+              <div className="flex items-center space-x-2 mb-4">
+                <GraduationCap className="h-8 w-8 text-yellow-500" />
+                <span className="text-xl font-bold">Alumni Connect</span>
+              </div>
+              <p className="text-slate-400">
+                Building bridges between alumni, students, and faculty for a brighter future.
+              </p>
+            </div>
+            <div>
+              <h3 className="font-semibold text-lg mb-4">Quick Links</h3>
+              <ul className="space-y-2">
+                <li><a href="#home" className="text-slate-400 hover:text-yellow-500 transition-colors">Home</a></li>
+                <li><a href="#gallery" className="text-slate-400 hover:text-yellow-500 transition-colors">Gallery</a></li>
+                <li><a href="#about" className="text-slate-400 hover:text-yellow-500 transition-colors">About Us</a></li>
+                <li><Link to="/login" className="text-slate-400 hover:text-yellow-500 transition-colors">Login</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-semibold text-lg mb-4">Contact</h3>
+              <p className="text-slate-400 mb-2">Email: info@alumniconnect.com</p>
+              <p className="text-slate-400">Phone: +1 (555) 123-4567</p>
+            </div>
+          </div>
+          <div className="border-t border-slate-800 mt-8 pt-8 text-center text-slate-400">
+            <p>&copy; 2024 Alumni Connect. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
