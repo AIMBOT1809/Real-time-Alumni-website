@@ -46,7 +46,7 @@ export function PostApproval() {
         console.log('[PostApproval] Fetching posts for admin...');
 
         const { data, error } = await supabase
-          .from('posts')
+          .from('pending_posts')
           .select('*')
           .order('created_at', { ascending: false });
 
@@ -149,8 +149,8 @@ export function PostApproval() {
       setActionLoading(postId);
       console.log('[PostApproval] Approving post:', postId);
 
-      const { error } = await supabase
-        .from('posts')
+      /*const { error } = await supabase
+        .from('pending_posts')
         .update({
           status: 'approved',
           reviewed_by: user.id,
@@ -162,18 +162,64 @@ export function PostApproval() {
         console.error('[PostApproval] Error approving post:', error);
         alert('Failed to approve post: ' + error.message);
         return;
-      }
+      } */
+     // Get post from pending_posts
+const { data: pendingPost, error: fetchError } = await supabase
+  .from('pending_posts')
+  .select('*')
+  .eq('id', postId)
+  .single();
+
+if (fetchError) {
+  console.error(fetchError);
+  return;
+}
+
+// Insert into posts table
+console.log("PENDING POST:", pendingPost);
+const { error: insertError } = await supabase
+  .from('posts')
+  
+  .insert([
+    {
+      title: pendingPost.title,
+      content: pendingPost.content,
+      image: pendingPost.image_url,
+      file: pendingPost.file,
+      alumni_id: pendingPost.alumni_id,
+      type: pendingPost.type,
+      created_at: pendingPost.created_at,
+      likes: pendingPost.likes || 0,
+      comments: pendingPost.comments || 0,
+    },
+  ]);
+
+if (insertError) {
+  console.error(insertError);
+  alert(insertError.message);
+  return;
+}
+
+// Delete from pending_posts
+await supabase
+  .from('pending_posts')
+  .delete()
+  .eq('id', postId);
 
       console.log('[PostApproval] Post approved successfully');
+
+      setPosts(prevPosts =>
+  prevPosts.filter(post => post.id !== postId)
+);
       
       // Update local state
-      setPosts(prevPosts =>
+      /*setPosts(prevPosts =>
         prevPosts.map(post =>
           post.id === postId
             ? { ...post, status: 'approved' as PostStatus, reviewedBy: user.id, reviewedAt: new Date().toISOString() }
             : post
         )
-      );
+      );  */
 
       // Show success message
       alert('Post approved successfully!');
