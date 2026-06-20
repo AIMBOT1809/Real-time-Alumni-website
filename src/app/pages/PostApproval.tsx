@@ -193,7 +193,7 @@ const { error: insertError } = await supabase
       comments: pendingPost.comments || 0,
     },
   ]);
-
+////hello
 if (insertError) {
   console.error(insertError);
   alert(insertError.message);
