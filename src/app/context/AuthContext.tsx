@@ -30,7 +30,7 @@ interface AuthContextType {
   deleteEvent: (id: string) => void;
   getAlumniById: (id: string) => UserProfile | undefined;
 }
-
+//hello
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
