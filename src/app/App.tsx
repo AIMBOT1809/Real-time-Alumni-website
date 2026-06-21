@@ -4,6 +4,7 @@ import { router } from './routes';
 import { AuthProvider } from './context/AuthContext';
 import { useEffect, useState } from 'react';
 import IntroVideo from './components/IntroVideo';
+import Toast from './components/Toast';
 
 export default function App() {
   const [showIntro, setShowIntro] = useState(false);
@@ -34,6 +35,7 @@ export default function App() {
   return (
     <AuthProvider>
       <RouterProvider router={router} />
+      <Toast />
       {showIntro && <IntroVideo onFinish={() => setShowIntro(false)} />}
     </AuthProvider>
   );

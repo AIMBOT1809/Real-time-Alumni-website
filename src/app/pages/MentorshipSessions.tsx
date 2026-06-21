@@ -1,0 +1,90 @@
+import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router';
+import { BriefcaseBusiness, Building2, CalendarCheck, CheckCircle2, Clock3, GraduationCap, LayoutDashboard, Menu, Rocket, Search, Send, UserCheck, Users, X } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { addActivityItem } from '../data/activityStore';
+
+type SessionTab = 'available' | 'requested' | 'completed';
+type Mentor = { id: number; name: string; initials: string; domain: string; company: string; availability: string; accent: string };
+
+const mentors: Mentor[] = [
+  { id: 1, name: 'Ananya Rao', initials: 'AR', domain: 'Product Management', company: 'Microsoft', availability: 'Sat, 10:00 AM – 1:00 PM', accent: 'bg-violet-100 text-violet-700' },
+  { id: 2, name: 'Vikram Mehta', initials: 'VM', domain: 'Data Science & AI', company: 'Google', availability: 'Sun, 3:00 PM – 6:00 PM', accent: 'bg-blue-100 text-blue-700' },
+  { id: 3, name: 'Priya Nair', initials: 'PN', domain: 'UX & Product Design', company: 'Adobe', availability: 'Wed, 6:30 PM – 8:30 PM', accent: 'bg-rose-100 text-rose-700' },
+  { id: 4, name: 'Arjun Kapoor', initials: 'AK', domain: 'Software Engineering', company: 'Amazon', availability: 'Sat, 4:00 PM – 7:00 PM', accent: 'bg-emerald-100 text-emerald-700' },
+  { id: 5, name: 'Sneha Iyer', initials: 'SI', domain: 'Finance & Consulting', company: 'Deloitte', availability: 'Fri, 7:00 PM – 9:00 PM', accent: 'bg-amber-100 text-amber-700' },
+  { id: 6, name: 'Rahul Sharma', initials: 'RS', domain: 'Entrepreneurship', company: 'Razorpay', availability: 'Sun, 11:00 AM – 2:00 PM', accent: 'bg-cyan-100 text-cyan-700' },
+];
+
+const requestedSeed = [mentors[1]];
+const completedSeed = [
+  { ...mentors[4], availability: 'Completed on 12 May 2026' },
+  { ...mentors[2], availability: 'Completed on 28 April 2026' },
+];
+
+export function MentorshipSessions() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState<SessionTab>('available');
+  const [requestedMentors, setRequestedMentors] = useState<Mentor[]>(requestedSeed);
+  const [search, setSearch] = useState('');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const availableMentors = mentors.filter((mentor) => !requestedMentors.some((requested) => requested.id === mentor.id));
+  const tabMentors = activeTab === 'available' ? availableMentors : activeTab === 'requested' ? requestedMentors : completedSeed;
+  const filteredMentors = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    return query ? tabMentors.filter((mentor) => [mentor.name, mentor.domain, mentor.company].some((value) => value.toLowerCase().includes(query))) : tabMentors;
+  }, [search, tabMentors]);
+  const tabs: Array<{ id: SessionTab; label: string; count: number }> = [
+    { id: 'available', label: 'Available Mentors', count: availableMentors.length },
+    { id: 'requested', label: 'Requested Sessions', count: requestedMentors.length },
+    { id: 'completed', label: 'Completed Sessions', count: completedSeed.length },
+  ];
+
+  const requestMentorship = (mentor: Mentor) => {
+    setRequestedMentors((current) => [...current, mentor]);
+    addActivityItem(user?.id, 'joinedMentorshipSessions', {
+      id: String(mentor.id), title: mentor.name, subtitle: `${mentor.domain} ? ${mentor.company}`,
+      date: new Date().toISOString(), status: 'Requested', category: 'Mentorship',
+    });
+    setActiveTab('requested');
+    setSearch('');
+  };
+
+  return (
+    <div className="-mx-4 -my-8 min-h-[calc(100vh-4rem)] bg-slate-50">
+      <div className="mx-auto flex max-w-[1440px]">
+
+        <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-10 lg:py-10">
+          <div className="mb-7 flex items-start gap-3">
+            <div><p className="mb-2 text-sm font-semibold text-yellow-600">LEARN FROM ALUMNI</p><h1 className="text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">Mentorship Sessions</h1><p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">Find the right mentor, request a one-to-one session, and keep track of your mentorship journey.</p></div>
+          </div>
+          <div className="mb-6 border-b border-slate-200">
+            <div className="flex gap-2 overflow-x-auto" role="tablist" aria-label="Mentorship sessions">
+              {tabs.map((tab) => <button key={tab.id} role="tab" aria-selected={activeTab === tab.id} onClick={() => { setActiveTab(tab.id); setSearch(''); }} className={`flex shrink-0 items-center gap-2 border-b-2 px-3 py-3 text-sm font-semibold transition ${activeTab === tab.id ? 'border-yellow-500 text-slate-950' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>{tab.label}<span className={`rounded-full px-2 py-0.5 text-xs ${activeTab === tab.id ? 'bg-yellow-100 text-yellow-800' : 'bg-slate-200 text-slate-600'}`}>{tab.count}</span></button>)}
+            </div>
+          </div>
+          <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+            <div><h2 className="font-semibold text-slate-900">{tabs.find((tab) => tab.id === activeTab)?.label}</h2><p className="text-sm text-slate-500">{activeTab === 'available' ? 'Browse alumni who are currently accepting mentees.' : activeTab === 'requested' ? 'Requests awaiting confirmation from your mentors.' : 'A record of your completed mentorship sessions.'}</p></div>
+            <label className="relative block w-full sm:w-72"><span className="sr-only">Search mentors</span><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search name, domain, company" className="w-full rounded-xl border border-slate-300 bg-slate-50 py-2.5 pl-9 pr-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-yellow-500 focus:ring-2 focus:ring-yellow-500/20" /></label>
+          </div>
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+            {filteredMentors.map((mentor) => (
+              <article key={`${activeTab}-${mentor.id}`} className="flex min-h-72 flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-yellow-300 hover:shadow-md">
+                <div className="flex items-start justify-between gap-3"><div className={`flex h-14 w-14 items-center justify-center rounded-2xl text-base font-bold ${mentor.accent}`}>{mentor.initials}</div><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${activeTab === 'available' ? 'bg-emerald-50 text-emerald-700' : activeTab === 'requested' ? 'bg-amber-50 text-amber-700' : 'bg-blue-50 text-blue-700'}`}>{activeTab === 'available' ? 'Available' : activeTab === 'requested' ? 'Pending' : 'Completed'}</span></div>
+                <div className="mt-4"><h3 className="text-lg font-bold text-slate-950">{mentor.name}</h3><p className="mt-1 font-medium text-yellow-700">{mentor.domain}</p></div>
+                <div className="mt-4 space-y-3 text-sm text-slate-600"><div className="flex items-center gap-2.5"><BriefcaseBusiness className="h-4 w-4 shrink-0 text-slate-400" /><span>{mentor.company}</span></div><div className="flex items-start gap-2.5"><Clock3 className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" /><span>{mentor.availability}</span></div></div>
+                <div className="mt-auto pt-5">
+                  {activeTab === 'available' && <button onClick={() => requestMentorship(mentor)} className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-yellow-400 hover:text-slate-950 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"><Send className="h-4 w-4" />Request Mentorship</button>}
+                  {activeTab === 'requested' && <div className="flex items-center justify-center gap-2 rounded-xl bg-amber-50 px-4 py-2.5 text-sm font-semibold text-amber-800"><Clock3 className="h-4 w-4" />Request sent</div>}
+                  {activeTab === 'completed' && <div className="flex items-center justify-center gap-2 rounded-xl bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-800"><CheckCircle2 className="h-4 w-4" />Session completed</div>}
+                </div>
+              </article>
+            ))}
+          </div>
+          {filteredMentors.length === 0 && <div className="rounded-2xl border border-dashed border-slate-300 bg-white py-16 text-center"><Users className="mx-auto h-10 w-10 text-slate-300" /><h3 className="mt-3 font-semibold text-slate-900">No mentors found</h3><p className="mt-1 text-sm text-slate-500">Try a different name, domain, or company.</p></div>}
+        </main>
+      </div>
+    </div>
+  );
+}

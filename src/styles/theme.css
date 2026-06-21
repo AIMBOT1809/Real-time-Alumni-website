@@ -179,3 +179,46 @@
     line-height: 1.5;
   }
 }
+
+/* Dashboard pages use the single shared navigation shell. */
+.dashboard-content main { grid-column: 1 / -1; }
+.dashboard-content > div { margin: 0; }
+
+/* Chatbot video button - replaces pink n8n icon with video */
+.chat-window-wrapper .chat-window-toggle.has-video {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35) !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+  width: 96px !important;
+  height: 96px !important;
+  border-radius: 50% !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.chat-window-wrapper .chat-window-toggle.has-video:hover {
+  transform: scale(1.12) !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5) !important;
+}
+
+.chat-window-wrapper .chat-window-toggle.has-video:active {
+  transform: scale(0.92) !important;
+}
+
+/* Mobile responsive sizes */
+@media (max-width: 640px) {
+  .chat-window-wrapper .chat-window-toggle.has-video {
+    width: 80px !important;
+    height: 80px !important;
+  }
+
+  .chat-window-wrapper .chat-window-toggle.has-video:hover {
+    transform: scale(1.10) !important;
+  }
+
+  .chat-window-wrapper .chat-window-toggle.has-video:active {
+    transform: scale(0.90) !important;
+  }
+}
+

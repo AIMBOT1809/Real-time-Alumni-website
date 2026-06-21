@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { supabase } from '../../supabaseClient';
 import { createChat } from '@n8n/chat';
 import '@n8n/chat/style.css';
+import { AlumniStatisticsWidget } from '../components/AlumniStatisticsWidget';
 import { 
   Bell, 
   User, 
@@ -14,20 +15,36 @@ import {
   Settings,
   LogOut,
   Eye,
-  MessageSquare,
   MessageCircle,
-  ArrowLeft,
-  Sun,
-  Moon,
-  Activity,
+  GraduationCap,
 } from 'lucide-react';
-import { useNavigate } from 'react-router';
+// @ts-ignore
+import MessageSquare from 'lucide-react/dist/esm/icons/message-square';
+// @ts-ignore
+import ArrowLeft from 'lucide-react/dist/esm/icons/arrow-left';
+// @ts-ignore
+import Sun from 'lucide-react/dist/esm/icons/sun';
+// @ts-ignore
+import Moon from 'lucide-react/dist/esm/icons/moon';
+// @ts-ignore
+import Edit3 from 'lucide-react/dist/esm/icons/edit-3';
+// @ts-ignore
+import Trash2 from 'lucide-react/dist/esm/icons/trash-2';
+import { useLocation, useNavigate } from 'react-router';
 import { Chat } from './Chat';
+import { getApprovedPosts, getPostsByAuthor } from '../data/localStoragePosts';
+import { showGlobalToast } from '../components/Toast';
+import { ConfirmModal } from '../components/ConfirmModal';
 
 export function MainDashboard() {
-  const { user, role, logout, login, posts, jobs, events, following, getAlumniById, alumni, addPost } = useAuth();
+  const { user, role, logout, login, posts, jobs, events, following, getAlumniById, alumni, addPost, deletePost } = useAuth();
   const navigate = useNavigate();
-  const [activeMenu, setActiveMenu] = useState('home');
+  const location = useLocation();
+  const getMenuFromPath = () => {
+    const section = location.pathname.split('/')[2];
+    return ['community', 'activity', 'notifications', 'profile', 'chat', 'post'].includes(section) ? section : 'home';
+  };
+  const [activeMenu, setActiveMenu] = useState(getMenuFromPath);
   const [eventView, setEventView] = useState('upcoming');
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -36,14 +53,27 @@ export function MainDashboard() {
   const [registeredEvents, setRegisteredEvents] = useState<any[]>([]);
   const [attendedEvents, setAttendedEvents] = useState<any[]>([]);
   const [selectedActivityCard, setSelectedActivityCard] = useState<string | null>(null);
+  const [deleteConfirmPost, setDeleteConfirmPost] = useState<string | null>(null);
+  const [isDeletingPost, setIsDeletingPost] = useState(false);
+
+  useEffect(() => {
+    setActiveMenu(getMenuFromPath());
+  }, [location.pathname]);
   
   // Profile editing state
   const [isEditing, setIsEditing] = useState(false);
   const [postContent, setPostContent] = useState('');
-  const [postType, setPostType] = useState<'general'|'opportunity'|'event'>('general');
+  const [postType, setPostType] = useState<'general'|'job'|'internship'|'mentorship'|'referral'|'event'|'business'|'higher-education'>('general');
   const [postImage, setPostImage] = useState<string | null>(null);
   const [postFileName, setPostFileName] = useState<string | null>(null);
   const [postTitle, setPostTitle] = useState<string>('');
+  const [postDetails, setPostDetails] = useState<Record<string, any>>({});
+
+  // Reset dynamic fields when post type changes
+  useEffect(() => {
+    setPostDetails({});
+  }, [postType]);
+
   const [formData, setFormData] = useState({
     collegeName: user?.collegeName || '',
     rollNumber: user?.rollNumber || '',
@@ -99,6 +129,81 @@ export function MainDashboard() {
   createChat({
     webhookUrl: 'https://shaaz-03.app.n8n.cloud/webhook/2c823375-ff32-43b7-b598-63fb73838f86/chat'
   });
+
+  // Replace the n8n chat toggle icon with the chatbot video
+  const tryInjectVideo = () => {
+    const toggleBtn = document.querySelector('.chat-window-toggle') as HTMLElement | null;
+    if (!toggleBtn) return;
+    if (toggleBtn.querySelector('.chatbot-video')) return;
+
+    toggleBtn.classList.add('has-video');
+
+    const video = document.createElement('video');
+    video.src = '/chatbot.mp4';
+    video.autoplay = true;
+    video.loop = true;
+    video.muted = true;
+    video.playsInline = true;
+    video.className = 'chatbot-video';
+    Object.assign(video.style, {
+      width: '100%',
+      height: '100%',
+      objectFit: 'cover',
+      borderRadius: '50%',
+      pointerEvents: 'none',
+      position: 'absolute',
+      top: '0',
+      left: '0',
+    } as Partial<CSSStyleDeclaration>);
+
+    const fallbackIcon = document.createElement('span');
+    fallbackIcon.className = 'chatbot-fallback-icon';
+    fallbackIcon.innerHTML = '💬';
+    Object.assign(fallbackIcon.style, {
+      position: 'absolute',
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -50%)',
+      fontSize: '24px',
+      lineHeight: '1',
+      pointerEvents: 'none',
+      zIndex: '1',
+    } as Partial<CSSStyleDeclaration>);
+
+    const showFallback = () => {
+      toggleBtn.classList.remove('has-video');
+      (video as HTMLElement).style.display = 'none';
+      (fallbackIcon as HTMLElement).style.display = 'flex';
+      toggleBtn.style.backgroundColor = '#ec4899';
+      toggleBtn.style.border = 'none';
+      toggleBtn.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+    };
+
+    video.onerror = () => {
+      showFallback();
+    };
+
+    video.onloadeddata = () => {
+      (fallbackIcon as HTMLElement).style.display = 'none';
+    };
+
+    toggleBtn.style.position = 'relative';
+    toggleBtn.style.overflow = 'hidden';
+    toggleBtn.appendChild(video);
+    toggleBtn.appendChild(fallbackIcon);
+  };
+
+  // Wait for n8n chat to render its toggle button
+  const observer = new MutationObserver(() => {
+    tryInjectVideo();
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
+
+  // Also try immediately in case it's already there
+  setTimeout(tryInjectVideo, 500);
+  setTimeout(tryInjectVideo, 1500);
+
+  return () => observer.disconnect();
 }, []);
 
   const startEditing = () => {
@@ -423,6 +528,34 @@ const fetchEventRegistrations = async () => {
   const removeLink = (index: number) => {
     setLinks(links.filter((_: any, i: number) => i !== index));
   };
+
+  const handleDeletePost = async (postId: string) => {
+    if (!user) return;
+    const canDelete = user.role === 'admin' || posts.some(p => p.id === postId && p.alumniId === user.id);
+    if (!canDelete) return;
+    setDeleteConfirmPost(postId);
+  };
+
+  const confirmDeletePost = async () => {
+    if (!deleteConfirmPost || !user) return;
+    
+    try {
+      setIsDeletingPost(true);
+      const { error } = await supabase.from('posts').delete().eq('id', deleteConfirmPost);
+      if (error) {
+        console.error('[MainDashboard] Error deleting post:', error);
+        showGlobalToast('Something went wrong. Please try again.', 'error');
+        return;
+      }
+      showGlobalToast('Post deleted successfully.', 'success');
+      setDeleteConfirmPost(null);
+    } catch (err) {
+      console.error('[MainDashboard] Unexpected error deleting post:', err);
+      showGlobalToast('Something went wrong. Please try again.', 'error');
+    } finally {
+      setIsDeletingPost(false);
+    }
+  };
  
  
 /*
@@ -437,20 +570,33 @@ const fetchEventRegistrations = async () => {
  //const followedPosts = adminPosts;
   const canPost = role === 'faculty' || role === 'alumni';
 
-// Show admin posts + faculty/alumni posts to everyone
-const followedPosts = [
-  ...(adminPosts || []).map((post) => ({
-    ...post,
-    source: 'admin',
-  })),
-  ...(posts || []).map((post) => ({
-    ...post,
-    source: 'user',
-    description: post.content,
-    created_at: post.timestamp,
-    file_url: post.image,
-  })),
-];
+  // Temporary localStorage approval flow for demo
+  // Show admin posts + faculty/alumni posts to everyone (only approved posts)
+  const followedPosts = [
+    ...(adminPosts || []).map((post) => ({
+      ...post,
+      source: 'admin',
+    })),
+    ...(posts || []).map((post) => ({
+      ...post,
+      source: 'user',
+      description: post.content,
+      created_at: post.timestamp,
+      file_url: post.image,
+    })),
+    // Add approved local posts from localStorage
+    ...getApprovedPosts().map((post) => ({
+      ...post,
+      source: 'local',
+      description: post.content,
+      created_at: post.timestamp || post.created_at,
+      file_url: post.image,
+    })),
+  ].filter((post, index, self) => 
+    // Filter out pending/rejected posts and deduplicate
+    (!post.status || post.status === 'approved') && 
+    index === self.findIndex((p) => p.id === post.id)
+  );
   // Filter events
   const now = new Date();
   const upcomingEvents = events?.filter(event => new Date(event.date) > now) || [];
@@ -467,15 +613,22 @@ const followedPosts = [
   // Filter jobs to only show from followed alumni
   const followedJobs = jobs?.filter(job => job.alumniId && following?.includes(job.alumniId)) || [];
 
-  // Get user's own posts
-  const userPosts = posts?.filter(p => p.alumniId === user?.id) || [];
+  // Temporary localStorage approval flow for demo
+  // Get user's own posts from both Supabase and localStorage
+  const userPosts = [
+    ...(posts?.filter(p => p.alumniId === user?.id) || []),
+    ...getApprovedPosts().filter(p => p.alumniId === user?.id),
+    ...getPostsByAuthor(user?.id || '').filter(p => p.status === 'pending' || p.status === 'rejected'),
+  ].filter((post, index, self) => 
+    index === self.findIndex((p) => p.id === post.id)
+  );
 
   if (activeMenu === 'chat') {
     const isDark = chatTheme === 'dark';
     return (
-      <div className={`fixed inset-0 z-50 flex flex-col ${isDark ? 'bg-black' : 'bg-white'}`}>
+      <div className={`h-[calc(100vh-4rem)] flex flex-col ${isDark ? 'bg-black' : 'bg-white'}`}>
         <div className={`h-16 px-6 border-b flex items-center justify-between ${isDark ? 'bg-black border-[#262626]' : 'bg-white border-gray-200'}`}>
-          <button onClick={() => setActiveMenu('home')} className={`flex items-center gap-2 transition-colors ${isDark ? 'text-white hover:text-[#FFD700]' : 'text-black hover:text-yellow-600'}`}>
+          <button onClick={() => navigate('/dashboard')} className={`flex items-center gap-2 transition-colors ${isDark ? 'text-white hover:text-[#FFD700]' : 'text-black hover:text-yellow-600'}`}>
             <ArrowLeft size={20} />
             <span className="font-semibold text-sm">Back to Dashboard</span>
           </button>
@@ -497,149 +650,13 @@ const followedPosts = [
 
   return (
     <div className="min-h-screen bg-white text-slate-900">
-      {/* Top Navbar */}
-      <header className="bg-slate-900 border-b border-slate-800 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            {/* Logo */}
-            <div className="flex items-center space-x-4">
-              <h1 className="text-2xl font-bold text-[#FFD700]">Alumni Connect</h1>
-            </div>
-
-            {/* Right Icons */}
-            <div className="flex items-center space-x-4">
-              {canPost && (
-                <button className="p-2 hover:bg-slate-800 rounded-lg transition-colors group">
-                  <Plus className="h-6 w-6 text-[#FFD700] group-hover:text-yellow-400" />
-                </button>
-              )}
-              <button 
-                onClick={() => setActiveMenu('chat')}
-                className="p-2 hover:bg-slate-800 rounded-lg transition-colors relative"
-              >
-                <MessageCircle className="h-6 w-6 text-slate-300" />
-                <span className="absolute top-1 right-1 h-2 w-2 bg-[#FFD700] rounded-full"></span>
-              </button>
-              <button 
-                onClick={() => setActiveMenu('notifications')}
-                className="p-2 hover:bg-slate-800 rounded-lg transition-colors relative"
-              >
-                <Bell className="h-6 w-6 text-slate-300" />
-                <span className="absolute top-1 right-1 h-2 w-2 bg-[#FFD700] rounded-full"></span>
-              </button>
-              <button className="p-2 hover:bg-slate-800 rounded-lg transition-colors">
-                <img 
-                  src={user?.avatar || 'https://ui-avatars.com/api/?name=User&background=FDE68A&color=111827&size=256'} 
-                  alt={user?.name || 'User'}
-                  className="h-8 w-8 rounded-full object-cover border-2 border-[#FFD700]"
-                />
-              </button>
-            </div>
-          </div>
-
-          <div className="mt-4 mb-3">
-            <div className="relative max-w-3xl mx-auto">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5" />
-              <input
-                type="search"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search the dashboard..."
-                className="w-full rounded-2xl border border-slate-700 bg-slate-800 py-3 pl-10 pr-4 text-slate-100 placeholder:text-slate-500 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/20"
-              />
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <nav className="mt-4 bg-white border border-slate-200 rounded-3xl shadow-sm max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-        <div className={`grid ${role === 'student' ? 'grid-cols-6' : 'grid-cols-7'} gap-1`}>
-          <button
-            onClick={() => setActiveMenu('home')}
-            className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[0.72rem] transition ${
-              activeMenu === 'home' ? 'bg-[#FFD700] text-black' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
-            }`}
-          >
-            <Home className="h-5 w-5" />
-            <span>Home</span>
-          </button>
-          {role !== 'student' && (
-          <button
-            onClick={() => setActiveMenu('post')}
-            className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[0.72rem] transition ${
-              activeMenu === 'post' ? 'bg-[#FFD700] text-black' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
-            }`}
-          >
-            <Plus className="h-5 w-5" />
-            <span>Post</span>
-          </button>
-          )}
-          <button
-            onClick={() => setActiveMenu('events')}
-            className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[0.72rem] transition ${
-              activeMenu === 'events' ? 'bg-[#FFD700] text-black' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
-            }`}
-          >
-            <Briefcase className="h-5 w-5" />
-            <span>Event</span>
-          </button>
-          <button
-            onClick={() => setActiveMenu('community')}
-            className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[0.72rem] transition ${
-              activeMenu === 'community' ? 'bg-[#FFD700] text-black' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
-            }`}
-          >
-            <Users className="h-5 w-5" />
-            <span>Community</span>
-          </button>
-          <button
-            onClick={() => setActiveMenu('activity')}
-            className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[0.72rem] transition ${
-              activeMenu === 'activity' ? 'bg-[#FFD700] text-black' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
-            }`}
-          >
-            <Eye className="h-5 w-5" />
-            <span>Activity</span>
-          </button>
-          <button
-            onClick={() => setActiveMenu('profile')}
-            className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[0.72rem] transition ${
-              activeMenu === 'profile' ? 'bg-[#FFD700] text-black' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
-            }`}
-          >
-            <User className="h-5 w-5" />
-            <span>Profile</span>
-          </button>
-        </div>
-      </nav>
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          
-          {/* Sidebar */}
-          <aside className="lg:col-span-1">
-            <div className="bg-slate-900 rounded-lg border border-slate-800 overflow-hidden sticky top-20">
-              {/* Simple User Profile Card */}
-              <div className="p-4 border-b border-slate-800">
-                <div className="flex items-center space-x-3 mb-4">
-                  <img 
-                    src={user?.avatar || 'https://ui-avatars.com/api/?name=User&background=FDE68A&color=111827&size=256'} 
-                    alt={user?.name || 'User'}
-                    className="h-12 w-12 rounded-full object-cover"
-                  />
-                  <div>
-                    <h3 className="font-semibold text-white">{user?.name || 'User'}</h3>
-                    <p className="text-sm text-slate-400 capitalize">{role}</p>
-                  </div>
-                </div>
-                              </div>
-
-            </div>
-          </aside>
+        <div className="flex flex-col lg:flex-row gap-6">
 
           {/* Main Content Area */}
-          <main className="lg:col-span-3 space-y-6">
+          <main className="flex-1 min-w-0 space-y-6">
             {activeMenu === 'home' && (
               <>
                 {/* Create Post (for Faculty and Alumni) */}
@@ -722,6 +739,11 @@ const author =
                                   Event
                                 </span>
                               )}
+                              {post.type === 'mentorship' && (
+                                <span className="px-3 py-1 bg-purple-500 text-white text-xs font-bold rounded-full">
+                                  Mentorship
+                                </span>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -729,13 +751,13 @@ const author =
                         {/* Post Content */}
                         <div className="px-4 pb-3">
                           {post.title && <h3 className="text-lg font-semibold text-slate-100">{post.title}</h3>}
-                          <p className="text-slate-200">{post.description}</p>
+                          <p className="text-slate-200">{post.content}</p>
                         </div>
 
                         {/* Post Image */}
-                        {post.file_url && (
+                        {post.image && (
                           <img 
-                            src={post.file_url} 
+                            src={post.image} 
                             alt="Post content"
                             className="w-full h-64 object-cover"
                           />
@@ -795,9 +817,14 @@ const author =
                           onChange={(e) => setPostType(e.target.value as any)}
                           className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white"
                         >
-                          <option value="general">General</option>
-                          <option value="opportunity">Opportunity</option>
+                          {role === 'alumni' && <option value="job">Job</option>}
+                          {role === 'alumni' && <option value="internship">Internship</option>}
+                          {role === 'alumni' && <option value="referral">Referral</option>}
+                          <option value="mentorship">Mentorship</option>
                           <option value="event">Event</option>
+                          {role === 'alumni' && <option value="business">Business</option>}
+                          {role === 'faculty' && <option value="higher-education">Higher Education</option>}
+                          <option value="general">General Post</option>
                         </select>
                       </div>
 
@@ -819,6 +846,263 @@ const author =
                           placeholder="Write your post here..."
                         />
                       </div>
+
+                      {/* Dynamic fields based on post type */}
+                      {postType === 'job' && (
+                        <div className="space-y-4 p-4 bg-slate-800 rounded-lg">
+                          <h3 className="text-lg font-semibold text-white">Job Details</h3>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Company Name *</label>
+                              <input type="text" required value={postDetails.companyName || ''} onChange={(e) => setPostDetails({...postDetails, companyName: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Job Role *</label>
+                              <input type="text" required value={postDetails.jobRole || ''} onChange={(e) => setPostDetails({...postDetails, jobRole: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Location *</label>
+                              <input type="text" required value={postDetails.location || ''} onChange={(e) => setPostDetails({...postDetails, location: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Eligibility *</label>
+                              <input type="text" required value={postDetails.eligibility || ''} onChange={(e) => setPostDetails({...postDetails, eligibility: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Required Skills *</label>
+                              <input type="text" required value={postDetails.requiredSkills || ''} onChange={(e) => setPostDetails({...postDetails, requiredSkills: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Salary/Package *</label>
+                              <input type="text" required value={postDetails.salary || ''} onChange={(e) => setPostDetails({...postDetails, salary: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Apply Link *</label>
+                              <input type="url" required value={postDetails.applyLink || ''} onChange={(e) => setPostDetails({...postDetails, applyLink: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Deadline *</label>
+                              <input type="date" required value={postDetails.deadline || ''} onChange={(e) => setPostDetails({...postDetails, deadline: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {postType === 'internship' && (
+                        <div className="space-y-4 p-4 bg-slate-800 rounded-lg">
+                          <h3 className="text-lg font-semibold text-white">Internship Details</h3>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Company Name *</label>
+                              <input type="text" required value={postDetails.companyName || ''} onChange={(e) => setPostDetails({...postDetails, companyName: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Internship Role *</label>
+                              <input type="text" required value={postDetails.internshipRole || ''} onChange={(e) => setPostDetails({...postDetails, internshipRole: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Duration *</label>
+                              <input type="text" required value={postDetails.duration || ''} onChange={(e) => setPostDetails({...postDetails, duration: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Stipend *</label>
+                              <input type="text" required value={postDetails.stipend || ''} onChange={(e) => setPostDetails({...postDetails, stipend: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Required Skills *</label>
+                              <input type="text" required value={postDetails.requiredSkills || ''} onChange={(e) => setPostDetails({...postDetails, requiredSkills: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Location/Remote *</label>
+                              <input type="text" required value={postDetails.locationType || ''} onChange={(e) => setPostDetails({...postDetails, locationType: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Apply Link *</label>
+                              <input type="url" required value={postDetails.applyLink || ''} onChange={(e) => setPostDetails({...postDetails, applyLink: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Deadline *</label>
+                              <input type="date" required value={postDetails.deadline || ''} onChange={(e) => setPostDetails({...postDetails, deadline: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {postType === 'business' && (
+                        <div className="space-y-4 p-4 bg-slate-800 rounded-lg">
+                          <h3 className="text-lg font-semibold text-white">Business Details</h3>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Business/Startup Name *</label>
+                              <input type="text" required value={postDetails.businessName || ''} onChange={(e) => setPostDetails({...postDetails, businessName: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Opportunity Title *</label>
+                              <input type="text" required value={postDetails.opportunityTitle || ''} onChange={(e) => setPostDetails({...postDetails, opportunityTitle: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                            </div>
+                            <div className="md:col-span-2">
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Business Category *</label>
+                              <input type="text" required value={postDetails.businessCategory || ''} onChange={(e) => setPostDetails({...postDetails, businessCategory: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                            </div>
+                            <div className="md:col-span-2">
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Collaboration Details *</label>
+                              <textarea required value={postDetails.collaborationDetails || ''} onChange={(e) => setPostDetails({...postDetails, collaborationDetails: e.target.value})} rows={3} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                            </div>
+                            <div className="md:col-span-2">
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Support Needed *</label>
+                              <textarea required value={postDetails.supportNeeded || ''} onChange={(e) => setPostDetails({...postDetails, supportNeeded: e.target.value})} rows={3} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                            </div>
+                            <div className="md:col-span-2">
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Contact Link/Email *</label>
+                              <input type="text" required value={postDetails.contactLink || ''} onChange={(e) => setPostDetails({...postDetails, contactLink: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {postType === 'referral' && (
+                        <div className="space-y-4 p-4 bg-slate-800 rounded-lg">
+                          <h3 className="text-lg font-semibold text-white">Referral Details</h3>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Company Name *</label>
+                              <input type="text" required value={postDetails.companyName || ''} onChange={(e) => setPostDetails({...postDetails, companyName: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Role *</label>
+                              <input type="text" required value={postDetails.role || ''} onChange={(e) => setPostDetails({...postDetails, role: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Eligibility *</label>
+                              <input type="text" required value={postDetails.eligibility || ''} onChange={(e) => setPostDetails({...postDetails, eligibility: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Required Skills *</label>
+                              <input type="text" required value={postDetails.requiredSkills || ''} onChange={(e) => setPostDetails({...postDetails, requiredSkills: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                            </div>
+                            <div className="md:col-span-2">
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Referral Process *</label>
+                              <textarea required value={postDetails.referralProcess || ''} onChange={(e) => setPostDetails({...postDetails, referralProcess: e.target.value})} rows={3} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                            </div>
+                            <div className="md:col-span-2">
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Resume Submission Link *</label>
+                              <input type="url" required value={postDetails.resumeLink || ''} onChange={(e) => setPostDetails({...postDetails, resumeLink: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Deadline *</label>
+                              <input type="date" required value={postDetails.deadline || ''} onChange={(e) => setPostDetails({...postDetails, deadline: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {postType === 'higher-education' && (
+                        <div className="space-y-4 p-4 bg-slate-800 rounded-lg">
+                          <h3 className="text-lg font-semibold text-white">Higher Education Details</h3>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Title *</label>
+                              <input type="text" required value={postDetails.heTitle || postTitle || ''} onChange={(e) => { setPostTitle(e.target.value); setPostDetails({...postDetails, heTitle: e.target.value}); }} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                            </div>
+                            <div className="md:col-span-2">
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Description *</label>
+                              <textarea required value={postDetails.description || ''} onChange={(e) => setPostDetails({...postDetails, description: e.target.value})} rows={3} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Country *</label>
+                              <input type="text" required value={postDetails.country || ''} onChange={(e) => setPostDetails({...postDetails, country: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">University/College Name *</label>
+                              <input type="text" required value={postDetails.university || ''} onChange={(e) => setPostDetails({...postDetails, university: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Course/Program Name *</label>
+                              <input type="text" required value={postDetails.course || ''} onChange={(e) => setPostDetails({...postDetails, course: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Branch/Specialization *</label>
+                              <input type="text" required value={postDetails.branch || ''} onChange={(e) => setPostDetails({...postDetails, branch: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Eligibility *</label>
+                              <input type="text" required value={postDetails.eligibility || ''} onChange={(e) => setPostDetails({...postDetails, eligibility: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Exams Required *</label>
+                              <input type="text" required value={postDetails.examsRequired || ''} onChange={(e) => setPostDetails({...postDetails, examsRequired: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Scholarship Information</label>
+                              <input type="text" value={postDetails.scholarship || ''} onChange={(e) => setPostDetails({...postDetails, scholarship: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Application Deadline *</label>
+                              <input type="date" required value={postDetails.applicationDeadline || ''} onChange={(e) => setPostDetails({...postDetails, applicationDeadline: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                            </div>
+                            <div className="md:col-span-2">
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Application/Info Link *</label>
+                              <input type="url" required value={postDetails.applicationLink || ''} onChange={(e) => setPostDetails({...postDetails, applicationLink: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {postType === 'mentorship' && (
+                        <div className="space-y-4 p-4 bg-slate-800 rounded-lg">
+                          <h3 className="text-lg font-semibold text-white">Mentorship Details</h3>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Mentorship Topic *</label>
+                              <input type="text" required value={postDetails.mentorshipTopic || ''} onChange={(e) => setPostDetails({...postDetails, mentorshipTopic: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" placeholder="e.g., Career Guidance, Technical Skills" />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Mentor Name *</label>
+                              <input type="text" required value={postDetails.mentorName || ''} onChange={(e) => setPostDetails({...postDetails, mentorName: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Mentor Role/Designation *</label>
+                              <input type="text" required value={postDetails.mentorRole || ''} onChange={(e) => setPostDetails({...postDetails, mentorRole: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" placeholder="e.g., Senior Software Engineer at Google" />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Session Date *</label>
+                              <input type="date" required value={postDetails.sessionDate || ''} onChange={(e) => setPostDetails({...postDetails, sessionDate: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Session Time *</label>
+                              <input type="time" required value={postDetails.sessionTime || ''} onChange={(e) => setPostDetails({...postDetails, sessionTime: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Duration *</label>
+                              <input type="text" required value={postDetails.duration || ''} onChange={(e) => setPostDetails({...postDetails, duration: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" placeholder="e.g., 1 hour, 2 hours" />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Mode *</label>
+                              <select required value={postDetails.mode || ''} onChange={(e) => setPostDetails({...postDetails, mode: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white">
+                                <option value="">Select Mode</option>
+                                <option value="Online">Online</option>
+                                <option value="Offline">Offline</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Meeting Link or Venue *</label>
+                              <input type="text" required value={postDetails.meetingLinkOrVenue || ''} onChange={(e) => setPostDetails({...postDetails, meetingLinkOrVenue: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" placeholder="Zoom link or physical venue" />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Maximum Participants *</label>
+                              <input type="number" required min="1" value={postDetails.maxParticipants || ''} onChange={(e) => setPostDetails({...postDetails, maxParticipants: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" placeholder="e.g., 20" />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Eligibility / Target Students *</label>
+                              <input type="text" required value={postDetails.eligibility || ''} onChange={(e) => setPostDetails({...postDetails, eligibility: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" placeholder="e.g., 2nd year CSE students" />
+                            </div>
+                            <div className="md:col-span-2">
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Description *</label>
+                              <textarea required value={postDetails.description || ''} onChange={(e) => setPostDetails({...postDetails, description: e.target.value})} rows={4} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" placeholder="Describe the mentorship session, what students will learn..." />
+                            </div>
+                          </div>
+                        </div>
+                      )}
 
                       <div>
                         <label className="block text-sm font-medium text-slate-300 mb-1">Attach file / image (optional)</label>
@@ -851,27 +1135,29 @@ const author =
                           onClick={() => {
                             if (!postContent.trim()) return;
                             addPost({
-  title: postTitle || undefined,
-  alumniId: user?.id || 'unknown',
-  authorRole: role,
-  content: postContent.trim(),
-  type: postType,
-  likes: 0,
-  comments: 0,
-  image: postImage || undefined,
-});
+                              title: postTitle || undefined,
+                              alumniId: user?.id || 'unknown',
+                              authorRole: role,
+                              content: postContent.trim(),
+                              type: postType,
+                              likes: 0,
+                              comments: 0,
+                              image: postImage || undefined,
+                              post_details: Object.keys(postDetails).length > 0 ? postDetails : undefined,
+                            });
                             setPostTitle('');
                             setPostContent('');
                             setPostType('general');
                             setPostImage(null);
-                            setActiveMenu('home');
+                            setPostDetails({});
+                            navigate('/dashboard/contributions');
                           }}
                           className="px-4 py-2 bg-[#FFD700] text-black rounded-lg font-semibold hover:bg-yellow-600"
                         >
                           Publish
                         </button>
                         <button
-                          onClick={() => { setPostContent(''); setPostType('general'); setPostImage(null); }}
+                          onClick={() => { setPostContent(''); setPostType('general'); setPostImage(null); setPostDetails({}); }}
                           className="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600"
                         >
                           Cancel
@@ -1010,13 +1296,13 @@ const author =
               </div>
             )}
 
-            {activeMenu === 'activity' && (
+            {activeMenu === 'activity' && role !== 'faculty' && (
               <div className="space-y-6">
                 <h2 className="text-2xl font-bold text-white">Activity</h2>
                 
                 {/* Activity Cards - Top Row */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {(role === "alumni" || role === "faculty") && (
+                  {(role === "alumni") && (
                     <div
                       onClick={() => setSelectedActivityCard("postsCreated")}
                       className={`cursor-pointer transition rounded-lg border p-6 ${
@@ -1107,38 +1393,87 @@ const author =
                 ) : (
                   <>
                     {/* Posts Created Details */}
-                    {selectedActivityCard === "postsCreated" && (role === "alumni" || role === "faculty") && (
+                    {selectedActivityCard === "postsCreated" && (role === "alumni") && (
                       <div className="bg-slate-900 rounded-lg border border-slate-800 p-6">
-                        <h3 className="text-xl font-bold text-white mb-4">Your Posts</h3>
+                        <div className="flex items-center justify-between mb-6">
+                          <h3 className="text-xl font-bold text-white">Your Posts</h3>
+                          <span className="px-3 py-1 rounded-full text-sm font-semibold bg-slate-800 text-slate-300">
+                            {userPosts.length} total
+                          </span>
+                        </div>
                         <div className="space-y-4">
-                          {posts?.filter(p => p.alumniId === user?.id).length > 0 ? (
-                            posts?.filter(p => p.alumniId === user?.id).map((post) => (
-                              <div key={post.id} className="bg-slate-800 rounded-lg p-4 border border-slate-700 hover:border-[#FFD700] transition-colors">
-                                <div className="flex items-start justify-between mb-2">
+                          {userPosts.length > 0 ? (
+                            userPosts.map((post) => (
+                              <div key={post.id} className="bg-slate-800 rounded-lg p-4 border border-slate-700 hover:border-[#FFD700] transition-colors group">
+                                <div className="flex items-start justify-between mb-3">
                                   <div className="flex-1">
                                     <h4 className="font-semibold text-white">{post.title || 'Untitled Post'}</h4>
-                                    <p className="text-sm text-slate-400 mt-1">{post.content?.substring(0, 150) || 'No content'}...</p>
+                                    <p className="text-sm text-slate-400 mt-1 line-clamp-2">{post.content?.substring(0, 150) || 'No content'}{post.content && post.content.length > 150 ? '...' : ''}</p>
                                   </div>
-                                  <span className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ml-2 ${
-                                    post.status === 'approved' ? 'bg-green-900 text-green-200' :
-                                    post.status === 'rejected' ? 'bg-red-900 text-red-200' :
-                                    'bg-yellow-900 text-yellow-200'
+                                  <span className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ml-2 flex-shrink-0 ${
+                                    post.status === 'approved' ? 'bg-green-900/30 text-green-200 border border-green-800' :
+                                    post.status === 'rejected' ? 'bg-red-900/30 text-red-200 border border-red-800' :
+                                    'bg-yellow-900/30 text-yellow-200 border border-yellow-800'
                                   }`}>
-                                    {post.status || 'pending'}
+                                    {post.status === 'pending' && 'Pending'}
+                                    {post.status === 'approved' && 'Approved'}
+                                    {post.status === 'rejected' && 'Rejected'}
                                   </span>
                                 </div>
-                                <p className="text-xs text-slate-500 mt-2">
-                                  {(() => {
-                                    try {
-                                      const d = new Date(post.created_at || post.timestamp);
-                                      return isNaN(d.getTime()) ? 'Recently' : d.toLocaleDateString();
-                                    } catch { return 'Recently'; }
-                                  })()}
-                                </p>
+                                <div className="flex items-center justify-between">
+                                  <p className="text-xs text-slate-500">
+                                    {(() => {
+                                      try {
+                                        const d = new Date(post.created_at || post.timestamp);
+                                        return isNaN(d.getTime()) ? 'Recently' : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                                      } catch { return 'Recently'; }
+                                    })()}
+                                  </p>
+                                  <div className="flex items-center space-x-3">
+                                    {(post.status === 'rejected' && post.rejection_reason) && (
+                                      <div className="flex items-start space-x-2">
+                                        <span className="text-red-400 text-xs">💡</span>
+                                        <p className="text-xs text-red-300 max-w-[200px]">{post.rejection_reason}</p>
+                                      </div>
+                                    )}
+                                    {deleteConfirmPost === post.id ? (
+                                      <div className="flex items-center space-x-2">
+                                        <span className="text-xs text-slate-300">Delete?</span>
+                                        <button
+                                          onClick={() => handleDeletePost(post.id)}
+                                          className="px-2 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700"
+                                        >
+                                          Yes
+                                        </button>
+                                        <button
+                                          onClick={() => setDeleteConfirmPost(null)}
+                                          className="px-2 py-1 bg-slate-600 text-white text-xs rounded hover:bg-slate-500"
+                                        >
+                                          No
+                                        </button>
+                                      </div>
+                                    ) : (
+                                      <button
+                                        onClick={() => setDeleteConfirmPost(post.id)}
+                                        className="text-red-400 hover:text-red-300 text-xs flex items-center space-x-1"
+                                      >
+                                        <span>Delete</span>
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
                               </div>
                             ))
                           ) : (
-                            <p className="text-slate-400 text-center py-8">You haven't created any posts yet.</p>
+                            <div className="text-center py-12 bg-slate-800/50 rounded-lg border border-dashed border-slate-700">
+                              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-700/50 mb-4">
+                                <svg className="w-8 h-8 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                              </div>
+                              <h3 className="text-lg font-medium text-white mb-2">No posts yet</h3>
+                              <p className="text-slate-400 text-sm">Create your first post to share with the community</p>
+                            </div>
                           )}
                         </div>
                       </div>
@@ -1708,6 +2043,14 @@ const author =
             )}
           </main>
 
+          {/* Alumni Insights Widget - Right Side on Desktop, Below on Mobile */}
+          {role?.toLowerCase() !== 'admin' && activeMenu === 'home' && (
+            <aside className="w-full lg:w-[360px] shrink-0 animate-in fade-in slide-in-from-bottom-4 duration-700">
+              <div className="sticky top-[156px]">
+                <AlumniStatisticsWidget />
+              </div>
+            </aside>
+          )}
         </div>
       </div>
     </div>

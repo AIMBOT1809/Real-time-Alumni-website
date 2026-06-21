@@ -1,875 +1,1059 @@
-import React, { useState, useRef, useEffect } from 'react';
-import {
-  Search, Edit, Phone, Video, Info, Smile, Image, Heart, X, ArrowLeft, MessageCircle, Mic, MicOff, VideoOff, PhoneOff
-} from 'lucide-react';
+'use client';
+// Temporary localStorage connection-based chat demo for presentation.
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { supabase } from '../../supabaseClient';
+// @ts-ignore
+import MessageCircle from 'lucide-react/dist/esm/icons/message-circle';
+// @ts-ignore
+import Users from 'lucide-react/dist/esm/icons/users';
+// @ts-ignore
+import Plus from 'lucide-react/dist/esm/icons/plus';
+// @ts-ignore
+import Send from 'lucide-react/dist/esm/icons/send';
+// @ts-ignore
+import X from 'lucide-react/dist/esm/icons/x';
+// @ts-ignore
+import Check from 'lucide-react/dist/esm/icons/check';
+// @ts-ignore
+import CheckCheck from 'lucide-react/dist/esm/icons/check-check';
+// @ts-ignore
+import Loader from 'lucide-react/dist/esm/icons/loader';
+// @ts-ignore
+import MoreVertical from 'lucide-react/dist/esm/icons/more-vertical';
+// @ts-ignore
+import Flag from 'lucide-react/dist/esm/icons/flag';
+// @ts-ignore
+import Ban from 'lucide-react/dist/esm/icons/ban';
+// @ts-ignore
+import Search from 'lucide-react/dist/esm/icons/search';
+// @ts-ignore
+import UserPlus from 'lucide-react/dist/esm/icons/user-plus';
+// @ts-ignore
+import ArrowLeft from 'lucide-react/dist/esm/icons/arrow-left';
+import { Toast, showGlobalToast } from '../components/Toast';
+import { ConfirmModal } from '../components/ConfirmModal';
+
+// Types
+interface User {
+  id: string;
+  name: string;
+  avatar?: string;
+  role?: string;
+  status?: 'online' | 'offline';
+}
 
 interface Message {
   id: string;
-  chat_id: string;
-  sender_id: string;
-  content: string;
-  created_at: string;
-  read_at?: string;
+  conversationId: string;
+  senderId: string;
+  text: string;
+  createdAt: string;
+  readAt?: string;
 }
 
-interface FollowRequest {
+interface Conversation {
   id: string;
-  sender_id: string;
-  receiver_id: string;
-  status: string;
-  created_at: string;
+  participants: string[];
+  otherUser: User;
+  unreadCount: number;
+  lastMessage?: string;
+  lastMessageTime?: string;
+  blockedBy?: string;
 }
 
-function Avatar({ src, name, size = 36, online = false }: { src?: string; name?: string; size?: number; online?: boolean }) {
-  const initials = (name || 'U').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+interface ConnectionRequest {
+  id: string;
+  senderId: string;
+  receiverId: string;
+  senderName: string;
+  senderAvatar?: string;
+  status: 'pending' | 'accepted' | 'declined';
+}
+
+interface ChatProps {
+  theme?: 'dark' | 'light';
+}
+
+const DEMO_USERS: User[] = [
+  { id: 'demo-alumni-1', name: 'Rahul Sharma', role: 'Alumni', avatar: '', status: 'online' },
+  { id: 'demo-faculty-1', name: 'Dr. Priya Patel', role: 'Faculty', avatar: '', status: 'online' },
+  { id: 'demo-student-1', name: 'Ananya Singh', role: 'Student', avatar: '', status: 'offline' },
+  { id: 'demo-alumni-2', name: 'Vikram Joshi', role: 'Alumni', avatar: '', status: 'online' },
+  { id: 'demo-faculty-2', name: 'Prof. Amit Kumar', role: 'Faculty', avatar: '', status: 'offline' },
+];
+
+const AUTO_REPLIES = [
+  'Thanks for your message. I will get back to you soon.',
+  'Sure, we can discuss this.',
+  'Please share more details.',
+  'That sounds great! Let me know more.',
+  'I appreciate you reaching out. Let me check and get back to you.',
+];
+
+const STORAGE_KEYS = {
+  conversations: 'chat_demo_conversations',
+  messages: 'chat_demo_messages',
+  blockedUsers: 'chat_demo_blocked_users',
+  reportedUsers: 'chat_demo_reported_users',
+  connectionRequests: 'chat_demo_connection_requests',
+  acceptedConnections: 'chat_demo_accepted_connections',
+};
+
+export function Chat({ theme = 'dark' }: ChatProps) {
+  const { user } = useAuth();
+  const [view, setView] = useState<'conversations' | 'people' | 'requests'>('conversations');
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [messageText, setMessageText] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [people, setPeople] = useState<User[]>([]);
+  const [requests, setRequests] = useState<ConnectionRequest[]>([]);
+  const [acceptedConnections, setAcceptedConnections] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [sendingMessage, setSendingMessage] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [showBlockModal, setShowBlockModal] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [showChatMenu, setShowChatMenu] = useState(false);
+
+  const isDark = theme === 'dark';
+  const bgClass = isDark ? 'bg-black' : 'bg-white';
+  const textClass = isDark ? 'text-white' : 'text-black';
+  const borderClass = isDark ? 'border-[#262626]' : 'border-gray-200';
+  const hoverBgClass = isDark ? 'hover:bg-[#1a1a1a]' : 'hover:bg-gray-50';
+  const inputBgClass = isDark ? 'bg-[#262626] text-white placeholder-gray-500' : 'bg-gray-100 text-black placeholder-gray-400';
+
+  // Load data from localStorage on mount
+  useEffect(() => {
+    if (!user?.id) return;
+    loadFromStorage();
+  }, [user?.id]);
+
+  // Refresh conversations when view changes to inbox
+  useEffect(() => {
+    if (view === 'conversations') {
+      loadFromStorage();
+    }
+  }, [view]);
+
+  // Load people when view changes to people
+  useEffect(() => {
+    if (view === 'people') {
+      setPeople(DEMO_USERS);
+    }
+  }, [view]);
+
+  // Load requests and accepted connections when view changes to requests
+  useEffect(() => {
+    if (view === 'requests') {
+      const stored = localStorage.getItem(STORAGE_KEYS.connectionRequests);
+      if (stored) {
+        setRequests(JSON.parse(stored));
+      } else {
+        // Seed demo requests (incoming)
+        const demoRequests: ConnectionRequest[] = [
+          { id: 'req-1', senderId: 'demo-alumni-1', receiverId: user?.id || '', senderName: 'Rahul Sharma', senderAvatar: '', status: 'pending' },
+          { id: 'req-2', senderId: 'demo-student-1', receiverId: user?.id || '', senderName: 'Ananya Singh', senderAvatar: '', status: 'pending' },
+        ];
+        setRequests(demoRequests);
+        localStorage.setItem(STORAGE_KEYS.connectionRequests, JSON.stringify(demoRequests));
+      }
+      // Load accepted connections
+      const acceptedStored = localStorage.getItem(STORAGE_KEYS.acceptedConnections);
+      if (acceptedStored) {
+        setAcceptedConnections(JSON.parse(acceptedStored));
+      }
+    }
+  }, [view, user?.id]);
+
+  // Load accepted connections when view changes to conversations (inbox)
+  useEffect(() => {
+    if (view === 'conversations') {
+      const acceptedStored = localStorage.getItem(STORAGE_KEYS.acceptedConnections);
+      if (acceptedStored) {
+        setAcceptedConnections(JSON.parse(acceptedStored));
+      }
+    }
+  }, [view]);
+
+  // Load messages when conversation selected
+  useEffect(() => {
+    if (!selectedConversation?.id) return;
+    const stored = localStorage.getItem(STORAGE_KEYS.messages);
+    if (stored) {
+      const allMessages: Message[] = JSON.parse(stored);
+      const convoMessages = allMessages.filter(m => m.conversationId === selectedConversation.id);
+      setMessages(convoMessages);
+    } else {
+      setMessages([]);
+    }
+    // Mark as read
+    setConversations(prev => prev.map(c =>
+      c.id === selectedConversation.id ? { ...c, unreadCount: 0 } : c
+    ));
+  }, [selectedConversation?.id]);
+
+  // Auto-scroll
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  const loadFromStorage = () => {
+    const storedConvos = localStorage.getItem(STORAGE_KEYS.conversations);
+    if (storedConvos) {
+      const parsed: Conversation[] = JSON.parse(storedConvos);
+      // Sort by lastMessageTime descending, conversations with messages first
+      parsed.sort((a: Conversation, b: Conversation) => {
+        if (!a.lastMessageTime && !b.lastMessageTime) return 0;
+        if (!a.lastMessageTime) return 1;
+        if (!b.lastMessageTime) return -1;
+        return new Date(b.lastMessageTime).getTime() - new Date(a.lastMessageTime).getTime();
+      });
+      setConversations(parsed);
+    } else {
+      setConversations([]);
+    }
+  };
+
+  const saveConversations = (convos: Conversation[]) => {
+    localStorage.setItem(STORAGE_KEYS.conversations, JSON.stringify(convos));
+    setConversations(convos);
+  };
+
+  const saveMessages = (msgs: Message[]) => {
+    localStorage.setItem(STORAGE_KEYS.messages, JSON.stringify(msgs));
+  };
+
+  const getBlockedUsers = (): string[] => {
+    const stored = localStorage.getItem(STORAGE_KEYS.blockedUsers);
+    return stored ? JSON.parse(stored) : [];
+  };
+
+  const saveBlockedUsers = (blocked: string[]) => {
+    localStorage.setItem(STORAGE_KEYS.blockedUsers, JSON.stringify(blocked));
+  };
+
+  const getReportedUsers = (): string[] => {
+    const stored = localStorage.getItem(STORAGE_KEYS.reportedUsers);
+    return stored ? JSON.parse(stored) : [];
+  };
+
+  const saveReportedUsers = (reported: string[]) => {
+    localStorage.setItem(STORAGE_KEYS.reportedUsers, JSON.stringify(reported));
+  };
+
+  const getAcceptedConnections = (): string[] => {
+    const stored = localStorage.getItem(STORAGE_KEYS.acceptedConnections);
+    return stored ? JSON.parse(stored) : [];
+  };
+
+  const saveAcceptedConnections = (connections: string[]) => {
+    localStorage.setItem(STORAGE_KEYS.acceptedConnections, JSON.stringify(connections));
+    setAcceptedConnections(connections);
+  };
+
+  const getOrCreateConversation = (otherUser: User): Conversation => {
+    const existing = conversations.find(c => c.otherUser.id === otherUser.id);
+    if (existing) return existing;
+
+    const newConvo: Conversation = {
+      id: `conv-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      participants: [user!.id, otherUser.id],
+      otherUser,
+      unreadCount: 0,
+    };
+
+    const updated = [...conversations, newConvo];
+    saveConversations(updated);
+    return newConvo;
+  };
+
+  const updateConversationLastMessage = (conversationId: string, messageText: string, messageTime: string) => {
+    // Update the conversations state directly
+    setConversations(prev => {
+      const updated = [...prev];
+      const convoIndex = updated.findIndex(c => c.id === conversationId);
+      
+      if (convoIndex !== -1) {
+        updated[convoIndex] = {
+          ...updated[convoIndex],
+          lastMessage: messageText,
+          lastMessageTime: messageTime,
+        };
+      } else if (selectedConversation && selectedConversation.id === conversationId) {
+        // If conversation not found in array but we have it selected, add it
+        updated.push({
+          ...selectedConversation,
+          lastMessage: messageText,
+          lastMessageTime: messageTime,
+        });
+      }
+
+      // Sort by lastMessageTime descending
+      updated.sort((a: Conversation, b: Conversation) => {
+        if (!a.lastMessageTime && !b.lastMessageTime) return 0;
+        if (!a.lastMessageTime) return 1;
+        if (!b.lastMessageTime) return -1;
+        return new Date(b.lastMessageTime).getTime() - new Date(a.lastMessageTime).getTime();
+      });
+
+      // Save to localStorage
+      localStorage.setItem(STORAGE_KEYS.conversations, JSON.stringify(updated));
+      
+      return updated;
+    });
+  };
+
+  const handlePersonClick = (person: User) => {
+    // Check if there's an accepted connection with this person
+    const accepted = getAcceptedConnections();
+    if (accepted.includes(person.id)) {
+      // Open chat directly if accepted
+      const convo = getOrCreateConversation(person);
+      setSelectedConversation(convo);
+      setView('conversations');
+      setTimeout(() => loadFromStorage(), 0);
+    } else {
+      // Check if request is pending
+      const allRequests = JSON.parse(localStorage.getItem(STORAGE_KEYS.connectionRequests) || '[]') as ConnectionRequest[];
+      const pendingRequest = allRequests.find(r => 
+        (r.senderId === user?.id && r.receiverId === person.id) ||
+        (r.senderId === person.id && r.receiverId === user?.id)
+      );
+      
+      if (pendingRequest && pendingRequest.status === 'pending') {
+        showGlobalToast('Chat will be enabled after request is accepted.', 'info');
+      } else if (pendingRequest && pendingRequest.status === 'declined') {
+        showGlobalToast('Request was rejected. You cannot chat with this user.', 'warning');
+      } else {
+        showGlobalToast('Send a connection request first to enable chat.', 'info');
+      }
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!messageText.trim() || !selectedConversation?.id || !user?.id) return;
+
+    const blockedUsers = getBlockedUsers();
+    if (blockedUsers.includes(selectedConversation.otherUser.id)) {
+      showGlobalToast('You blocked this user. Unblock to send messages.', 'warning');
+      return;
+    }
+
+    // Check if connection is accepted
+    const accepted = getAcceptedConnections();
+    if (!accepted.includes(selectedConversation.otherUser.id)) {
+      showGlobalToast('Chat will be enabled after request is accepted.', 'info');
+      return;
+    }
+
+    setSendingMessage(true);
+
+    const newMessage: Message = {
+      id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      conversationId: selectedConversation.id,
+      senderId: user.id,
+      text: messageText.trim(),
+      createdAt: new Date().toISOString(),
+    };
+
+    const stored = localStorage.getItem(STORAGE_KEYS.messages);
+    const allMessages: Message[] = stored ? JSON.parse(stored) : [];
+    const updatedMessages = [...allMessages, newMessage];
+    saveMessages(updatedMessages);
+    setMessages(prev => [...prev, newMessage]);
+    setMessageText('');
+    showGlobalToast('Message sent.', 'success');
+
+    // Update conversation with last message
+    updateConversationLastMessage(selectedConversation.id, messageText.trim(), newMessage.createdAt);
+
+    // Auto-reply after 1 second
+    setTimeout(() => {
+      const autoReply: Message = {
+        id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        conversationId: selectedConversation.id,
+        senderId: selectedConversation.otherUser.id,
+        text: AUTO_REPLIES[Math.floor(Math.random() * AUTO_REPLIES.length)],
+        createdAt: new Date().toISOString(),
+      };
+      const currentStored = localStorage.getItem(STORAGE_KEYS.messages);
+      const currentMessages: Message[] = currentStored ? JSON.parse(currentStored) : [];
+      const newAll = [...currentMessages, autoReply];
+      saveMessages(newAll);
+      setMessages(prev => [...prev, autoReply]);
+      
+      // Update conversation with auto-reply as last message
+      updateConversationLastMessage(selectedConversation.id, autoReply.text, autoReply.createdAt);
+    }, 1000);
+
+    setSendingMessage(false);
+  };
+
+  const handleReport = () => {
+    if (!selectedConversation) return;
+    if (!reportReason) {
+      showGlobalToast('Please select a reason.', 'warning');
+      return;
+    }
+    const reported = getReportedUsers();
+    if (!reported.includes(selectedConversation.otherUser.id)) {
+      reported.push(selectedConversation.otherUser.id);
+      saveReportedUsers(reported);
+    }
+    setShowReportModal(false);
+    setReportReason('');
+    showGlobalToast('Report submitted successfully.', 'success');
+  };
+
+  const handleBlock = () => {
+    if (!selectedConversation) return;
+    const blocked = getBlockedUsers();
+    if (!blocked.includes(selectedConversation.otherUser.id)) {
+      blocked.push(selectedConversation.otherUser.id);
+      saveBlockedUsers(blocked);
+    }
+    setShowBlockModal(false);
+    showGlobalToast('User blocked.', 'success');
+    // Refresh conversation to show blocked state
+    loadFromStorage();
+    if (selectedConversation) {
+      const updated = conversations.find(c => c.id === selectedConversation.id);
+      if (updated) setSelectedConversation(updated);
+    }
+  };
+
+  const handleUnblock = () => {
+    if (!selectedConversation) return;
+    const blocked = getBlockedUsers();
+    const updated = blocked.filter(id => id !== selectedConversation.otherUser.id);
+    saveBlockedUsers(updated);
+    showGlobalToast('User unblocked.', 'success');
+    loadFromStorage();
+    if (selectedConversation) {
+      const updatedConvo = conversations.find(c => c.id === selectedConversation.id);
+      if (updatedConvo) setSelectedConversation(updatedConvo);
+    }
+  };
+
+  const handleAcceptRequest = (requestId: string) => {
+    const request = requests.find(r => r.id === requestId);
+    if (!request) return;
+
+    // Remove from requests
+    const updatedRequests = requests.filter(r => r.id !== requestId);
+    setRequests(updatedRequests);
+    localStorage.setItem(STORAGE_KEYS.connectionRequests, JSON.stringify(updatedRequests));
+
+    // Add to accepted connections
+    const accepted = getAcceptedConnections();
+    const newAccepted = [...accepted];
+    // Add both directions
+    if (!newAccepted.includes(request.senderId)) {
+      newAccepted.push(request.senderId);
+    }
+    if (!newAccepted.includes(request.receiverId)) {
+      newAccepted.push(request.receiverId);
+    }
+    saveAcceptedConnections(newAccepted);
+
+    // Create conversation for the accepted user
+    const otherUser: User = {
+      id: request.senderId,
+      name: request.senderName,
+      avatar: request.senderAvatar || '',
+      role: 'User',
+      status: 'offline',
+    };
+    getOrCreateConversation(otherUser);
+
+    showGlobalToast('Request accepted. Chat enabled.', 'success');
+  };
+
+  const handleDeclineRequest = (requestId: string) => {
+    const request = requests.find(r => r.id === requestId);
+    if (!request) return;
+
+    // Mark as declined
+    const updated = requests.map(r => 
+      r.id === requestId ? { ...r, status: 'declined' as const } : r
+    );
+    setRequests(updated);
+    localStorage.setItem(STORAGE_KEYS.connectionRequests, JSON.stringify(updated));
+
+    showGlobalToast('Request rejected.', 'info');
+  };
+
+  const handleSendConnectionRequest = (person: User) => {
+    if (!user?.id) return;
+
+    // Check if request already exists
+    const allRequests = JSON.parse(localStorage.getItem(STORAGE_KEYS.connectionRequests) || '[]') as ConnectionRequest[];
+    const existingRequest = allRequests.find(r => 
+      (r.senderId === user.id && r.receiverId === person.id) ||
+      (r.senderId === person.id && r.receiverId === user.id)
+    );
+
+    if (existingRequest) {
+      if (existingRequest.status === 'pending') {
+        showGlobalToast('Request already sent.', 'info');
+      } else if (existingRequest.status === 'accepted') {
+        showGlobalToast('You are already connected.', 'info');
+      } else if (existingRequest.status === 'declined') {
+        showGlobalToast('Request was declined.', 'warning');
+      }
+      return;
+    }
+
+    const newReq: ConnectionRequest = {
+      id: `req-${Date.now()}`,
+      senderId: user.id,
+      receiverId: person.id,
+      senderName: user?.name || 'You',
+      senderAvatar: '',
+      status: 'pending',
+    };
+    const stored = localStorage.getItem(STORAGE_KEYS.connectionRequests);
+    const existing: ConnectionRequest[] = stored ? JSON.parse(stored) : [];
+    const updated = [...existing, newReq];
+    localStorage.setItem(STORAGE_KEYS.connectionRequests, JSON.stringify(updated));
+    
+    // Update local state
+    setRequests(prev => [...prev, newReq]);
+    
+    showGlobalToast('Request sent.', 'success');
+  };
+
+  const getRequestStatus = (personId: string): 'none' | 'pending' | 'accepted' | 'declined' => {
+    if (!user?.id) return 'none';
+    const allRequests = JSON.parse(localStorage.getItem(STORAGE_KEYS.connectionRequests) || '[]') as ConnectionRequest[];
+    const request = allRequests.find(r => 
+      (r.senderId === user.id && r.receiverId === personId) ||
+      (r.senderId === personId && r.receiverId === user.id)
+    );
+    if (!request) return 'none';
+    return request.status;
+  };
+
+  const isBlocked = selectedConversation ? getBlockedUsers().includes(selectedConversation.otherUser.id) : false;
+
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString();
+  };
+
+  const filteredPeople = people.filter(p =>
+    p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    p.role?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Inbox: show only conversations with accepted connections
+  const acceptedConversations = conversations.filter(c => acceptedConnections.includes(c.otherUser.id));
+  const filteredConversations = acceptedConversations.filter(c =>
+    c.otherUser.name?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Requests: show incoming and outgoing pending requests
+  const pendingRequests = requests.filter(r => r.status === 'pending');
+  const incomingRequests = pendingRequests.filter(r => r.receiverId === user?.id);
+  const outgoingRequests = pendingRequests.filter(r => r.senderId === user?.id);
+
+  if (!user?.id) {
+    return <div className={`${bgClass} ${textClass} p-4`}>Please log in to use chat</div>;
+  }
+
   return (
-    <div style={{ position: 'relative', flexShrink: 0, width: size, height: size }}>
-      {src ? (
-        <img
-          src={src}
-          alt={name || 'Avatar'}
-          style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', display: 'block' }}
-          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-        />
-      ) : (
-        <div style={{
-          width: size, height: size, borderRadius: '50%', background: 'linear-gradient(135deg, #FFD700, #f59e0b)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: size * 0.35, fontWeight: 700, color: '#111827'
-        }}>
-          {initials}
+    <div className={`${bgClass} h-full flex flex-col`}>
+      {/* Header */}
+      <div className={`border-b ${borderClass} p-4 flex items-center justify-between`}>
+        <h2 className={`text-xl font-bold ${textClass}`}>Messages</h2>
+      </div>
+
+      <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar */}
+        <div className={`w-80 border-r ${borderClass} flex flex-col`}>
+          {/* Tabs */}
+          <div className={`flex gap-4 p-4 border-b ${borderClass}`}>
+            <button
+              onClick={() => setView('conversations')}
+              className={`pb-2 px-2 font-semibold transition-colors ${
+                view === 'conversations'
+                  ? `text-[#FFD700] border-b-2 border-[#FFD700]`
+                  : `${textClass} opacity-60 hover:opacity-100`
+              }`}
+            >
+              Inbox
+            </button>
+            <button
+              onClick={() => setView('people')}
+              className={`pb-2 px-2 font-semibold transition-colors ${
+                view === 'people'
+                  ? `text-[#FFD700] border-b-2 border-[#FFD700]`
+                  : `${textClass} opacity-60 hover:opacity-100`
+              }`}
+            >
+              People
+            </button>
+            <button
+              onClick={() => setView('requests')}
+              className={`pb-2 px-2 font-semibold transition-colors relative ${
+                view === 'requests'
+                  ? `text-[#FFD700] border-b-2 border-[#FFD700]`
+                  : `${textClass} opacity-60 hover:opacity-100`
+              }`}
+            >
+              Requests
+              {pendingRequests.length > 0 && (
+                <span className="absolute -top-1 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  {pendingRequests.length}
+                </span>
+              )}
+            </button>
+          </div>
+
+          {/* Search */}
+          <div className="p-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className={`w-full rounded-full pl-9 pr-4 py-2 text-sm transition-colors focus:outline-none ${inputBgClass}`}
+              />
+            </div>
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto">
+            {view === 'conversations' && (
+              <>
+                {filteredConversations.length === 0 ? (
+                  <div className={`p-4 text-center ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                    <MessageCircle className="mx-auto mb-2 opacity-50" size={32} />
+                    <p className="text-sm">No conversations yet</p>
+                    <p className="text-xs mt-1">Go to People tab to send connection requests</p>
+                  </div>
+                ) : (
+                  filteredConversations.map((convo) => {
+                    const connectionStatus = getRequestStatus(convo.otherUser.id);
+                    const isAccepted = acceptedConnections.includes(convo.otherUser.id);
+                    
+                    return (
+                      <div
+                        key={convo.id}
+                        onClick={() => {
+                          if (isAccepted) {
+                            setSelectedConversation(convo);
+                          } else {
+                            showGlobalToast('Chat will be enabled after request is accepted.', 'info');
+                          }
+                        }}
+                        className={`p-3 border-b ${borderClass} cursor-pointer transition-colors ${
+                          selectedConversation?.id === convo.id
+                            ? isDark ? 'bg-[#262626]' : 'bg-gray-100'
+                            : hoverBgClass
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="relative">
+                            <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold ${isDark ? 'bg-[#333] text-white' : 'bg-gray-200 text-black'}`}>
+                              {convo.otherUser.avatar ? (
+                                <img src={convo.otherUser.avatar} alt={convo.otherUser.name} className="w-12 h-12 rounded-full object-cover" />
+                              ) : (
+                                convo.otherUser.name.charAt(0).toUpperCase()
+                              )}
+                            </div>
+                            {convo.otherUser.status === 'online' && (
+                              <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-black rounded-full" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <p className={`font-semibold ${textClass} truncate`}>{convo.otherUser.name}</p>
+                              <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                                {convo.lastMessageTime ? formatTime(convo.lastMessageTime) : ''}
+                              </span>
+                            </div>
+                            <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>{convo.otherUser.role}</p>
+                            <p className={`text-sm truncate ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                              {convo.lastMessage || 'No messages yet'}
+                            </p>
+                          </div>
+                          {convo.unreadCount > 0 && (
+                            <span className="bg-[#FFD700] text-black text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0">
+                              {convo.unreadCount}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </>
+            )}
+
+            {view === 'people' && (
+              <>
+                {filteredPeople.length === 0 ? (
+                  <div className={`p-4 text-center ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                    <Users className="mx-auto mb-2 opacity-50" size={32} />
+                    <p className="text-sm">{searchQuery ? 'No results found' : 'No people available'}</p>
+                  </div>
+                ) : (
+                  filteredPeople.map((person) => {
+                    const requestStatus = getRequestStatus(person.id);
+                    const isAccepted = acceptedConnections.includes(person.id);
+                    
+                    return (
+                      <div
+                        key={person.id}
+                        className={`p-3 border-b ${borderClass} flex items-center justify-between transition-colors ${isAccepted ? '' : hoverBgClass}`}
+                      >
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold ${isDark ? 'bg-[#333] text-white' : 'bg-gray-200 text-black'}`}>
+                            {person.avatar ? (
+                              <img src={person.avatar} alt={person.name} className="w-12 h-12 rounded-full object-cover" />
+                            ) : (
+                              person.name.charAt(0).toUpperCase()
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <p className={`font-semibold ${textClass} truncate`}>{person.name}</p>
+                            <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                              {person.role || 'User'}
+                            </p>
+                            {requestStatus === 'pending' && (
+                              <p className="text-xs text-yellow-500 mt-1">Request Sent</p>
+                            )}
+                            {requestStatus === 'accepted' && (
+                              <p className="text-xs text-green-500 mt-1">Connected</p>
+                            )}
+                            {requestStatus === 'declined' && (
+                              <p className="text-xs text-red-500 mt-1">Declined</p>
+                            )}
+                          </div>
+                        </div>
+                        {isAccepted ? (
+                          <button
+                            onClick={() => handlePersonClick(person)}
+                            className="ml-2 p-2 rounded-full bg-green-600 text-white hover:bg-green-700 transition-colors"
+                            title="Open chat"
+                          >
+                            <MessageCircle size={18} />
+                          </button>
+                        ) : requestStatus === 'pending' ? (
+                          <span className="ml-2 px-3 py-1.5 rounded-full bg-yellow-600/20 text-yellow-500 text-xs font-semibold">
+                            Pending
+                          </span>
+                        ) : (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSendConnectionRequest(person);
+                            }}
+                            className="ml-2 p-2 rounded-full bg-[#FFD700] text-black hover:bg-yellow-500 transition-colors"
+                            title="Send connection request"
+                          >
+                            <UserPlus size={18} />
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+              </>
+            )}
+
+            {view === 'requests' && (
+              <>
+                {requests.length === 0 ? (
+                  <div className={`p-4 text-center ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                    <Users className="mx-auto mb-2 opacity-50" size={32} />
+                    <p className="text-sm">No pending requests</p>
+                  </div>
+                ) : (
+                  <div className="p-3 space-y-4">
+                    {/* Incoming Requests */}
+                    {incomingRequests.length > 0 && (
+                      <div>
+                        <p className={`text-xs font-semibold uppercase tracking-wider mb-2 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                          Incoming Requests
+                        </p>
+                        <div className="space-y-2">
+                          {incomingRequests.map((request) => (
+                            <div
+                              key={request.id}
+                              className={`p-3 rounded-lg border ${borderClass} ${isDark ? 'bg-[#1a1a1a]' : 'bg-gray-50'}`}
+                            >
+                              <div className="flex items-center gap-3 mb-3">
+                                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold ${isDark ? 'bg-[#333] text-white' : 'bg-gray-200 text-black'}`}>
+                                  {request.senderAvatar ? (
+                                    <img src={request.senderAvatar} alt={request.senderName} className="w-12 h-12 rounded-full object-cover" />
+                                  ) : (
+                                    request.senderName.charAt(0).toUpperCase()
+                                  )}
+                                </div>
+                                <div className="flex-1">
+                                  <p className={`font-semibold ${textClass}`}>{request.senderName}</p>
+                                  <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                                    wants to connect with you
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleAcceptRequest(request.id)}
+                                  className="flex-1 px-3 py-2 bg-[#FFD700] text-black rounded-lg font-semibold text-sm hover:bg-yellow-500 transition-colors"
+                                >
+                                  Accept
+                                </button>
+                                <button
+                                  onClick={() => handleDeclineRequest(request.id)}
+                                  className={`flex-1 px-3 py-2 rounded-lg font-semibold text-sm transition-colors ${
+                                    isDark ? 'bg-[#262626] text-white hover:bg-[#1a1a1a]' : 'bg-gray-200 text-black hover:bg-gray-300'
+                                  }`}
+                                >
+                                  Reject
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Outgoing Requests */}
+                    {outgoingRequests.length > 0 && (
+                      <div>
+                        <p className={`text-xs font-semibold uppercase tracking-wider mb-2 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                          Sent Requests
+                        </p>
+                        <div className="space-y-2">
+                          {outgoingRequests.map((request) => (
+                            <div
+                              key={request.id}
+                              className={`p-3 rounded-lg border ${borderClass} ${isDark ? 'bg-[#1a1a1a]' : 'bg-gray-50'}`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold ${isDark ? 'bg-[#333] text-white' : 'bg-gray-200 text-black'}`}>
+                                  {request.senderAvatar ? (
+                                    <img src={request.senderAvatar} alt={request.senderName} className="w-12 h-12 rounded-full object-cover" />
+                                  ) : (
+                                    request.senderName.charAt(0).toUpperCase()
+                                  )}
+                                </div>
+                                <div className="flex-1">
+                                  <p className={`font-semibold ${textClass}`}>{request.senderName}</p>
+                                  <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                                    Request sent
+                                  </p>
+                                </div>
+                                <span className="px-3 py-1 rounded-full bg-yellow-600/20 text-yellow-500 text-xs font-semibold">
+                                  Pending
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </div>
-      )}
-      {online && (
-        <span style={{
-          position: 'absolute', bottom: 1, right: 1,
-          width: size * 0.27, height: size * 0.27,
-          background: '#22c55e', border: `2px solid #000`, borderRadius: '50%'
-        }} />
-      )}
+
+        {/* Chat Area */}
+        {selectedConversation?.otherUser ? (
+          <div className="flex-1 flex flex-col">
+            {/* Chat Header */}
+            <div className={`border-b ${borderClass} p-4 flex items-center justify-between`}>
+              <div className="flex items-center gap-3">
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold ${isDark ? 'bg-[#333] text-white' : 'bg-gray-200 text-black'}`}>
+                  {selectedConversation.otherUser.avatar ? (
+                    <img src={selectedConversation.otherUser.avatar} alt={selectedConversation.otherUser.name} className="w-12 h-12 rounded-full object-cover" />
+                  ) : (
+                    selectedConversation.otherUser.name.charAt(0).toUpperCase()
+                  )}
+                </div>
+                <div>
+                  <p className={`font-semibold ${textClass}`}>{selectedConversation.otherUser.name}</p>
+                  <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                    {selectedConversation.otherUser.role}
+                    {isBlocked && ' • Blocked'}
+                  </p>
+                </div>
+              </div>
+              <div className="relative">
+                <button
+                  onClick={() => setShowChatMenu(!showChatMenu)}
+                  className={`p-2 rounded-full transition-colors ${isDark ? 'hover:bg-[#262626]' : 'hover:bg-gray-100'}`}
+                >
+                  <MoreVertical size={20} className={textClass} />
+                </button>
+                {showChatMenu && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setShowChatMenu(false)} />
+                    <div className={`absolute right-0 top-10 w-48 rounded-lg shadow-lg border ${borderClass} ${isDark ? 'bg-[#1a1a1a]' : 'bg-white'} z-20`}>
+                      <button
+                        onClick={() => { setShowReportModal(true); setShowChatMenu(false); }}
+                        className={`w-full flex items-center gap-2 px-4 py-3 text-sm ${textClass} hover:bg-[#262626] transition-colors`}
+                      >
+                        <Flag size={16} />
+                        Report
+                      </button>
+                      {!isBlocked ? (
+                        <button
+                          onClick={() => { setShowBlockModal(true); setShowChatMenu(false); }}
+                          className={`w-full flex items-center gap-2 px-4 py-3 text-sm text-red-400 hover:bg-[#262626] transition-colors`}
+                        >
+                          <Ban size={16} />
+                          Block
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => { handleUnblock(); setShowChatMenu(false); }}
+                          className={`w-full flex items-center gap-2 px-4 py-3 text-sm text-green-400 hover:bg-[#262626] transition-colors`}
+                        >
+                          <Ban size={16} />
+                          Unblock
+                        </button>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {messages.length === 0 ? (
+                <div className={`text-center py-12 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                  <MessageCircle className="mx-auto mb-4 opacity-30" size={48} />
+                  <p className="text-sm">No messages yet. Say hello!</p>
+                </div>
+              ) : (
+                messages.map((msg) => (
+                  <div
+                    key={msg.id}
+                    className={`flex ${msg.senderId === user?.id ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div
+                      className={`max-w-xs px-4 py-2 rounded-2xl ${
+                        msg.senderId === user?.id
+                          ? 'bg-[#FFD700] text-black rounded-br-none'
+                          : isDark ? 'bg-[#262626] text-white rounded-bl-none' : 'bg-gray-200 text-black rounded-bl-none'
+                      }`}
+                    >
+                      <p className="break-words">{msg.text}</p>
+                      <div className="flex items-center justify-end gap-1 mt-1 text-xs opacity-70">
+                        <span>{formatTime(msg.createdAt)}</span>
+                        {msg.senderId === user?.id && (
+                          msg.readAt ? <CheckCheck size={12} /> : <Check size={12} />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Input */}
+            <div className={`border-t ${borderClass} p-4 flex gap-2`}>
+              {isBlocked ? (
+                <div className={`flex-1 text-center py-3 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                  <p className="text-sm">You blocked this user.</p>
+                </div>
+              ) : (
+                <>
+                  <input
+                    type="text"
+                    placeholder="Message..."
+                    value={messageText}
+                    onChange={(e) => setMessageText(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                    className={`flex-1 rounded-full px-4 py-2 text-sm transition-colors focus:outline-none ${inputBgClass}`}
+                  />
+                  <button
+                    onClick={handleSendMessage}
+                    disabled={sendingMessage || !messageText.trim()}
+                    className="p-2 rounded-full bg-[#FFD700] text-black hover:bg-yellow-500 transition-colors disabled:opacity-50"
+                  >
+                    <Send size={20} />
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className={`flex-1 flex items-center justify-center ${bgClass}`}>
+            <div className={`text-center ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+              <MessageCircle className="mx-auto mb-4 opacity-30" size={64} />
+              <p className="text-lg font-semibold">Select a conversation to start chatting</p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Report Modal */}
+      <ConfirmModal
+        isOpen={showReportModal}
+        onClose={() => { setShowReportModal(false); setReportReason(''); }}
+        onConfirm={handleReport}
+        title="Report User"
+        message="Why are you reporting this user?"
+        confirmText="Submit Report"
+        type="warning"
+      >
+        <div className="mt-4 space-y-2">
+          {['Spam', 'Inappropriate message', 'Fake profile', 'Harassment', 'Other'].map((reason) => (
+            <label key={reason} className={`flex items-center gap-2 p-3 rounded-lg border ${borderClass} cursor-pointer ${isDark ? 'hover:bg-[#262626]' : 'hover:bg-gray-50'}`}>
+              <input
+                type="radio"
+                name="reportReason"
+                value={reason}
+                checked={reportReason === reason}
+                onChange={(e) => setReportReason(e.target.value)}
+                className="accent-[#FFD700]"
+              />
+              <span className={`text-sm ${textClass}`}>{reason}</span>
+            </label>
+          ))}
+        </div>
+      </ConfirmModal>
+
+      {/* Block Modal */}
+      <ConfirmModal
+        isOpen={showBlockModal}
+        onClose={() => setShowBlockModal(false)}
+        onConfirm={handleBlock}
+        title="Block User"
+        message={`Are you sure you want to block ${selectedConversation?.otherUser.name}? You won't be able to send or receive messages from this user.`}
+        confirmText="Block"
+        cancelText="Cancel"
+        type="danger"
+      />
+
+      {/* Toast Container */}
+      <Toast />
     </div>
   );
 }
 
-export function Chat({ theme = 'dark' }: { theme?: 'dark' | 'light' }) {
-  const { user, getAlumniById, alumni } = useAuth();
-
-  const [activeTab, setActiveTab] = useState<'messages' | 'people'>('messages');
-  const [chats, setChats] = useState<{ chat_id: string; otherUserId: string; lastMessage?: any; unreadCount: number }[]>([]);
-  const [activeConvoId, setActiveConvoId] = useState<string | null>(null);
-  const activeConvoIdRef = useRef<string | null>(null);
-  
-  useEffect(() => { activeConvoIdRef.current = activeConvoId; }, [activeConvoId]);
-
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [requests, setRequests] = useState<FollowRequest[]>([]);
-  const [isSendingRequest, setIsSendingRequest] = useState(false);
-  const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
-
-  // WebRTC States
-  const [callState, setCallState] = useState<'idle' | 'calling' | 'ringing' | 'connected'>('idle');
-  const [callType, setCallType] = useState<'audio' | 'video'>('video');
-  const [callPartnerId, setCallPartnerId] = useState<string | null>(null);
-  const [isMuted, setIsMuted] = useState(false);
-  const [isVideoOff, setIsVideoOff] = useState(false);
-
-  const pcRef = useRef<RTCPeerConnection | null>(null);
-  const localStreamRef = useRef<MediaStream | null>(null);
-  const localVideoRef = useRef<HTMLVideoElement>(null);
-  const remoteVideoRef = useRef<HTMLVideoElement>(null);
-  const channelRef = useRef<any>(null);
-
-  const stateRef = useRef({ callState, callPartnerId });
-  useEffect(() => { stateRef.current = { callState, callPartnerId }; }, [callState, callPartnerId]);
-
-  const endRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const loadRequests = async () => {
-    if (!user) return;
-    const { data } = await supabase
-      .from("follow_requests")
-      .select("*")
-      .eq("receiver_id", user.id)
-      .eq("status", "pending");
-    if (data) setRequests(data);
-  };
-
-  const loadChats = async () => {
-    if (!user) return;
-    const { data: myMemberships } = await supabase
-      .from("chat_members")
-      .select('chat_id')
-      .eq("user_id", user.id);
-      
-    if (myMemberships && myMemberships.length > 0) {
-      const chatIds = myMemberships.map(m => m.chat_id);
-      
-      if (chatIds.length > 0) {
-        const { data: allMembers } = await supabase
-          .from('chat_members')
-          .select('chat_id, user_id')
-          .in('chat_id', chatIds)
-          .neq('user_id', user.id);
-          
-        if (allMembers) {
-          setChats(allMembers.map(m => ({
-            chat_id: m.chat_id,
-            otherUserId: m.user_id,
-            unreadCount: 0
-          })));
-        }
-      }
-    } else {
-      setChats([]);
-    }
-  };
-
-  useEffect(() => {
-    if (!user) return;
-    loadRequests();
-    loadChats();
-
-    const handleWebRTCSignal = async (payload: any) => {
-      if (!user || payload.targetId !== user.id) return;
-      const { senderId, type, data } = payload;
-      const { callState: currentCallState, callPartnerId: currentCallPartnerId } = stateRef.current;
-
-      if (type === 'call-invite') {
-        if (currentCallState !== 'idle') {
-          if (channelRef.current) {
-            channelRef.current.send({
-              type: 'broadcast', event: 'webrtc-signal',
-              payload: { targetId: senderId, senderId: user.id, type: 'call-end', data: { reason: 'busy' } }
-            });
-          }
-          return;
-        }
-        setCallType(data.isVideo ? 'video' : 'audio');
-        setCallPartnerId(senderId);
-        setCallState('ringing');
-      }
-      else if (type === 'call-accept') {
-        if (currentCallState === 'calling' && currentCallPartnerId === senderId) {
-          const pc = setupPeerConnection(senderId);
-          setCallState('connected');
-          const offer = await pc.createOffer();
-          await pc.setLocalDescription(offer);
-          if (channelRef.current) {
-            channelRef.current.send({ type: 'broadcast', event: 'webrtc-signal', payload: { targetId: senderId, senderId: user.id, type: 'offer', data: offer } });
-          }
-        }
-      }
-      else if (type === 'offer') {
-        if (pcRef.current) {
-          await pcRef.current.setRemoteDescription(new RTCSessionDescription(data));
-          const answer = await pcRef.current.createAnswer();
-          await pcRef.current.setLocalDescription(answer);
-          if (channelRef.current) {
-            channelRef.current.send({ type: 'broadcast', event: 'webrtc-signal', payload: { targetId: senderId, senderId: user.id, type: 'answer', data: answer } });
-          }
-        }
-      }
-      else if (type === 'answer') {
-        if (pcRef.current) await pcRef.current.setRemoteDescription(new RTCSessionDescription(data));
-      }
-      else if (type === 'ice-candidate') {
-        if (pcRef.current) {
-          try { await pcRef.current.addIceCandidate(new RTCIceCandidate(data)); } 
-          catch (e) { console.error("Error adding ice candidate", e); }
-        }
-      }
-      else if (type === 'call-end') {
-        cleanupCall();
-      }
-    };
-
-    const channel = supabase
-      .channel("chat-room")
-      .on("broadcast", { event: "webrtc-signal" }, (payload) => {
-        handleWebRTCSignal(payload.payload);
-      })
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, (payload) => {
-        const newMsg = payload.new as Message;
-        if (newMsg.chat_id === activeConvoIdRef.current) {
-          setMessages(prev => {
-            if (prev.find(m => m.id === newMsg.id)) return prev;
-            return [...prev, newMsg];
-          });
-        }
-      })
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "follow_requests", filter: `receiver_id=eq.${user.id}` }, (payload) => {
-        if (payload.new.status === 'pending') {
-          setRequests(prev => {
-            if (prev.find(r => r.id === payload.new.id)) return prev;
-            return [...prev, payload.new as FollowRequest];
-          });
-        }
-      })
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "follow_requests" }, (payload) => {
-        if (payload.new.sender_id === user.id || payload.new.receiver_id === user.id) {
-           loadChats();
-           if (payload.new.receiver_id === user.id) {
-               loadRequests();
-           }
-        }
-      })
-      .subscribe();
-
-    channelRef.current = channel;
-
-    return () => {
-      supabase.removeChannel(channel);
-      channelRef.current = null;
-    };
-  }, [user]);
-
-  const sendSignal = async (targetId: string, type: string, data: any) => {
-    if (!channelRef.current || !user) return;
-    await channelRef.current.send({
-      type: 'broadcast',
-      event: 'webrtc-signal',
-      payload: { targetId, senderId: user.id, type, data }
-    });
-  };
-
-  const startCall = async (targetId: string, isVideo: boolean) => {
-    try {
-      setCallType(isVideo ? 'video' : 'audio');
-      setCallState('calling');
-      setCallPartnerId(targetId);
-      
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: isVideo });
-      localStreamRef.current = stream;
-      if (localVideoRef.current) localVideoRef.current.srcObject = stream;
-
-      await sendSignal(targetId, 'call-invite', { isVideo });
-    } catch (err) {
-      console.error("Error accessing media devices.", err);
-      alert("Could not access camera/microphone.");
-      cleanupCall();
-    }
-  };
-
-  const acceptCall = async () => {
-    if (!callPartnerId) return;
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: callType === 'video' });
-      localStreamRef.current = stream;
-      if (localVideoRef.current) localVideoRef.current.srcObject = stream;
-      
-      setupPeerConnection(callPartnerId);
-      await sendSignal(callPartnerId, 'call-accept', {});
-      setCallState('connected');
-    } catch (err) {
-      console.error("Error accessing media devices.", err);
-      endCall();
-    }
-  };
-
-  const cleanupCall = () => {
-    setCallState('idle');
-    setCallPartnerId(null);
-    setIsMuted(false);
-    setIsVideoOff(false);
-    if (pcRef.current) { pcRef.current.close(); pcRef.current = null; }
-    if (localStreamRef.current) { localStreamRef.current.getTracks().forEach(t => t.stop()); localStreamRef.current = null; }
-    if (localVideoRef.current) localVideoRef.current.srcObject = null;
-    if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
-  };
-
-  const endCall = async () => {
-    if (callPartnerId) await sendSignal(callPartnerId, 'call-end', {});
-    cleanupCall();
-  };
-
-  const setupPeerConnection = (targetId: string) => {
-    const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
-    pcRef.current = pc;
-
-    pc.onicecandidate = (e) => {
-      if (e.candidate) sendSignal(targetId, 'ice-candidate', e.candidate);
-    };
-
-    pc.ontrack = (e) => {
-      if (remoteVideoRef.current) remoteVideoRef.current.srcObject = e.streams[0];
-    };
-
-    if (localStreamRef.current) {
-      localStreamRef.current.getTracks().forEach(t => pc.addTrack(t, localStreamRef.current!));
-    }
-    return pc;
-  };
-
-  const toggleMute = () => {
-    if (localStreamRef.current) {
-      const audioTrack = localStreamRef.current.getAudioTracks()[0];
-      if (audioTrack) {
-        audioTrack.enabled = !audioTrack.enabled;
-        setIsMuted(!audioTrack.enabled);
-      }
-    }
-  };
-
-  const toggleVideo = () => {
-    if (localStreamRef.current) {
-      const videoTrack = localStreamRef.current.getVideoTracks()[0];
-      if (videoTrack) {
-        videoTrack.enabled = !videoTrack.enabled;
-        setIsVideoOff(!videoTrack.enabled);
-      }
-    }
-  };
-
-  useEffect(() => {
-    if (!activeConvoId) return;
-    const loadMessages = async () => {
-      const { data } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('chat_id', activeConvoId)
-        .order('created_at', { ascending: true });
-      if (data) setMessages(data);
-    };
-    loadMessages();
-  }, [activeConvoId]);
-
-  useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
-  const handleSend = async () => {
-    if (!input.trim() || !user || !activeConvoId) return;
-    const messageText = input.trim();
-    setInput('');
-    
-    const tempId = `temp-${Date.now()}`;
-    setMessages(prev => [...prev, { id: tempId, chat_id: activeConvoId, sender_id: user.id, content: messageText, created_at: new Date().toISOString() }]);
-
-    await supabase
-      .from("messages")
-      .insert({
-        chat_id: activeConvoId,
-        sender_id: user.id,
-        content: messageText
-      });
-      
-    inputRef.current?.focus();
-  };
-
-  const handleStartChat = async (targetId: string) => {
-    if (!user || isSendingRequest) return;
-    
-    const existing = chats.find(c => c.otherUserId === targetId);
-    if (existing) {
-      setActiveConvoId(existing.chat_id);
-      setActiveTab('messages');
-      return;
-    }
-    
-    setIsSendingRequest(true);
-    try {
-      const { data: existingReqs } = await supabase
-        .from("follow_requests")
-        .select("*")
-        .eq("sender_id", user.id)
-        .eq("receiver_id", targetId)
-        .eq("status", "pending");
-        
-      if (existingReqs && existingReqs.length > 0) {
-        alert("Request already sent and pending.");
-        return;
-      }
-
-      const { error } = await supabase
-        .from("follow_requests")
-        .insert({
-          sender_id: user.id,
-          receiver_id: targetId
-        });
-
-      if (!error) {
-        alert("Request Sent");
-      } else {
-        alert("Error sending request");
-      }
-    } finally {
-      setIsSendingRequest(false);
-    }
-  };
-
-  const acceptRequest = async (request: FollowRequest) => {
-    try {
-      const { data: chat, error: chatError } = await supabase
-        .from("chats")
-        .insert({})
-        .select()
-        .single();
-        
-      if (chatError || !chat) throw chatError;
-
-      await supabase
-        .from("chat_members")
-        .insert([
-          { chat_id: chat.id, user_id: request.sender_id },
-          { chat_id: chat.id, user_id: request.receiver_id }
-        ]);
-
-      await supabase
-        .from("follow_requests")
-        .update({ status: "accepted" })
-        .eq("id", request.id);
-        
-      loadRequests();
-      loadChats();
-      setActiveConvoId(chat.id);
-      setActiveTab('messages');
-    } catch (err) {
-      console.error("Error accepting request:", err);
-    }
-  };
-  
-  const declineRequest = async (request: FollowRequest) => {
-    try {
-      await supabase
-        .from("follow_requests")
-        .update({ status: "declined" })
-        .eq("id", request.id);
-      loadRequests();
-    } catch (err) {
-      console.error("Error declining request:", err);
-    }
-  };
-
-  if (!user) return null;
-
-  const totalUnread = chats.reduce((acc, c) => acc + c.unreadCount, 0);
-  const filteredPeople = alumni
-    .filter((u: any) => u.id !== user.id)
-    .filter((u: any) => searchQuery ? u.name.toLowerCase().includes(searchQuery.toLowerCase()) || (u.department || '').toLowerCase().includes(searchQuery.toLowerCase()) : true);
-
-  const activeConvo = chats.find(c => c.chat_id === activeConvoId);
-  const otherUserId = activeConvo?.otherUserId;
-  const otherUser = otherUserId ? getAlumniById(otherUserId) : null;
-
-  return (
-    <>
-      <style>{`
-        :root {
-          --ig-bg: ${theme === 'dark' ? '#000' : '#fff'};
-          --ig-sidebar-bg: ${theme === 'dark' ? '#000' : '#fff'};
-          --ig-border: ${theme === 'dark' ? '#262626' : '#dbdbdb'};
-          --ig-text: ${theme === 'dark' ? '#f5f5f5' : '#000'};
-          --ig-muted: #737373;
-          --ig-accent: ${theme === 'dark' ? '#1a1a1a' : '#efefef'};
-          --ig-hover: ${theme === 'dark' ? '#161616' : '#fafafa'};
-          --ig-active: ${theme === 'dark' ? '#1c1c1c' : '#efefef'};
-          --ig-bubble-me: #0095f6;
-          --ig-bubble-them: ${theme === 'dark' ? '#262626' : '#efefef'};
-          --ig-gold: #FFD700;
-          --ig-online: #22c55e;
-        }
-        .ig-root { display:flex; height:calc(100vh - 64px); background:var(--ig-bg); color:var(--ig-text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; overflow:hidden; }
-        
-        .ig-sidebar { width:360px; flex-shrink:0; display:flex; flex-direction:column; border-right:1px solid var(--ig-border); height:100%; background:var(--ig-sidebar-bg); }
-        .ig-sidebar-header { padding:16px 20px 12px; display:flex; align-items:center; justify-content:space-between; }
-        .ig-sidebar-title { font-size:16px; font-weight:700; color:var(--ig-text); display:flex; align-items:center; gap:8px; }
-        .ig-tab-bar { display:flex; border-bottom:1px solid var(--ig-border); }
-        .ig-tab { flex:1; padding:14px 0; background:none; border:none; border-bottom:2px solid transparent; color:var(--ig-muted); font-size:14px; font-weight:600; cursor:pointer; transition:all 0.2s; }
-        .ig-tab.active { color:var(--ig-text); border-bottom-color:var(--ig-text); }
-        .ig-search-wrap { padding:8px 16px; }
-        .ig-search-box { display:flex; align-items:center; gap:8px; background:var(--ig-accent); border-radius:10px; padding:8px 12px; }
-        .ig-search-input { flex:1; background:none; border:none; outline:none; color:var(--ig-text); font-size:14px; }
-        .ig-search-input::placeholder { color:var(--ig-muted); }
-        
-        .ig-list { flex:1; overflow-y:auto; }
-        .ig-list::-webkit-scrollbar { width:0; }
-        .ig-convo-row { width:100%; display:flex; align-items:center; gap:12px; padding:10px 16px; background:transparent; border:none; cursor:pointer; text-align:left; transition:background 0.15s; }
-        .ig-convo-row:hover { background:var(--ig-hover); }
-        .ig-convo-row.active { background:var(--ig-active); }
-        .ig-convo-info { flex:1; min-width:0; }
-        .ig-convo-name { font-size:14px; color:var(--ig-text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-        .ig-convo-name.bold { font-weight:700; }
-        .ig-convo-sub { font-size:13px; color:var(--ig-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px; }
-        .ig-convo-sub.bold { color:var(--ig-text); font-weight:500; }
-        .ig-convo-time { font-size:12px; color:var(--ig-muted); flex-shrink:0; }
-        .ig-unread-dot { width:8px; height:8px; border-radius:50%; background:#0095f6; flex-shrink:0; }
-        
-        .ig-section-header { padding:10px 16px 6px; font-size:12px; font-weight:700; color:var(--ig-muted); text-transform:uppercase; letter-spacing:0.08em; }
-        .ig-people-row { width:100%; display:flex; align-items:center; gap:12px; padding:10px 16px; background:transparent; border:none; cursor:pointer; text-align:left; transition:background 0.15s; }
-        .ig-people-row:hover { background:var(--ig-hover); }
-        .ig-person-name { font-size:14px; color:var(--ig-text); font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-        .ig-person-sub { font-size:12px; color:var(--ig-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px; }
-        .ig-chat-btn { padding:5px 14px; background:#0095f6; color:#fff; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; flex-shrink:0; transition:background 0.2s; }
-        .ig-chat-btn:hover { background:#1aa0f8; }
-        .ig-chat-btn.connected { background:transparent; color:#0095f6; border:1px solid #0095f6; }
-        
-        .ig-chat-pane { flex:1; display:flex; flex-direction:column; height:100%; min-width:0; background:var(--ig-bg); }
-        .ig-chat-header { height:60px; padding:0 16px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--ig-border); flex-shrink:0; }
-        .ig-chat-header-left { display:flex; align-items:center; gap:12px; }
-        .ig-chat-header-name { font-size:15px; font-weight:700; color:var(--ig-text); }
-        .ig-chat-header-status { font-size:12px; color:var(--ig-muted); margin-top:1px; }
-        .ig-chat-actions { display:flex; gap:4px; }
-        .ig-icon-btn { background:none; border:none; cursor:pointer; color:var(--ig-text); display:flex; align-items:center; justify-content:center; padding:8px; border-radius:50%; transition:background 0.15s; }
-        .ig-icon-btn:hover { background:var(--ig-hover); }
-        
-        .ig-messages { flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:4px; }
-        .ig-messages::-webkit-scrollbar { width:4px; }
-        .ig-messages::-webkit-scrollbar-thumb { background:#333; border-radius:4px; }
-        .ig-msg-row { display:flex; align-items:flex-end; gap:8px; }
-        .ig-msg-me { justify-content:flex-end; }
-        .ig-msg-them { justify-content:flex-start; }
-        .ig-bubble { padding:10px 14px; font-size:14px; line-height:1.5; word-wrap:break-word; max-width:320px; }
-        .ig-bubble-me { background:var(--ig-bubble-me); color:#fff; border-radius:22px 22px 4px 22px; }
-        .ig-bubble-them { background:var(--ig-bubble-them); color:var(--ig-text); border-radius:22px 22px 22px 4px; }
-        .ig-msg-time { font-size:11px; color:var(--ig-muted); margin-top:2px; }
-        .ig-time-right { text-align:right; }
-        .ig-time-left { text-align:left; }
-        
-        .ig-input-area { padding:12px 16px; border-top:1px solid var(--ig-border); flex-shrink:0; }
-        .ig-input-box { display:flex; align-items:center; gap:10px; background:var(--ig-bg); border-radius:24px; padding:8px 8px 8px 16px; border:1px solid var(--ig-border); transition:border-color 0.2s; }
-        .ig-input-box:focus-within { border-color:#555; }
-        .ig-msg-input { flex:1; background:none; border:none; outline:none; color:var(--ig-text); font-size:15px; }
-        .ig-msg-input::placeholder { color:var(--ig-muted); }
-        .ig-send-btn { background:none; border:none; cursor:pointer; color:#0095f6; font-size:14px; font-weight:700; padding:0 8px; }
-        
-        .ig-empty { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--ig-muted); gap:12px; padding:20px; }
-        .ig-empty-icon { width:96px; height:96px; border:2px solid #333; border-radius:50%; display:flex; align-items:center; justify-content:center; }
-        .ig-empty-title { font-size:20px; font-weight:500; color:var(--ig-text); }
-        
-        .ig-req-row { display:flex; align-items:center; gap:12px; padding:12px 16px; border-bottom:1px solid var(--ig-border); }
-        .ig-req-actions { display:flex; gap:8px; }
-        .ig-req-accept { padding:6px 14px; background:#0095f6; color:#fff; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; }
-        .ig-req-decline { padding:6px 14px; background:var(--ig-accent); color:var(--ig-text); border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; }
-        
-        .ig-call-overlay { position:absolute; top:0; left:0; width:100%; height:100%; background:#111; z-index:50; display:flex; flex-direction:column; color:#fff; }
-        .ig-call-video { flex:1; width:100%; object-fit:cover; background:#000; }
-        .ig-call-pip { position:absolute; top:20px; right:20px; width:120px; height:160px; background:#000; border-radius:12px; overflow:hidden; border:2px solid #333; z-index:51; box-shadow:0 4px 12px rgba(0,0,0,0.5); }
-        .ig-call-pip video { width:100%; height:100%; object-fit:cover; }
-        .ig-call-controls { position:absolute; bottom:40px; left:50%; transform:translateX(-50%); display:flex; gap:20px; z-index:52; }
-        .ig-call-btn { width:56px; height:56px; border-radius:50%; border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#fff; transition:all 0.2s; }
-        .ig-call-btn.hangup { background:#ef4444; }
-        .ig-call-btn.hangup:hover { background:#dc2626; }
-        .ig-call-btn.normal { background:rgba(255,255,255,0.2); backdrop-filter:blur(10px); }
-        .ig-call-btn.normal:hover { background:rgba(255,255,255,0.3); }
-        .ig-call-btn.off { background:#fff; color:#000; }
-
-        .ig-incoming { position:absolute; top:20px; left:50%; transform:translateX(-50%); background:#262626; padding:16px 24px; border-radius:16px; display:flex; align-items:center; gap:16px; z-index:60; box-shadow:0 10px 25px rgba(0,0,0,0.5); border:1px solid #333; }
-        .ig-incoming-btns { display:flex; gap:12px; }
-        .ig-inc-btn { padding:8px 16px; border-radius:8px; font-weight:600; font-size:14px; cursor:pointer; border:none; color:#fff; }
-        .ig-inc-accept { background:#22c55e; }
-        .ig-inc-decline { background:#ef4444; }
-
-        @media (max-width: 768px) {
-          .ig-sidebar { width:100%; position:absolute; z-index:10; }
-          .ig-chat-pane { position:absolute; width:100%; left:100%; transition:left 0.3s ease; }
-          .ig-chat-pane.mobile-open { left:0; }
-        }
-      `}</style>
-
-      <div className="ig-root">
-        <div className="ig-sidebar">
-          <div className="ig-sidebar-header">
-            <div className="ig-sidebar-title">
-              <span>{user.name}</span>
-            </div>
-            <button className="ig-icon-btn" onClick={() => setActiveTab('people')} title="New message">
-              <Edit size={20} />
-            </button>
-          </div>
-
-          <div className="ig-tab-bar">
-            <button className={`ig-tab ${activeTab === 'messages' ? 'active' : ''}`} onClick={() => setActiveTab('messages')}>
-              Messages {totalUnread > 0 && <span style={{ background: '#0095f6', color: '#fff', borderRadius: 10, padding: '1px 7px', fontSize: 11, marginLeft: 4 }}>{totalUnread}</span>}
-            </button>
-            <button className={`ig-tab ${activeTab === 'people' ? 'active' : ''}`} onClick={() => setActiveTab('people')}>
-              People
-            </button>
-          </div>
-
-          <div className="ig-search-wrap">
-            <div className="ig-search-box">
-              <Search size={14} color="#737373" />
-              <input
-                className="ig-search-input"
-                placeholder={activeTab === 'messages' ? 'Search messages' : 'Search people'}
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-              />
-              {searchQuery && <button onClick={() => setSearchQuery('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#737373' }}><X size={14} /></button>}
-            </div>
-          </div>
-
-          <div className="ig-list">
-            {activeTab === 'messages' && (
-              <>
-                {requests.length > 0 && (
-                  <div style={{ padding: '8px 16px', borderBottom: '1px solid var(--ig-border)' }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: '#0095f6', marginBottom: 8 }}>
-                      Follow Requests ({requests.length})
-                    </div>
-                    {requests.map(req => {
-                      const sender = getAlumniById(req.sender_id);
-                      return (
-                        <div key={req.id} className="ig-req-row" style={{ padding: '8px 0' }}>
-                          <Avatar src={sender?.avatar} name={sender?.name} size={44} />
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div className="ig-convo-name bold">{sender?.name || 'Unknown'}</div>
-                            <div className="ig-convo-sub">{sender?.department || 'Alumni'}</div>
-                          </div>
-                          <div className="ig-req-actions">
-                            <button className="ig-req-accept" onClick={() => acceptRequest(req)}>Accept</button>
-                            <button className="ig-req-decline" onClick={() => declineRequest(req)}>Decline</button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-
-                {chats
-                  .filter(c => {
-                    if (!searchQuery) return true;
-                    const other = getAlumniById(c.otherUserId);
-                    return other?.name.toLowerCase().includes(searchQuery.toLowerCase());
-                  })
-                  .map(convo => {
-                    const other = getAlumniById(convo.otherUserId);
-                    if (!other) return null;
-                    const isUnread = convo.unreadCount > 0;
-                    const lastText = convo.lastMessage?.content || 'Say hi!';
-                    return (
-                      <button
-                        key={convo.chat_id}
-                        className={`ig-convo-row ${activeConvoId === convo.chat_id ? 'active' : ''}`}
-                        onClick={() => setActiveConvoId(convo.chat_id)}
-                      >
-                        <Avatar src={other.avatar} name={other.name} size={56} online={onlineUsers.has(other.id)} />
-                        <div className="ig-convo-info">
-                          <div className={`ig-convo-name ${isUnread ? 'bold' : ''}`}>{other.name}</div>
-                          <div className={`ig-convo-sub ${isUnread ? 'bold' : ''}`}>
-                            {lastText}
-                          </div>
-                        </div>
-                        {isUnread && <span className="ig-unread-dot" />}
-                      </button>
-                    );
-                  })}
-
-                {chats.length === 0 && (
-                  <div style={{ padding: '32px 20px', textAlign: 'center', color: '#737373' }}>
-                    <MessageCircle size={36} style={{ margin: '0 auto 8px' }} />
-                    <div style={{ fontWeight: 600, color: '#f5f5f5', marginBottom: 4 }}>No messages yet</div>
-                    <div style={{ fontSize: 13 }}>Go to "People" tab to start chatting!</div>
-                  </div>
-                )}
-              </>
-            )}
-
-            {activeTab === 'people' && (
-              <>
-                <div className="ig-section-header">All Registered Members</div>
-                {filteredPeople.length === 0 && (
-                  <div style={{ padding: '24px 16px', textAlign: 'center', color: '#737373', fontSize: 14 }}>
-                    No people found
-                  </div>
-                )}
-                {filteredPeople.map((person: any) => {
-                  const hasConvo = chats.some(c => c.otherUserId === person.id);
-                  const isOnline = onlineUsers.has(person.id);
-                  return (
-                    <button
-                      key={person.id}
-                      className="ig-people-row"
-                      onClick={() => handleStartChat(person.id)}
-                      disabled={isSendingRequest}
-                    >
-                      <Avatar src={person.avatar} name={person.name} size={52} online={isOnline} />
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div className="ig-person-name">{person.name}</div>
-                        <div className="ig-person-sub">
-                          {person.department || 'Alumni'}
-                          {person.collegeName ? ` • ${person.collegeName}` : ''}
-                          {person.year ? ` • ${person.year}` : ''}
-                        </div>
-                      </div>
-                      <button
-                        className={`ig-chat-btn ${hasConvo ? 'connected' : ''}`}
-                        onClick={e => { e.stopPropagation(); handleStartChat(person.id); }}
-                        disabled={isSendingRequest}
-                      >
-                        {hasConvo ? 'Open' : 'Follow'}
-                      </button>
-                    </button>
-                  );
-                })}
-              </>
-            )}
-          </div>
-        </div>
-
-        <div className={`ig-chat-pane${activeConvoId ? ' mobile-open' : ''}`}>
-          {activeConvoId && activeConvo ? (
-            <>
-              <div className="ig-chat-header">
-                <div className="ig-chat-header-left">
-                  <button className="ig-icon-btn" style={{ marginRight: 4 }} onClick={() => setActiveConvoId(null)}>
-                    <ArrowLeft size={20} />
-                  </button>
-                  <Avatar src={otherUser?.avatar} name={otherUser?.name} size={40} online={otherUserId ? onlineUsers.has(otherUserId) : false} />
-                  <div>
-                    <div className="ig-chat-header-name">{otherUser?.name || 'Unknown User'}</div>
-                    <div className="ig-chat-header-status">
-                      {otherUser?.department || 'Offline'}
-                    </div>
-                  </div>
-                </div>
-                <div className="ig-chat-actions">
-                  <button className="ig-icon-btn" onClick={() => startCall(otherUserId!, false)}><Phone size={20} /></button>
-                  <button className="ig-icon-btn" onClick={() => startCall(otherUserId!, true)}><Video size={20} /></button>
-                  <button className="ig-icon-btn"><Info size={20} /></button>
-                </div>
-              </div>
-
-              {messages.length === 0 && (
-                <div style={{ padding: '40px 20px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', borderBottom: '1px solid var(--ig-border)' }}>
-                  <Avatar src={otherUser?.avatar} name={otherUser?.name} size={80} />
-                  <div style={{ marginTop: 12, fontWeight: 700, fontSize: 18, color: '#f5f5f5' }}>{otherUser?.name}</div>
-                  {otherUser?.department && <div style={{ fontSize: 13, color: '#737373', marginTop: 4 }}>{otherUser.department}{otherUser.year ? ` · ${otherUser.year}` : ''}</div>}
-                  <div style={{ fontSize: 13, color: '#737373', marginTop: 8 }}>
-                    Connected via Alumni Network
-                  </div>
-                </div>
-              )}
-
-              <div className="ig-messages">
-                {messages.map((msg, i) => {
-                  const isMe = msg.sender_id === user.id;
-                  const showAvatar = !isMe && (i === messages.length - 1 || messages[i + 1]?.sender_id !== msg.sender_id);
-                  const showTime = i === messages.length - 1 ||
-                    (messages[i + 1] && (new Date(messages[i + 1].created_at).getTime() - new Date(msg.created_at).getTime()) > 5 * 60 * 1000);
-                  const time = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-                  return (
-                    <div key={msg.id || i}>
-                      <div className={`ig-msg-row ${isMe ? 'ig-msg-me' : 'ig-msg-them'}`}>
-                        {!isMe && (
-                          <div style={{ width: 28, flexShrink: 0 }}>
-                            {showAvatar && <Avatar src={otherUser?.avatar} name={otherUser?.name} size={24} />}
-                          </div>
-                        )}
-                        <div>
-                          <div className={`ig-bubble ${isMe ? 'ig-bubble-me' : 'ig-bubble-them'}`}>
-                            {msg.content}
-                          </div>
-                          {showTime && (
-                            <div className={`ig-msg-time ${isMe ? 'ig-time-right' : 'ig-time-left'}`}>{time}</div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-                <div ref={endRef} />
-              </div>
-
-              <div className="ig-input-area">
-                <div className="ig-input-box">
-                  <button className="ig-icon-btn" style={{ padding: 4 }}><Smile size={22} /></button>
-                  <input
-                    ref={inputRef}
-                    className="ig-msg-input"
-                    value={input}
-                    onChange={e => setInput(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-                    placeholder="Message..."
-                  />
-                  {input.trim() ? (
-                    <button onClick={handleSend} className="ig-send-btn">Send</button>
-                  ) : (
-                    <div style={{ display: 'flex', gap: 2 }}>
-                      <button className="ig-icon-btn" style={{ padding: 4 }}><Image size={20} /></button>
-                      <button className="ig-icon-btn" style={{ padding: 4 }}><Heart size={20} /></button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="ig-empty">
-              <div className="ig-empty-icon">
-                <MessageCircle size={48} />
-              </div>
-              <div className="ig-empty-title">Your Messages</div>
-              <p style={{ fontSize: 14, textAlign: 'center', maxWidth: 280 }}>
-                Send private messages to anyone registered in the alumni network.
-              </p>
-              <button
-                onClick={() => setActiveTab('people')}
-                style={{ marginTop: 8, padding: '10px 24px', background: '#0095f6', color: '#fff', border: 'none', borderRadius: 10, fontWeight: 700, fontSize: 14, cursor: 'pointer' }}
-              >
-                Find People
-              </button>
-            </div>
-          )}
-          
-          {callState !== 'idle' && (
-            <div className="ig-call-overlay">
-              <div style={{ position: 'absolute', top: 20, left: 20, zIndex: 51, textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>
-                {callState === 'calling' && <div style={{ fontSize: 20, fontWeight: 600 }}>Calling {getAlumniById(callPartnerId!)?.name}...</div>}
-                {callState === 'connected' && <div style={{ fontSize: 20, fontWeight: 600 }}>In call with {getAlumniById(callPartnerId!)?.name}</div>}
-              </div>
-
-              {callType === 'video' && <video ref={remoteVideoRef} className="ig-call-video" autoPlay playsInline />}
-              {callType === 'audio' && (
-                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                   <Avatar src={getAlumniById(callPartnerId!)?.avatar} name={getAlumniById(callPartnerId!)?.name} size={120} />
-                   <audio ref={remoteVideoRef} autoPlay />
-                </div>
-              )}
-
-              {(callState === 'connected' || callState === 'calling') && callType === 'video' && (
-                <div className="ig-call-pip">
-                  <video ref={localVideoRef} autoPlay playsInline muted />
-                </div>
-              )}
-
-              <div className="ig-call-controls">
-                <button className={`ig-call-btn ${isMuted ? 'off' : 'normal'}`} onClick={toggleMute}>
-                  {isMuted ? <MicOff size={24} /> : <Mic size={24} />}
-                </button>
-                {callType === 'video' && (
-                  <button className={`ig-call-btn ${isVideoOff ? 'off' : 'normal'}`} onClick={toggleVideo}>
-                    {isVideoOff ? <VideoOff size={24} /> : <Video size={24} />}
-                  </button>
-                )}
-                <button className="ig-call-btn hangup" onClick={endCall}>
-                  <PhoneOff size={24} />
-                </button>
-              </div>
-            </div>
-          )}
-
-          {callState === 'ringing' && callPartnerId && (
-            <div className="ig-incoming">
-               <Avatar src={getAlumniById(callPartnerId)?.avatar} name={getAlumniById(callPartnerId)?.name} size={48} />
-               <div>
-                 <div style={{ fontWeight: 600, color: '#fff', fontSize: 16 }}>{getAlumniById(callPartnerId)?.name}</div>
-                 <div style={{ color: '#aaa', fontSize: 13 }}>Incoming {callType} call...</div>
-               </div>
-               <div className="ig-incoming-btns">
-                 <button className="ig-inc-btn ig-inc-accept" onClick={acceptCall}>Accept</button>
-                 <button className="ig-inc-btn ig-inc-decline" onClick={endCall}>Decline</button>
-               </div>
-            </div>
-          )}
-
-        </div>
-      </div>
-    </>
-  );
-}
+export default Chat;

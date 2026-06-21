@@ -14,7 +14,12 @@ export function Layout() {
     { name: 'Home', path: '/' },
     { name: 'Network', path: '/network' },
     { name: 'Opportunities', path: '/opportunities' },
+    { name: 'Jobs', path: '/jobs' },
+    { name: 'Internships', path: '/internships' },
+    { name: 'Referrals', path: '/referrals' },
+    { name: 'Business & Startups', path: '/business-startups' },
     { name: 'Events', path: '/events' },
+    { name: 'Mentorship', path: '/mentorship' },
     { name: 'Community', path: '/community' },
     { name: 'Dashboard', path: '/dashboard' },
   ];
@@ -22,7 +27,7 @@ export function Layout() {
   const toggleMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
 
   // Hide layout components on dashboard
-  const isDashboard = location.pathname === '/dashboard';
+  const isDashboard = location.pathname === '/dashboard' || location.pathname.startsWith('/dashboard/') || ['/mentorship', '/jobs', '/referrals', '/internships', '/higher-education', '/business-startups', '/events'].includes(location.pathname);
   const isAdminPage = location.pathname === '/admin';
   const isLandingPage = location.pathname === '/';
   const isLoginPage = location.pathname === '/login';
