@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router';
 import collegeLogo from '../../assests/college-logo.png';
 
@@ -43,11 +43,11 @@ const bannerImages: Array<any> = [
 export function Home() {
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
 
-  // Auto-rotate banners every 5 seconds
   useEffect(() => {
     if (!isAutoPlaying) return;
-    
+
     const delay = currentBannerIndex === 0 ? 4000 : 5000;
     const interval = setInterval(() => {
       setCurrentBannerIndex((prevIndex) => 
@@ -57,6 +57,15 @@ export function Home() {
 
     return () => clearInterval(interval);
   }, [isAutoPlaying, currentBannerIndex]);
+
+  useEffect(() => {
+    if (currentBannerIndex === 0 && videoRef.current) {
+      videoRef.current.currentTime = 0;
+      videoRef.current.play().catch(() => {
+        // ignore autoplay block if browser prevents it
+      });
+    }
+  }, [currentBannerIndex]);
 
   const nextBanner = () => {
     setIsAutoPlaying(false);
@@ -99,6 +108,7 @@ export function Home() {
               {/* Banner Image or Video */}
               {banner.type === 'video' ? (
                 <video
+                  ref={videoRef}
                   src={banner.url}
                   className="w-full h-full object-cover"
                   autoPlay
@@ -107,6 +117,7 @@ export function Home() {
                   playsInline
                   controls
                   preload="auto"
+                  poster="/video-poster.png"
                   onError={(event) => {
                     const target = event.currentTarget as HTMLVideoElement;
                     target.poster = '/video-poster.png';
