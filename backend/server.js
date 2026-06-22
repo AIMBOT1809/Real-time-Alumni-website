@@ -4,6 +4,11 @@ const http = require("http");
 const { Server } = require("socket.io");
 const { supabase } = require("./authMiddleware");
 
+const PORT = process.env.PORT || 5000;
+const CORS_ORIGIN = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(",").map((s) => s.trim())
+  : ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000", "http://localhost:5187"];
+
 const validateRoutes = require("./validateRoutes");
 const chatRoutes = require("./chatRoutes");
 
@@ -13,7 +18,7 @@ const server = http.createServer(app);
 // Socket.io with CORS
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000"],
+    origin: CORS_ORIGIN,
     methods: ["GET", "POST", "PATCH"],
     credentials: true,
   },
@@ -22,7 +27,7 @@ const io = new Server(server, {
 // Make io accessible to routes
 app.set("io", io);
 
-app.use(cors());
+app.use(cors({ origin: CORS_ORIGIN, credentials: true }));
 app.use(express.json());
 
 // Existing routes
@@ -280,8 +285,6 @@ io.on("connection", (socket) => {
     console.log(`[Socket] Client disconnected: ${socket.id}`);
   });
 });
-
-const PORT = 5000;
 
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
