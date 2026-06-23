@@ -48,3 +48,24 @@ declare module 'lucide-react' {
   const _default: any;
   export default _default;
 }
+
+// Image module declarations for TypeScript imports
+declare module '*.png' {
+  const value: string;
+  export default value;
+}
+
+declare module '*.jpg' {
+  const value: string;
+  export default value;
+}
+
+declare module '*.jpeg' {
+  const value: string;
+  export default value;
+}
+
+declare module '*.svg' {
+  const value: string;
+  export default value;
+}

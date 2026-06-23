@@ -14,12 +14,7 @@ export function Layout() {
     { name: 'Home', path: '/' },
     { name: 'Network', path: '/network' },
     { name: 'Opportunities', path: '/opportunities' },
-    { name: 'Jobs', path: '/jobs' },
-    { name: 'Internships', path: '/internships' },
-    { name: 'Referrals', path: '/referrals' },
-    { name: 'Business & Startups', path: '/business-startups' },
     { name: 'Events', path: '/events' },
-    { name: 'Mentorship', path: '/mentorship' },
     { name: 'Community', path: '/community' },
     { name: 'Dashboard', path: '/dashboard' },
   ];
@@ -50,7 +45,17 @@ export function Layout() {
           </Link>
 
           {/* Desktop Nav */}
-          
+          <div className="hidden md:flex items-center space-x-8">
+            {navLinks.map((link) => (
+              <a
+                key={link.name}
+                href={link.href}
+                className="text-slate-300 hover:text-yellow-400 font-medium transition-colors duration-200"
+              >
+                {link.name}
+              </a>
+            ))}
+          </div>
 
           {/* User Controls */}
           <div className="hidden md:flex items-center space-x-4">
@@ -125,19 +130,14 @@ export function Layout() {
             >
               <nav className="flex flex-col p-4 space-y-4">
                 {navLinks.map((link) => (
-                  <NavLink
-                    key={link.path}
-                    to={link.path}
+                  <a
+                    key={link.name}
+                    href={link.href}
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className={({ isActive }: { isActive: boolean }) =>
-                      clsx(
-                        "text-base font-medium transition-colors duration-200 block py-2",
-                        isActive ? "text-yellow-400" : "text-slate-300"
-                      )
-                    }
+                    className="text-base font-medium transition-colors duration-200 block py-2 text-slate-300 hover:text-yellow-400"
                   >
                     {link.name}
-                  </NavLink>
+                  </a>
                 ))}
                 <div className="border-t border-slate-700 pt-4 mt-4">
                   {isLandingPage || isLoginPage || isRegisterPage || isAdminPage ? (
@@ -217,10 +217,8 @@ export function Layout() {
           <div>
             <h3 className="text-white font-semibold mb-4">Community</h3>
             <ul className="space-y-2 text-sm">
-              <li><Link to="/about" className="hover:text-yellow-400 transition-colors">About Us</Link></li>
               <li><Link to="/guidelines" className="hover:text-yellow-400 transition-colors">Community Guidelines</Link></li>
               <li><Link to="/success-stories" className="hover:text-yellow-400 transition-colors">Success Stories</Link></li>
-              <li><Link to="/contact" className="hover:text-yellow-400 transition-colors">Contact Support</Link></li>
             </ul>
           </div>
 

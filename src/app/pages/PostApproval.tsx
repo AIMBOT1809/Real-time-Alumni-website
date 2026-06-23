@@ -137,63 +137,6 @@ export function PostApproval() {
       // Update localStorage
       approveLocalPost(postId);
 
-<<<<<<< Updated upstream
-      if (error) {
-        console.error('[PostApproval] Error approving post:', error);
-        alert('Failed to approve post: ' + error.message);
-        return;
-      } */
-     // Get post from pending_posts
-const { data: pendingPost, error: fetchError } = await supabase
-  .from('pending_posts')
-  .select('*')
-  .eq('id', postId)
-  .single();
-
-if (fetchError) {
-  console.error(fetchError);
-  return;
-}
-
-// Insert into posts table
-console.log("PENDING POST:", pendingPost);
-const { error: insertError } = await supabase
-  .from('posts')
-  
-  .insert([
-    {
-      title: pendingPost.title,
-      content: pendingPost.content,
-      image: pendingPost.image_url,
-      file: pendingPost.file,
-      alumni_id: pendingPost.alumni_id,
-      type: pendingPost.type,
-      created_at: pendingPost.created_at,
-      likes: pendingPost.likes || 0,
-      comments: pendingPost.comments || 0,
-    },
-  ]);
-////hello
-if (insertError) {
-  console.error(insertError);
-  alert(insertError.message);
-  return;
-}
-
-// Delete from pending_posts
-await supabase
-  .from('pending_posts')
-  .delete()
-  .eq('id', postId);
-
-      console.log('[PostApproval] Post approved successfully');
-
-      setPosts(prevPosts =>
-  prevPosts.filter(post => post.id !== postId)
-);
-      
-=======
->>>>>>> Stashed changes
       // Update local state
       setPosts(prevPosts =>
         prevPosts.map(post =>
@@ -541,13 +484,12 @@ await supabase
                       </div>
                     )}
 
-                      {/* Review Info (for approved/rejected posts) */}
-                      {(post.status === 'approved' || post.status === 'rejected') && post.reviewedAt && (
-                        <div className="mt-4 text-xs text-slate-500">
-                          Reviewed on {new Date(post.reviewedAt).toLocaleString()}
-                        </div>
-                      )}
-                    </div>
+                    {/* Review Info (for approved/rejected posts) */}
+                    {(post.status === 'approved' || post.status === 'rejected') && post.reviewedAt && (
+                      <div className="mt-4 text-xs text-slate-500">
+                        Reviewed on {new Date(post.reviewedAt).toLocaleString()}
+                      </div>
+                    )}
 
                     {/* Action Buttons */}
                     {(post.status === 'pending' || user.role === 'admin') && (
@@ -601,6 +543,7 @@ await supabase
                         )}
                       </div>
                     )}
+                  </div>
                 </div>
               );
             })}
