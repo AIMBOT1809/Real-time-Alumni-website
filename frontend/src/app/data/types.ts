@@ -43,6 +43,18 @@ export interface UserProfile {
   yearsOfExperience?: number;
   specialization?: string;
   researchInterests?: string[];
+  // Entrepreneur / Startup Founder fields
+  startupName?: string;
+  founderRole?: string;
+  industry?: string;
+  yearFounded?: string;
+  website?: string;
+  location?: string;
+  employeeCount?: string;
+  startupStage?: string;
+  lookingFor?: string;
+  startupDescription?: string;
+  businessVerification?: string;
 }
 
 export interface Job {

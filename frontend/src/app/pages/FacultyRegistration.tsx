@@ -12,6 +12,8 @@ interface FacultyRegistrationProps {
 export function FacultyRegistration({ onBack }: FacultyRegistrationProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [facultyType, setFacultyType] = useState("");
+  const [customFacultyType, setCustomFacultyType] = useState("");
 
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -42,11 +44,8 @@ export function FacultyRegistration({ onBack }: FacultyRegistrationProps) {
     const department = formData.get('department') as string;
     const facultyId = formData.get('facultyId') as string;
     const officeEmail = formData.get('officeEmail') as string;
-    const designation = formData.get('designation') as string;
     const facultyType = formData.get('facultyType') as string;
     const yearsOfExperience = formData.get('yearsOfExperience') as string;
-    const specialization = formData.get('specialization') as string;
-    const researchInterests = formData.get('researchInterests') as string;
     const linkedin = formData.get('linkedin') as string;
 
     // Validation
@@ -98,16 +97,6 @@ export function FacultyRegistration({ onBack }: FacultyRegistrationProps) {
       return;
     }
 
-    if (!officeEmail) {
-      alert('Please enter your Office Email Address');
-      return;
-    }
-
-    if (!designation) {
-      alert('Please enter your Designation');
-      return;
-    }
-
     if (!facultyType) {
       alert('Please select your Faculty Type');
       return;
@@ -118,8 +107,10 @@ export function FacultyRegistration({ onBack }: FacultyRegistrationProps) {
       return;
     }
 
-    if (!specialization) {
-      alert('Please enter your Specialization');
+    // If "Other" is selected, validate custom faculty type
+    const finalFacultyType = facultyType === 'Other' ? customFacultyType.trim() : facultyType;
+    if (facultyType === 'Other' && !customFacultyType.trim()) {
+      alert('Please specify your faculty type');
       return;
     }
 
@@ -191,17 +182,14 @@ export function FacultyRegistration({ onBack }: FacultyRegistrationProps) {
             First_Name: firstName,
             Last_name: lastName,
             Email_Address: email,
-            Office_Email: officeEmail,
+            Office_Email: officeEmail || null,
             Phone_Number: phone,
             LinkedIn_Profile_URL: linkedin,
             College_Name: collegeName,
             Department: department,
             Faculty_ID: facultyId,
-            Designation: designation,
-            Faculty_Type: facultyType,
+            Faculty_Type: finalFacultyType,
             Years_Of_Experience: parseInt(yearsOfExperience),
-            Specialization: specialization,
-            Research_Interests: researchInterests || null,
             id_proof_url: idUrl,
             photo_url: photoUrl,
           }
@@ -221,7 +209,7 @@ export function FacultyRegistration({ onBack }: FacultyRegistrationProps) {
           ? URL.createObjectURL(photo)
           : `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=FDE68A&color=111827&size=256`,
         graduationYear: new Date().getFullYear(),
-        degree: `${specialization} - ${department}`,
+        degree: `${department}`,
         bio: `Faculty member at ${collegeName}`,
         skills: [],
         email: email.trim(),
@@ -232,11 +220,8 @@ export function FacultyRegistration({ onBack }: FacultyRegistrationProps) {
         memo: id ? id.name : undefined,
         facultyId: facultyId.trim(),
         officeEmail: officeEmail.trim(),
-        designation: designation.trim(),
         facultyType: facultyType as any,
         yearsOfExperience: parseInt(yearsOfExperience),
-        specialization: specialization.trim(),
-        researchInterests: researchInterests ? researchInterests.split(',').map(interest => interest.trim()).filter(Boolean) : [],
       };
 
       await login(newUser);
@@ -329,13 +314,13 @@ export function FacultyRegistration({ onBack }: FacultyRegistrationProps) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
                   <label htmlFor="officeEmail" className="block text-sm font-medium text-slate-700 mb-1">
-                    Office Email Address *
+                    College Email Address (Optional)
                   </label>
                   <input
                     id="officeEmail"
                     name="officeEmail"
                     type="email"
-                    required
+                    placeholder="e.g., faculty@college.edu"
                     className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
                   />
                 </div>
@@ -491,22 +476,6 @@ export function FacultyRegistration({ onBack }: FacultyRegistrationProps) {
                   />
                 </div>
                 <div>
-                  <label htmlFor="designation" className="block text-sm font-medium text-slate-700 mb-1">
-                    Designation *
-                  </label>
-                  <input
-                    id="designation"
-                    name="designation"
-                    type="text"
-                    placeholder="e.g., Assistant Professor, Associate Professor"
-                    required
-                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
                   <label htmlFor="facultyType" className="block text-sm font-medium text-slate-700 mb-1">
                     Faculty Type *
                   </label>
@@ -514,6 +483,13 @@ export function FacultyRegistration({ onBack }: FacultyRegistrationProps) {
                     id="facultyType"
                     name="facultyType"
                     required
+                    value={facultyType}
+                    onChange={(e) => {
+                      setFacultyType(e.target.value);
+                      if (e.target.value !== 'Other') {
+                        setCustomFacultyType("");
+                      }
+                    }}
                     className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
                   >
                     <option value="">Select Faculty Type</option>
@@ -521,54 +497,43 @@ export function FacultyRegistration({ onBack }: FacultyRegistrationProps) {
                     <option value="Part-Time">Associate Professor</option>
                     <option value="Visiting">Assistant Professor</option>
                     <option value="Contract">HoD</option>
-                    <option value="Visiting">Lecturer</option>
-                    <option value="Visiting">Other</option>
+                    <option value="Lecturer">Lecturer</option>
+                    <option value="Other">Other</option>
                   </select>
                 </div>
-                <div>
-                  <label htmlFor="yearsOfExperience" className="block text-sm font-medium text-slate-700 mb-1">
-                    Years of Experience *
+              </div>
+
+              {facultyType === 'Other' && (
+                <div className="mb-4">
+                  <label htmlFor="customFacultyType" className="block text-sm font-medium text-slate-700 mb-1">
+                    Specify Faculty Type *
                   </label>
                   <input
-                    id="yearsOfExperience"
-                    name="yearsOfExperience"
-                    type="number"
-                    min="0"
+                    id="customFacultyType"
+                    name="customFacultyType"
+                    type="text"
                     required
-                    placeholder="e.g., 5"
+                    value={customFacultyType}
+                    onChange={(e) => setCustomFacultyType(e.target.value)}
+                    placeholder="e.g., Adjunct Faculty, Research Scholar"
                     className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
                   />
                 </div>
-              </div>
+              )}
 
               <div className="mb-4">
-                <label htmlFor="specialization" className="block text-sm font-medium text-slate-700 mb-1">
-                  Specialization *
+                <label htmlFor="yearsOfExperience" className="block text-sm font-medium text-slate-700 mb-1">
+                  Years of Experience *
                 </label>
                 <input
-                  id="specialization"
-                  name="specialization"
-                  type="text"
-                  placeholder="e.g., Data Science, Web Development"
+                  id="yearsOfExperience"
+                  name="yearsOfExperience"
+                  type="number"
+                  min="0"
                   required
+                  placeholder="e.g., 5"
                   className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
                 />
-              </div>
-
-              <div className="mb-4">
-                <label htmlFor="researchInterests" className="block text-sm font-medium text-slate-700 mb-1">
-                  Research Interests
-                </label>
-                <input
-                  id="researchInterests"
-                  name="researchInterests"
-                  type="text"
-                  placeholder="e.g., Machine Learning, Artificial Intelligence (comma-separated)"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                />
-                <p className="mt-1 text-xs text-slate-500">
-                  Optional: Add comma-separated research interests
-                </p>
               </div>
             </div>
 

@@ -18,6 +18,7 @@ export function StudentRegistration({ onBack }: StudentRegistrationProps) {
   const [verifiedDocument, setVerifiedDocument] = useState<File | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [resume, setResume] = useState<File | null>(null);
 
   // Step 2: Career Interest
   const [careerInterest, setCareerInterest] = useState("");
@@ -177,6 +178,20 @@ export function StudentRegistration({ onBack }: StudentRegistrationProps) {
   alert('Please enter a valid roll number ');
   return;
 }
+
+    if (resume && resume.size > 0) {
+      const maxResumeSize = 5 * 1024 * 1024;
+      if (resume.size > maxResumeSize) {
+        alert('Resume file size must be less than 5MB');
+        return;
+      }
+
+      if (resume.type !== 'application/pdf') {
+        alert('Resume must be in PDF format only');
+        return;
+      }
+    }
+    
     const joiningYear = parseInt(yearOfJoining);
     const graduationYear = parseInt(passedOutYear);
     const currentYear = new Date().getFullYear();
@@ -206,6 +221,7 @@ export function StudentRegistration({ onBack }: StudentRegistrationProps) {
       confirmPassword,
       memo,
       photo,
+      resume,
       collegeName,
       department,
       yearOfJoining,
@@ -353,6 +369,27 @@ export function StudentRegistration({ onBack }: StudentRegistrationProps) {
         photoUrl = photoUrlData.publicUrl;
       }
 
+      // Upload Resume
+      let resumeUrl = '';
+      if (resume && resume.size > 0) {
+        const resumeFileName = `${Date.now()}-${resume.name}`;
+        const { data: resumeUpload, error: resumeError } = await supabase.storage
+          .from('resumes')
+          .upload(resumeFileName, resume);
+
+        if (resumeError) {
+          console.log(resumeError);
+          alert(resumeError.message);
+          return;
+        }
+
+        const { data: resumeUrlData } = supabase.storage
+          .from('resumes')
+          .getPublicUrl(resumeFileName);
+
+        resumeUrl = resumeUrlData.publicUrl;
+      }
+
       const { error: profileError } = await supabase
         .from('student_profiles')
         .insert([
@@ -370,6 +407,7 @@ export function StudentRegistration({ onBack }: StudentRegistrationProps) {
             Roll_Number: rollNumber,
             id_proof_url: memoUrl,
             photo_url: photoUrl,
+            resume_url: resumeUrl || null,
             career_interest: careerInterest,
             job_interest: careerInterest === 'Job' ? finalJobInterest : null,
             business_interest: careerInterest === 'Business' ? finalBusinessInterest : null,
@@ -668,6 +706,24 @@ export function StudentRegistration({ onBack }: StudentRegistrationProps) {
                       className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
                     />
                   </div>
+                </div>
+
+                <div className="mb-4">
+                  <label className="block text-sm font-medium mb-1">
+                    Resume (Optional)
+                  </label>
+                  <input
+                    name="resume"
+                    type="file"
+                    accept=".pdf"
+                    onChange={(e) => setResume(e.target.files?.[0] || null)}
+                    className="w-full border border-slate-300 rounded-md p-2
+                    file:bg-yellow-50 file:text-yellow-700 file:border-0
+                    file:px-3 file:py-2 file:rounded-md"
+                  />
+                  <p className="mt-1 text-xs text-slate-500">
+                    Optional: Upload your resume in PDF format (Max 5MB). You can update it later from your profile.
+                  </p>
                 </div>
               </div>
 
