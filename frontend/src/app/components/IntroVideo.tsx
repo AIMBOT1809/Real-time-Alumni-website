@@ -6,8 +6,15 @@ type IntroVideoProps = {
 
 export default function IntroVideo({ onFinish }: IntroVideoProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    // Safety fallback: force intro to finish after 3 seconds
+    // even if video doesn't load or end
+    timeoutRef.current = setTimeout(() => {
+      onFinish();
+    }, 3000);
+
     // Preload and set slightly slower playback rate
     const v = videoRef.current;
     if (!v) return;
@@ -25,19 +32,28 @@ export default function IntroVideo({ onFinish }: IntroVideoProps) {
     return () => {
       v.removeEventListener('loadedmetadata', setRate);
     };
-  }, []);
+  }, [onFinish]);
+
+  const clearAndFinish = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    onFinish();
+  };
 
   const handleEnd = () => {
+    clearAndFinish();
     try {
       sessionStorage.setItem('introPlayed', '1');
     } catch (e) {
       /* ignore */
     }
-    onFinish();
   };
 
   const handleSkip = () => {
     const v = videoRef.current;
+    clearAndFinish();
     try {
       sessionStorage.setItem('introPlayed', '1');
     } catch (e) {
@@ -50,7 +66,6 @@ export default function IntroVideo({ onFinish }: IntroVideoProps) {
     } catch (e) {
       /* ignore */
     }
-    onFinish();
   };
 
 

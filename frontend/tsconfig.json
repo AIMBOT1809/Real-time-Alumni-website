@@ -12,7 +12,7 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "baseUrl": ".",
+    "types": ["vite/client"]
   },
   "include": ["src", "global.d.ts", "src/global.d.ts"],
   "exclude": ["node_modules", "dist"]
