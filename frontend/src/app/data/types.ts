@@ -25,6 +25,7 @@ export interface UserProfile {
   portfolio?: string;
   resume?: string;
   memo?: string;
+  idproof?: string;
   links?: { title: string; url: string }[];
   cgpa?: string;
   phoneNumber?: string;
