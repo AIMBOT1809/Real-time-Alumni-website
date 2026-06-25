@@ -38,7 +38,20 @@ export function AlumniRegistration({ onBack }: AlumniRegistrationProps) {
     if (!file) return;
 
     try {
-      const validationResult = await validateUploadedDocument(file);
+      const formData = new FormData();
+
+    // Backend expects this name
+    formData.append("idCard", file);
+
+    // Backend will call memoValidator.js for alumni
+    formData.append("role", "alumni");
+
+    const response = await fetch("http://localhost:5000/verify-id", {
+      method: "POST",
+      body: formData,
+    });
+
+    const validationResult = await response.json();
 
       if (!validationResult.valid) {
         alert(validationResult.reason || "Invalid document.");
@@ -655,19 +668,19 @@ export function AlumniRegistration({ onBack }: AlumniRegistrationProps) {
 
                   <div className="mb-4">
                     <label htmlFor="memo" className="block text-sm font-medium text-slate-700 mb-1">
-                      Memo *
+                      College ID/College Memo*
                     </label>
                     <input
                       id="memo"
                       name="memo"
                       type="file"
-                      accept=".jpg,.jpeg,.png,.pdf"
+                      accept=".pdf"
                       required
                       onChange={handleDocumentValidation}
                       className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 file:mr-3 file:py-2 file:border-0 file:text-sm file:font-medium file:bg-yellow-50 file:text-yellow-700 hover:file:bg-yellow-100"   
                     />
                     <p className="mt-1 text-xs text-slate-500">
-                      Accepted formats: JPG, JPEG, PNG, PDF (Max 5MB)
+                      Accepted format: PDF (Max 5MB)
                     </p>
                   </div>
 
@@ -933,10 +946,25 @@ export function AlumniRegistration({ onBack }: AlumniRegistrationProps) {
                              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
                            />
                          </div>
-                       </div>
-                     </div>
-                   )}
-
+                       <div>
+                        <label htmlFor="companyIdProof" className="block text-sm font-medium text-slate-700 mb-1">
+          Company ID Proof *
+        </label>
+        <input
+          id="companyIdProof"
+          name="companyIdProof"
+          type="file"
+          required
+          accept=".jpg,.jpeg,.png,.pdf"
+          className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 file:mr-3 file:py-2 file:border-0 file:text-sm file:font-medium file:bg-yellow-50 file:text-yellow-700 hover:file:bg-yellow-100"
+        />
+        <p className="mt-1 text-xs text-slate-500">
+          Upload company ID card. Accepted formats: JPG, JPEG, PNG, PDF.
+        </p>
+      </div>
+    </div>
+  </div>
+)}
                   {currentStatus === 'career-aspirant' && (
                     <div className="space-y-4">
                       <div>
