@@ -78,10 +78,6 @@ export function Layout() {
   const isLoginPage = location.pathname === '/login';
   const isRegisterPage = location.pathname === '/register';
 
-  if (isDashboard) {
-    return <Outlet />;
-  }
-
   // Add smooth scrolling CSS
   useEffect(() => {
     const style = document.createElement('style');
@@ -96,6 +92,10 @@ export function Layout() {
       document.head.removeChild(style);
     };
   }, []);
+
+  if (isDashboard) {
+    return <Outlet />;
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 font-sans text-slate-900">
