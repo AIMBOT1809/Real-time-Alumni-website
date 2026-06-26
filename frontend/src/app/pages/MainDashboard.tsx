@@ -1918,21 +1918,38 @@ const author =
                     )}
 
                     {/* Skills Section */}
-                    {user?.skills?.length > 0 && (
-                      <>
-                        <hr className="border-slate-700" />
-                        <div>
-                          <p className="text-sm text-slate-400 mb-3">Skills</p>
-                          <div className="flex flex-wrap gap-2">
-                            {user.skills.map((skill, idx) => (
-                              <span key={idx} className="bg-slate-700 text-white px-3 py-1 rounded-lg text-sm">
-                                {skill}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      </>
-                    )}
+{(() => {
+  const skillsValue = user?.skills as unknown;
+
+  const skillsList: string[] = Array.isArray(skillsValue)
+    ? skillsValue.map((skill: unknown) => String(skill))
+    : typeof skillsValue === "string"
+    ? skillsValue
+        .split(",")
+        .map((skill: string) => skill.trim())
+        .filter((skill: string) => skill.length > 0)
+    : [];
+
+  return skillsList.length > 0 ? (
+    <>
+      <hr className="border-slate-700" />
+      <div>
+        <p className="text-sm text-slate-400 mb-3">Skills</p>
+
+        <div className="flex flex-wrap gap-2">
+          {skillsList.map((skill: string, idx: number) => (
+            <span
+              key={idx}
+              className="bg-slate-700 text-white px-3 py-1 rounded-lg text-sm"
+            >
+              {skill}
+            </span>
+          ))}
+        </div>
+      </div>
+    </>
+  ) : null;
+})()}
 
                     {/* Career Interest Section - Students Only */}
                     {role === 'student' && user?.careerInterest && (

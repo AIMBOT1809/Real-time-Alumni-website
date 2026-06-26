@@ -19,6 +19,7 @@ export function AlumniRegistration({ onBack }: AlumniRegistrationProps) {
     'working-professional' | 'higher-education' | 'career-aspirant' | 'entrepreneur' | null
   >(null);
   const [step, setStep] = useState<1 | 2>(1);
+  const [step1Data, setStep1Data] = useState<FormData | null>(null);
 
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -191,17 +192,20 @@ export function AlumniRegistration({ onBack }: AlumniRegistrationProps) {
 
     return true;
   };
+const handleNext = (e: React.MouseEvent<HTMLButtonElement>) => {
+  e.preventDefault();
 
-  const handleNext = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    const form = e.currentTarget.form;
-    if (!form) return;
+  const form = e.currentTarget.form;
+  if (!form) return;
 
-    const formData = new FormData(form);
-    if (validateStep1(formData)) {
-      setStep(2);
-    }
-  };
+  const formData = new FormData(form);
+
+  if (validateStep1(formData)) {
+    setStep1Data(formData);
+    setStep(2);
+  }
+};
+  
 
   const handlePrevious = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -211,8 +215,24 @@ export function AlumniRegistration({ onBack }: AlumniRegistrationProps) {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const form = e.currentTarget;
-    const formData = new FormData(form);
+    if (!step1Data) {
+  alert("Please complete Step 1 first");
+  setStep(1);
+  return;
+}
+
+const form = e.currentTarget;
+const step2Data = new FormData(form);
+
+const formData = new FormData();
+
+step1Data.forEach((value, key) => {
+  formData.append(key, value);
+});
+
+step2Data.forEach((value, key) => {
+  formData.append(key, value);
+});
 
     const firstName = formData.get('firstName') as string;
     const lastName = formData.get('lastName') as string;
@@ -231,7 +251,7 @@ export function AlumniRegistration({ onBack }: AlumniRegistrationProps) {
     const organization = formData.get('organization') as string;
     const jobRole = formData.get('jobRole') as string;
     const package_ = formData.get('package') as string;
-    const jobProof = formData.get('jobProof') as File;
+    const companyIdproof = formData.get('companyIdproof') as File;
     const skills = formData.get('skills') as string;
     const resumeUpload = formData.get('resumeUpload') as File;
     const university = formData.get('university') as string;
@@ -366,6 +386,11 @@ export function AlumniRegistration({ onBack }: AlumniRegistrationProps) {
     }
 
     const name = `${firstName} ${lastName}`.trim();
+    if (!firstName || !lastName || !email || !password || !memo || memo.size === 0) {
+  alert("Step 1 details are missing. Please go back and fill all required fields.");
+  setStep(1);
+  return;
+}
 
     try {
       const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -562,13 +587,16 @@ export function AlumniRegistration({ onBack }: AlumniRegistrationProps) {
       };
 
       await login(newUser);
-      navigate('/dashboard');
+
+localStorage.setItem("allumini_user", JSON.stringify(newUser));
+localStorage.setItem("allumini_role", "alumni");
+
+navigate("/dashboard", { replace: true });
     } catch (error) {
       alert('Registration failed. Please try again.');
       console.error('Registration error:', error);
     }
   };
-
   return (
     <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-slate-900 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl w-full">
@@ -846,12 +874,11 @@ export function AlumniRegistration({ onBack }: AlumniRegistrationProps) {
                   >
                     Next
                   </button>
-                </div>
-              </>
-            )}
-
-            {step === 2 && (
-               <>
+                  </div>
+                  </>
+  )}
+                {step === 2 && (
+                  <>
                  <button
                    type="button"
                    onClick={handlePrevious}
@@ -1269,11 +1296,12 @@ export function AlumniRegistration({ onBack }: AlumniRegistrationProps) {
                     Create Account
                   </button>
                 </div>
-              </>
-            )}
+                </>
+                )}
           </form>
         </div>
       </div>
     </div>
+    
   );
 }
