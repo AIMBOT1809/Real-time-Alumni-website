@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router';
 import { motion } from 'motion/react';
-import { RecentAlumniHighlights } from '../components/RecentAlumniHighlights';
 import collegeLogo from '../../assests/college-logo.png';
 
 // Banner images configuration - You can replace these URLs with your own images
@@ -236,13 +235,6 @@ export function Home() {
               />
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* Recent Alumni Highlights Section */}
-      <section className="py-12 bg-slate-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <RecentAlumniHighlights />
         </div>
       </section>
 
