@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router';
 import { motion } from 'motion/react';
 import collegeLogo from '../../assests/college-logo.png';
+import { supabase } from '../../supabaseClient';
 
 // Banner images configuration - You can replace these URLs with your own images
 // Local video path: put your video at public/clgvideo.mp4
@@ -39,12 +40,40 @@ const bannerImages: Array<any> = [
     subtitle: 'Discover Jobs and Internships from Alumni Network'
   }
 ];
+type AlumniHighlight = {
+  id: string;
+  title: string;
+  images: string[];
+  published: boolean;
+  created_at?: string;
+};
 
 export function Home() {
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const [showHighlights, setShowHighlights] = useState(false);
+  const [alumniHighlights, setAlumniHighlights] = useState<AlumniHighlight[]>([]);
+const [loadingHighlights, setLoadingHighlights] = useState(true);
+const [selectedHighlight, setSelectedHighlight] = useState<AlumniHighlight | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const fetchPublishedHighlights = async () => {
+  setLoadingHighlights(true);
+
+  const { data, error } = await supabase
+    .from('alumni_highlights')
+    .select('id, title, images, published, created_at')
+    .eq('published', true)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching alumni highlights:', error);
+    setLoadingHighlights(false);
+    return;
+  }
+
+  setAlumniHighlights(data || []);
+  setLoadingHighlights(false);
+};
 
   useEffect(() => {
     if (!isAutoPlaying) return;
@@ -76,6 +105,33 @@ export function Home() {
       });
     }
   }, [currentBannerIndex]);
+  useEffect(() => {
+  if (currentBannerIndex === 0 && videoRef.current) {
+    videoRef.current.currentTime = 0;
+    videoRef.current.play().catch(() => {
+      // ignore autoplay block if browser prevents it
+    });
+  }
+}, [currentBannerIndex]);
+
+useEffect(() => {
+  fetchPublishedHighlights();
+
+  const channel = supabase
+    .channel('homepage_alumni_highlights')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'alumni_highlights' },
+      () => {
+        fetchPublishedHighlights();
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}, []);
 
   const nextBanner = () => {
     setIsAutoPlaying(false);
@@ -482,85 +538,58 @@ export function Home() {
               </svg>
             </Link>
           </div>
+          {/* Gallery Grid - Published Alumni Highlights */}
+{loadingHighlights ? (
+  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-10 text-center text-slate-500">
+    Loading alumni highlights...
+  </div>
+) : alumniHighlights.length > 0 ? (
+  <div className="grid md:grid-cols-3 gap-8">
+    {alumniHighlights.map((highlight, index) => (
+      <motion.div
+  key={highlight.id}
+  initial={{ opacity: 0, y: 20 }}
+  whileInView={{ opacity: 1, y: 0 }}
+  viewport={{ once: true }}
+  transition={{ duration: 0.5, delay: index * 0.1 }}
+  onClick={() => setSelectedHighlight(highlight)}
+  className="group relative aspect-[4/3] rounded-2xl overflow-hidden cursor-pointer shadow-lg hover:shadow-2xl transition-all duration-300"
+>
+  {highlight.images && highlight.images.length > 0 ? (
+    <img
+      src={highlight.images[0]}
+      alt={highlight.title}
+      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+    />
+  ) : (
+    <div className="w-full h-full bg-slate-200 flex items-center justify-center">
+      <p className="text-slate-500 font-semibold">No Image</p>
+    </div>
+  )}
 
-          {/* Gallery Grid - 3 Recent Images */}
-          <div className="grid md:grid-cols-3 gap-8">
-            {/* Gallery Card 1 */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
-              className="group relative aspect-[4/3] rounded-2xl overflow-hidden cursor-pointer shadow-lg hover:shadow-2xl transition-all duration-300"
-            >
-              <img
-                src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?q=80&w=2070&auto=format&fit=crop"
-                alt="Annual Alumni Meet 2024"
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                  <div className="text-xs font-semibold text-yellow-400 mb-2">Events</div>
-                  <h3 className="font-bold text-xl mb-1">Annual Alumni Meet 2024</h3>
-                  <p className="text-sm text-slate-200">March 15, 2024</p>
-                </div>
-              </div>
-              <div className="absolute top-4 right-4 bg-yellow-500 text-slate-900 px-3 py-1 rounded-full text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                View
-              </div>
-            </motion.div>
+  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent opacity-100 transition-opacity duration-300">
+    <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+      <h3 className="font-bold text-xl mb-1">
+        {highlight.title}
+      </h3>
 
-            {/* Gallery Card 2 */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="group relative aspect-[4/3] rounded-2xl overflow-hidden cursor-pointer shadow-lg hover:shadow-2xl transition-all duration-300"
-            >
-              <img
-                src="https://images.unsplash.com/photo-1523580494863-6f3031224c94?q=80&w=2070&auto=format&fit=crop"
-                alt="Graduation Ceremony"
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                  <div className="text-xs font-semibold text-yellow-400 mb-2">Ceremony</div>
-                  <h3 className="font-bold text-xl mb-1">Graduation Ceremony</h3>
-                  <p className="text-sm text-slate-200">May 10, 2024</p>
-                </div>
-              </div>
-              <div className="absolute top-4 right-4 bg-yellow-500 text-slate-900 px-3 py-1 rounded-full text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                View
-              </div>
-            </motion.div>
+      {highlight.images && highlight.images.length > 1 && (
+        <p className="text-sm text-slate-200">
+          Click to view all {highlight.images.length} photos
+        </p>
+      )}
+    </div>
+  </div>
+</motion.div>
+    ))}
+  </div>
+) : (
+  <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center text-slate-500">
+    No alumni highlights available yet.
+  </div>
+)}
 
-            {/* Gallery Card 3 */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="group relative aspect-[4/3] rounded-2xl overflow-hidden cursor-pointer shadow-lg hover:shadow-2xl transition-all duration-300"
-            >
-              <img
-                src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?q=80&w=2070&auto=format&fit=crop"
-                alt="Workshop on AI & ML"
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                  <div className="text-xs font-semibold text-yellow-400 mb-2">Workshop</div>
-                  <h3 className="font-bold text-xl mb-1">Workshop on AI & ML</h3>
-                  <p className="text-sm text-slate-200">April 5, 2024</p>
-                </div>
-              </div>
-              <div className="absolute top-4 right-4 bg-yellow-500 text-slate-900 px-3 py-1 rounded-full text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                View
-              </div>
-            </motion.div>
-          </div>
-
+          
           {/* Mobile View More Button */}
           <div className="mt-12 text-center md:hidden">
             <Link
@@ -595,6 +624,40 @@ export function Home() {
           </form>
         </div>
       </section>
+      {selectedHighlight && (
+  <div className="fixed inset-0 z-[999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div className="relative bg-white rounded-3xl max-w-6xl w-full max-h-[90vh] overflow-y-auto p-6">
+      <button
+        type="button"
+        onClick={() => setSelectedHighlight(null)}
+        className="absolute top-4 right-4 z-10 h-10 w-10 rounded-full bg-slate-900 text-white flex items-center justify-center hover:bg-slate-700"
+      >
+        ✕
+      </button>
+
+      <h2 className="text-2xl font-bold text-slate-900 mb-6 pr-12">
+        {selectedHighlight.title}
+      </h2>
+
+      {selectedHighlight.images && selectedHighlight.images.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {selectedHighlight.images.map((img, index) => (
+            <img
+              key={index}
+              src={img}
+              alt={`${selectedHighlight.title} ${index + 1}`}
+              className="w-full h-64 object-cover rounded-2xl border border-slate-200"
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-2xl bg-slate-100 p-10 text-center text-slate-500">
+          No images available.
+        </div>
+      )}
+    </div>
+  </div>
+)}
 
     </div>
   );
