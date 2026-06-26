@@ -4,6 +4,7 @@ import { supabase } from '../../supabaseClient';
 import { createChat } from '@n8n/chat';
 import '@n8n/chat/style.css';
 import { AlumniStatisticsWidget } from '../components/AlumniStatisticsWidget';
+import { RecentAlumniHighlights } from '../components/RecentAlumniHighlights';
 import { 
   Bell, 
   User, 
@@ -347,102 +348,102 @@ export function MainDashboard() {
     };
   }, []);
 
-  useEffect(() => {
-  fetchAdminPosts();
-}, []);
-
-const fetchAdminPosts = async () => {
-  const { data, error } = await supabase
-    .from('admin_posts')
-    .select('*')
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    console.error(error);
-    return;
-  }
-console.log("ADMIN POSTS:", data);
-  setAdminPosts(data || []);
-};
-
-useEffect(() => {
-  if (!user?.id) return;
-  fetchEventRegistrations();
-}, [user?.id]);
-
-const fetchEventRegistrations = async () => {
-  try {
-    if (!user?.id) return;
-
-    // Fetch event registrations for the current user
-    const { data: registrations, error: regError } = await supabase
-      .from('event_registrations')
-      .select(`
-        id,
-        event_id,
-        status,
-        attended,
-        created_at,
-        events:event_id(
-          id,
-          title,
-          date,
-          time,
-          location,
-          description,
-          image
-        )
-      `)
-      .eq('user_id', user.id)
+  const fetchAdminPosts = async () => {
+    const { data, error } = await supabase
+      .from('admin_posts')
+      .select('*')
       .order('created_at', { ascending: false });
 
-    if (regError) {
-      console.error('[MainDashboard] Error fetching event registrations:', regError);
-      setRegisteredEvents([]);
-      setAttendedEvents([]);
+    if (error) {
+      console.error(error);
       return;
     }
+    console.log("ADMIN POSTS:", data);
+    setAdminPosts(data || []);
+  };
 
-    if (!registrations) {
-      console.log('[MainDashboard] No event registrations found');
-      setRegisteredEvents([]);
-      setAttendedEvents([]);
-      return;
-    }
+  useEffect(() => {
+    fetchAdminPosts();
+  }, []);
 
-    console.log('[MainDashboard] Event registrations:', registrations);
+  const fetchEventRegistrations = async () => {
+    try {
+      if (!user?.id) return;
 
-    // Filter registered and attended events
-    const registered: any[] = [];
-    const attended: any[] = [];
+      // Fetch event registrations for the current user
+      const { data: registrations, error: regError } = await supabase
+        .from('event_registrations')
+        .select(`
+          id,
+          event_id,
+          status,
+          attended,
+          created_at,
+          events:event_id(
+            id,
+            title,
+            date,
+            time,
+            location,
+            description,
+            image
+          )
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
 
-    registrations.forEach((reg: any) => {
-      if (reg.events) {
-        const eventData = {
-          ...reg.events,
-          registrationId: reg.id,
-          status: reg.status,
-          attended: reg.attended,
-          registeredAt: reg.created_at,
-        };
-
-        registered.push(eventData);
-
-        // If attended, also add to attended list
-        if (reg.attended) {
-          attended.push(eventData);
-        }
+      if (regError) {
+        console.error('[MainDashboard] Error fetching event registrations:', regError);
+        setRegisteredEvents([]);
+        setAttendedEvents([]);
+        return;
       }
-    });
 
-    setRegisteredEvents(registered);
-    setAttendedEvents(attended);
-  } catch (err) {
-    console.error('[MainDashboard] Unexpected error fetching event registrations:', err);
-    setRegisteredEvents([]);
-    setAttendedEvents([]);
-  }
-};
+      if (!registrations) {
+        console.log('[MainDashboard] No event registrations found');
+        setRegisteredEvents([]);
+        setAttendedEvents([]);
+        return;
+      }
+
+      console.log('[MainDashboard] Event registrations:', registrations);
+
+      // Filter registered and attended events
+      const registered: any[] = [];
+      const attended: any[] = [];
+
+      registrations.forEach((reg: any) => {
+        if (reg.events) {
+          const eventData = {
+            ...reg.events,
+            registrationId: reg.id,
+            status: reg.status,
+            attended: reg.attended,
+            registeredAt: reg.created_at,
+          };
+
+          registered.push(eventData);
+
+          // If attended, also add to attended list
+          if (reg.attended) {
+            attended.push(eventData);
+          }
+        }
+      });
+
+      setRegisteredEvents(registered);
+      setAttendedEvents(attended);
+    } catch (err) {
+      console.error('[MainDashboard] Unexpected error fetching event registrations:', err);
+      setRegisteredEvents([]);
+      setAttendedEvents([]);
+    }
+  };
+
+  useEffect(() => {
+    if (!user?.id) return;
+    fetchEventRegistrations();
+  }, [user?.id]);
 
   if (!user) return null;
 
@@ -659,6 +660,9 @@ const fetchEventRegistrations = async () => {
           <main className="flex-1 min-w-0 space-y-6">
             {activeMenu === 'home' && (
               <>
+                {/* Recent Alumni Highlights */}
+                <RecentAlumniHighlights userId={user?.id} />
+
                 {/* Create Post (for Faculty and Alumni) */}
                 {canPost && (
                   <div className="bg-slate-900 rounded-lg border border-slate-800 p-4">

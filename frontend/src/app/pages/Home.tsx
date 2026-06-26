@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router';
 import { motion } from 'motion/react';
+import { RecentAlumniHighlights } from '../components/RecentAlumniHighlights';
 import collegeLogo from '../../assests/college-logo.png';
 
 // Banner images configuration - You can replace these URLs with your own images
@@ -43,6 +44,7 @@ const bannerImages: Array<any> = [
 export function Home() {
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const [showHighlights, setShowHighlights] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
   useEffect(() => {
@@ -50,13 +52,22 @@ export function Home() {
 
     const delay = currentBannerIndex === 0 ? 4000 : 5000;
     const interval = setInterval(() => {
-      setCurrentBannerIndex((prevIndex) => 
-        prevIndex === bannerImages.length - 1 ? 0 : prevIndex + 1
-      );
+      setCurrentBannerIndex((prevIndex) => {
+        // After showing first 2 banners, show highlights section
+        if (prevIndex === 1 && !showHighlights) {
+          setShowHighlights(true);
+          return 0; // Reset to first banner
+        }
+        // If we're showing highlights and go past index 1, loop back
+        if (prevIndex >= bannerImages.length - 1) {
+          return 0;
+        }
+        return prevIndex + 1;
+      });
     }, delay);
 
     return () => clearInterval(interval);
-  }, [isAutoPlaying, currentBannerIndex]);
+  }, [isAutoPlaying, currentBannerIndex, showHighlights]);
 
   useEffect(() => {
     if (currentBannerIndex === 0 && videoRef.current) {
@@ -69,21 +80,38 @@ export function Home() {
 
   const nextBanner = () => {
     setIsAutoPlaying(false);
-    setCurrentBannerIndex((prevIndex) => 
-      prevIndex === bannerImages.length - 1 ? 0 : prevIndex + 1
-    );
+    setCurrentBannerIndex((prevIndex) => {
+      if (prevIndex === 1 && !showHighlights) {
+        setShowHighlights(true);
+        return 0;
+      }
+      if (prevIndex >= bannerImages.length - 1) {
+        return 0;
+      }
+      return prevIndex + 1;
+    });
   };
 
   const prevBanner = () => {
     setIsAutoPlaying(false);
-    setCurrentBannerIndex((prevIndex) => 
-      prevIndex === 0 ? bannerImages.length - 1 : prevIndex - 1
-    );
+    setCurrentBannerIndex((prevIndex) => {
+      if (showHighlights) {
+        setShowHighlights(false);
+        return 1;
+      }
+      return prevIndex === 0 ? bannerImages.length - 1 : prevIndex - 1;
+    });
   };
 
   const goToBanner = (index: number) => {
     setIsAutoPlaying(false);
     setCurrentBannerIndex(index);
+    // Only allow navigation to first 2 banners
+    if (index >= 2) {
+      setShowHighlights(true);
+    } else {
+      setShowHighlights(false);
+    }
   };
 
   const isCurrentVideoBanner = bannerImages[currentBannerIndex]?.type === 'video';
@@ -208,6 +236,13 @@ export function Home() {
               />
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Recent Alumni Highlights Section */}
+      <section className="py-12 bg-slate-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <RecentAlumniHighlights />
         </div>
       </section>
 
@@ -436,14 +471,14 @@ export function Home() {
         </div>
       </section>
 
-      {/* Gallery Section */}
+      {/* Alumni Highlights Section */}
       <section id="gallery" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Section Header */}
           <div className="flex items-center justify-between mb-12">
             <div>
-              <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2">Gallery</h2>
-              <p className="text-lg text-slate-600">Capturing memorable moments from our alumni community</p>
+              <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2">Alumni Highlights</h2>
+              <p className="text-lg text-slate-600">Recent moments, events, and memories from our alumni community</p>
             </div>
             <Link
               to="/gallery"

@@ -16,7 +16,7 @@ export function Layout() {
     { name: 'About Us', href: '#about' },
     { name: 'Events', href: '#events' },
     { name: 'Opportunities', href: '#opportunities' },
-    { name: 'Gallery', href: '#gallery' },
+    { name: 'Alumni Highlights', href: '#gallery' },
     { name: 'Contact', href: '#contact' },
   ];
 
