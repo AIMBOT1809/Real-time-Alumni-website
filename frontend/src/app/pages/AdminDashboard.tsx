@@ -35,7 +35,17 @@ type CommunityAlumniRecord = {
   currentStatus?: string;
   createdAt?: string;
 };
-
+type AdminHighlight = {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  date: string;
+  location?: string;
+  images: string[];
+  published: boolean;
+  created_at?: string;
+};
 export function AdminDashboard() {
   const {
     user,
@@ -89,6 +99,13 @@ export function AdminDashboard() {
   const [hoveredSegment, setHoveredSegment] = useState<string | null>(null);
   const [reportAlumni, setReportAlumni] = useState<CommunityAlumniRecord[]>([]);
   const [showHighlightForm, setShowHighlightForm] = useState(false);
+  const [adminHighlights, setAdminHighlights] = useState<AdminHighlight[]>([]);
+const [highlightTitle, setHighlightTitle] = useState('');
+const [highlightDescription, setHighlightDescription] = useState('');
+const [highlightCategory, setHighlightCategory] = useState('Alumni Meet');
+const [highlightDate, setHighlightDate] = useState(new Date().toISOString().split('T')[0]);
+const [highlightLocation, setHighlightLocation] = useState('');
+const [highlightFiles, setHighlightFiles] = useState<File[]>([]);
 
   useEffect(() => {
     fetchAllProfiles();
@@ -108,6 +125,24 @@ export function AdminDashboard() {
       supabase.removeChannel(channel);
     };
   }, []);
+  useEffect(() => {
+  fetchAdminHighlights();
+
+  const channel = supabase
+    .channel('alumni_highlights_realtime')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'alumni_highlights' },
+      () => {
+        fetchAdminHighlights();
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}, []);
 
   const fetchAllProfiles = async () => {
     const { data: alumniData, error: alumniError } = await supabase
@@ -143,6 +178,19 @@ export function AdminDashboard() {
 
     setReportAlumni(alumniRecords);
   };
+  const fetchAdminHighlights = async () => {
+  const { data, error } = await supabase
+    .from('alumni_highlights')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching alumni highlights:', error);
+    return;
+  }
+
+  setAdminHighlights(data || []);
+};
 
   useEffect(() => {
     const currentUserEmail = user?.email;
@@ -261,6 +309,78 @@ export function AdminDashboard() {
     setNewEventDescription('');
     setNewEventFile(null);
   };
+  const handleSubmitCreateHighlight = async () => {
+  if (!user || role !== 'admin') return;
+
+  const title = highlightTitle.trim();
+  const description = highlightDescription.trim();
+
+  if (!title || !description) {
+    alert('Highlight title and description are required.');
+    return;
+  }
+
+  const uploadedImageUrls: string[] = [];
+
+  for (const file of highlightFiles) {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}-${Math.random()
+      .toString(36)
+      .substring(2)}.${fileExt}`;
+
+    const filePath = `highlights/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('alumni_highlights')
+      .upload(filePath, file);
+
+    if (uploadError) {
+      console.error('Image upload error:', uploadError);
+      alert(uploadError.message);
+      return;
+    }
+
+    const { data } = supabase.storage
+      .from('alumni_highlights')
+      .getPublicUrl(filePath);
+
+    uploadedImageUrls.push(data.publicUrl);
+  }
+
+  const { error } = await supabase
+    .from('alumni_highlights')
+    .insert([
+      {
+        title,
+        description,
+        category: highlightCategory,
+        date: highlightDate,
+        location: highlightLocation.trim() || null,
+        images: uploadedImageUrls,
+        published: true,
+        created_by: user.id,
+      },
+    ]);
+
+  if (error) {
+    console.error(error);
+    alert(error.message);
+    return;
+  }
+
+  alert('Alumni highlight published successfully');
+
+  setHighlightTitle('');
+  setHighlightDescription('');
+  setHighlightCategory('Alumni Meet');
+  setHighlightDate(new Date().toISOString().split('T')[0]);
+  setHighlightLocation('');
+  setHighlightFiles([]);
+  setShowHighlightForm(false);
+
+  fetchAdminHighlights();
+};
+  
 
   const handleCreateAdmin = async () => {
     if (!user || role !== 'admin') return;
@@ -546,7 +666,7 @@ export function AdminDashboard() {
                       <p className="text-xs text-slate-500">Share alumni meet photos and updates</p>
                     </div>
                   </div>
-                  <p className="text-3xl font-bold text-slate-900">0</p>
+                  <p className="text-3xl font-bold text-slate-900">{adminHighlights.length}</p>
                   <p className="mt-3 text-sm text-slate-500">Manage alumni highlights and memories.</p>
                 </button>
               </div>
@@ -886,63 +1006,136 @@ export function AdminDashboard() {
                           Create Alumni Highlight
                         </button>
                       </div>
-
                       {showHighlightForm && (
-                        <div className="mt-6 space-y-4 border-t border-slate-200 pt-6">
-                          <div>
-                            <label className="block text-sm font-medium text-slate-700">Highlight Title</label>
-                            <input
-                              type="text"
-                              placeholder="Enter highlight title"
-                              className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/20"
-                            />
-                          </div>
+  <div className="mt-6 space-y-4 border-t border-slate-200 pt-6">
+    <div className="grid gap-4 md:grid-cols-2">
+      <div>
+        <label className="block text-sm font-medium text-slate-700">
+          Highlight Title
+        </label>
+        <input
+          type="text"
+          value={highlightTitle}
+          onChange={(e) => setHighlightTitle(e.target.value)}
+          placeholder="Enter highlight title"
+          className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/20"
+        />
+      </div>
 
-                          <div>
-                            <label className="block text-sm font-medium text-slate-700">Description</label>
-                            <textarea
-                              rows={3}
-                              placeholder="Enter highlight description"
-                              className="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/20"
-                            />
-                          </div>
+      <div>
+        <label className="block text-sm font-medium text-slate-700">
+          Category
+        </label>
+        <select
+          value={highlightCategory}
+          onChange={(e) => setHighlightCategory(e.target.value)}
+          className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/20"
+        >
+          <option value="Alumni Meet">Alumni Meet</option>
+          <option value="Discussion">Discussion</option>
+          <option value="Guidance Session">Guidance Session</option>
+          <option value="Webinar">Webinar</option>
+          <option value="Guest Lecture">Guest Lecture</option>
+          <option value="Event Memories">Event Memories</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
 
-                          <div>
-                            <label className="block text-sm font-medium text-slate-700">Upload Images (Multiple)</label>
-                            <input
-                              type="file"
-                              multiple
-                              accept="image/*"
-                              className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-700 focus:outline-none"
-                            />
-                            <p className="mt-1 text-xs text-slate-500">You can select multiple images for the carousel</p>
-                          </div>
+      <div>
+        <label className="block text-sm font-medium text-slate-700">
+          Date
+        </label>
+        <input
+          type="date"
+          value={highlightDate}
+          onChange={(e) => setHighlightDate(e.target.value)}
+          className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/20"
+        />
+      </div>
 
-                          <div className="flex justify-end">
-                            <button
-                              type="button"
-                              className="inline-flex items-center gap-2 rounded-full bg-yellow-500 px-5 py-3 text-sm font-semibold text-slate-900 hover:bg-yellow-400 transition-colors"
-                            >
-                              <Plus className="h-4 w-4" />
-                              Publish Highlight
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
+      <div>
+        <label className="block text-sm font-medium text-slate-700">
+          Location
+        </label>
+        <input
+          type="text"
+          value={highlightLocation}
+          onChange={(e) => setHighlightLocation(e.target.value)}
+          placeholder="Enter location"
+          className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/20"
+        />
+      </div>
+    </div>
 
+    <div>
+      <label className="block text-sm font-medium text-slate-700">
+        Description
+      </label>
+      <textarea
+        rows={3}
+        value={highlightDescription}
+        onChange={(e) => setHighlightDescription(e.target.value)}
+        placeholder="Enter highlight description"
+        className="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/20"
+      />
+    </div>
+
+    <div>
+  <label className="block text-sm font-medium text-slate-700">
+    Upload Images
+  </label>
+
+  <input
+    type="file"
+    multiple
+    accept="image/*"
+    onChange={(e) => setHighlightFiles(Array.from(e.target.files || []))}
+    className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-700 focus:outline-none"
+  />
+
+  <p className="mt-1 text-xs text-slate-500">
+    You can upload multiple images for this alumni highlight.
+  </p>
+
+  {highlightFiles.length > 0 && (
+    <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+      {highlightFiles.map((file, index) => (
+        <div
+          key={index}
+          className="rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600"
+        >
+          {file.name}
+        </div>
+      ))}
+    </div>
+  )}
+</div>
+    <div className="flex justify-end">
+      <button
+        type="button"
+        onClick={handleSubmitCreateHighlight}
+        className="inline-flex items-center gap-2 rounded-full bg-yellow-500 px-5 py-3 text-sm font-semibold text-slate-900 hover:bg-yellow-400 transition-colors"
+      >
+        <Plus className="h-4 w-4" />
+        Publish Highlight
+      </button>
+    </div>
+  </div>
+)}
+
+                      
                     <div className="space-y-4">
                       <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center text-slate-500">
                         No highlights created yet. Click "Create Alumni Highlight" to get started.
                       </div>
-                    </div>
-                  </div>
-                )}
+                      </div>
+                </div>
               </div>
             )}
           </div>
         )}
-
+        </div>
+        )}
         {activeTab === 'reports' && (
           <div className="space-y-6">
             <div className="bg-white/85 backdrop-blur-xl rounded-[28px] border border-slate-200/40 px-4 py-4 shadow-[0_24px_70px_rgba(15,23,42,0.08)]">
