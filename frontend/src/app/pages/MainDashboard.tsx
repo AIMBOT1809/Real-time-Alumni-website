@@ -51,6 +51,7 @@ export function MainDashboard() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [chatTheme, setChatTheme] = useState<'dark' | 'light'>('dark');
   const [adminPosts, setAdminPosts] = useState<any[]>([]);
+  //const [posts, setPosts] = useState<any[]>([]);
   const [registeredEvents, setRegisteredEvents] = useState<any[]>([]);
   const [attendedEvents, setAttendedEvents] = useState<any[]>([]);
   const [selectedActivityCard, setSelectedActivityCard] = useState<string | null>(null);
@@ -348,19 +349,39 @@ export function MainDashboard() {
     };
   }, []);
 
+  useEffect(() => {
+  fetchAdminPosts();
+  fetchPosts();
+}, []);
+
   const fetchAdminPosts = async () => {
     const { data, error } = await supabase
       .from('admin_posts')
       .select('*')
       .order('created_at', { ascending: false });
 
-    if (error) {
-      console.error(error);
-      return;
-    }
-    console.log("ADMIN POSTS:", data);
-    setAdminPosts(data || []);
-  };
+  if (error) {
+    console.error(error);
+    return;
+  }
+console.log("ADMIN POSTS:", data);
+  setAdminPosts(data || []);
+};
+
+const fetchPosts = async () => {
+  const { data, error } = await supabase
+    .from("posts")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  console.log("POSTS:", data);
+  setPosts(data || []);
+};
 
   useEffect(() => {
     fetchAdminPosts();

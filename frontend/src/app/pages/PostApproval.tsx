@@ -25,6 +25,7 @@ import ThumbsUp from 'lucide-react/dist/esm/icons/thumbs-up';
 // @ts-ignore
 import ChevronLeft from 'lucide-react/dist/esm/icons/chevron-left';
 import { Link } from 'react-router';
+import { supabase } from '../../supabaseClient';
 
 type PostStatus = 'pending' | 'approved' | 'rejected';
 
@@ -48,12 +49,42 @@ export function PostApproval() {
   useEffect(() => {
     if (!user || user.role !== 'admin') return;
 
-    const fetchPosts = () => {
+    const fetchPosts = async () => {
       try {
         setIsLoading(true);
-        console.log('[PostApproval] Fetching posts from localStorage for admin...');
 
-        const localPosts = getLocalPosts();
+        const { data, error } = await supabase
+  .from("pending_posts")
+  .select("*")
+  .order("created_at", { ascending: false });
+
+if (error) {
+  console.error(error);
+  return;
+}
+
+const mappedPosts: Post[] = (data || []).map((p: any) => ({
+  id: String(p.id),
+  alumniId: p.alumni_id,
+  title: p.title,
+  content: p.content,
+  timestamp: p.created_at,
+  type: p.type || "general",
+  status: p.status || "pending",
+  likes: Number(p.likes || 0),
+  comments: Number(p.comments || 0),
+  image: p.image,
+  file: null,
+  rejectionReason: p.rejectionReason,
+  reviewedBy: p.reviewedBy,
+  reviewedAt: p.reviewedAt,
+  post_details: p.post_details,
+}));
+
+setPosts(mappedPosts);
+        //console.log('[PostApproval] Fetching posts from localStorage for admin...');
+
+        /*const localPosts = getLocalPosts();
         const mappedPosts: Post[] = localPosts.map((p: any) => ({
           id: p.id,
           alumniId: p.alumniId,
@@ -73,7 +104,7 @@ export function PostApproval() {
         }));
 
         setPosts(mappedPosts);
-        console.log('[PostApproval] Posts loaded from localStorage:', mappedPosts.length);
+        console.log('[PostApproval] Posts loaded from localStorage:', mappedPosts.length); */
 
         // Build alumni details map from context alumni list
         const alumniMap: Record<string, any> = {};
@@ -98,12 +129,12 @@ export function PostApproval() {
     fetchPosts();
 
     // Poll for changes every 2 seconds (temporary demo approach)
-    const interval = setInterval(fetchPosts, 2000);
+    //const interval = setInterval(fetchPosts, 2000);
 
-    return () => {
+   /* return () => {
       clearInterval(interval);
-    };
-  }, [user, alumni]);
+    }; */
+  }, [user]);
 
   // Filter posts based on active tab and search query
   useEffect(() => {
@@ -133,6 +164,47 @@ export function PostApproval() {
     try {
       setActionLoading(postId);
       console.log('[PostApproval] Approving post:', postId);
+      // Get the pending post
+const { data: pendingPost, error: fetchError } = await supabase
+  .from("pending_posts")
+  .select("*")
+  .eq("id", postId)
+  .single();
+
+if (fetchError) {
+  console.error(fetchError);
+  return;
+}
+
+// Insert into posts table
+const { error: insertError } = await supabase
+  .from("posts")
+  .insert([
+    {
+      alumni_id: pendingPost.alumni_id,
+      title: pendingPost.title,
+      content: pendingPost.content,
+      type: "general",
+      likes: "0",
+      comments: "0",
+      image: pendingPost.image || pendingPost.image_url,
+      file: null,
+      created_at: pendingPost.created_at,
+      author_role: "alumni",
+    },
+  ]);
+
+if (insertError) {
+  console.error(insertError);
+  alert(insertError.message);
+  return;
+}
+
+// Delete from pending_posts
+await supabase
+  .from("pending_posts")
+  .delete()
+  .eq("id", postId);
 
       // Update localStorage
       approveLocalPost(postId);

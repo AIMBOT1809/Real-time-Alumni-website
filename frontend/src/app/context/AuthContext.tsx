@@ -742,15 +742,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       };
 
       let supportsApprovalStatus = true;
-      let { data, error } = await supabase.from('posts').insert([insertRow]).select();
+      let { data, error } = await supabase.from('pending_posts').insert([insertRow]).select();
+      console.log("INSERT DATA:", data);
+      console.log("INSERT ERROR:", error);
 
-      if (error && /status.*does not exist/i.test(error.message)) {
+      /*if (error && /status.*does not exist/i.test(error.message)) {
         const { status: _status, ...legacyRow } = insertRow;
         const legacyResult = await supabase.from('posts').insert([legacyRow]).select();
         data = legacyResult.data;
         error = legacyResult.error;
         supportsApprovalStatus = false;
-      }
+      } */
 
       if (error) {
         console.warn('[AuthContext] Supabase insert failed, using localStorage only:', error.message);
