@@ -52,7 +52,19 @@ export function StudentRegistration({ onBack }: StudentRegistrationProps) {
     if (!file) return;
 
     try {
-      const validationResult = await validateUploadedDocument(file);
+      const formData = new FormData();
+
+    // Backend expects upload.single("idCard")
+    formData.append("idCard", file);
+
+    // Backend uses role to call collegeIdValidator.js
+    formData.append("role", "student");
+
+    const response = await fetch("http://localhost:5000/verify-id", {
+      method: "POST",
+      body: formData,
+    });
+      const validationResult = await response.json();
 
       if (!validationResult.valid) {
         alert(validationResult.reason || "Invalid document.");
@@ -86,7 +98,7 @@ export function StudentRegistration({ onBack }: StudentRegistrationProps) {
     const phone = formData.get('phone') as string;
     const password = formData.get('password') as string;
     const confirmPassword = formData.get('confirmPassword') as string;
-    const memo = formData.get('memo') as File;
+    const idproof = formData.get('idproof') as File;
     const photo = formData.get('photo') as File;
     const collegeName = formData.get('collegeName') as string;
     const department = formData.get('department') as string;
@@ -119,21 +131,21 @@ export function StudentRegistration({ onBack }: StudentRegistrationProps) {
       }
     }
 
-    if (!memo || memo.size === 0) {
-      alert("Please upload valid memo");
+    if (!idproof || idproof.size === 0) {
+      alert("Please upload valid ID proof");
       return;
     }
 
-    if (memo) {
+    if (idproof) {
       const maxSize = 5 * 1024 * 1024;
-      if (memo.size > maxSize) {
-        alert('Memo file size must be less than 5MB');
+      if (idproof.size > maxSize) {
+        alert('ID proof file size must be less than 5MB');
         return;
       }
 
-      const allowedMemoTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
-      if (!allowedMemoTypes.includes(memo.type)) {
-        alert('Memo must be in JPG, PNG, or PDF format');
+      const allowedIdProofTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+      if (!allowedIdProofTypes.includes(idproof.type)) {
+        alert('ID proof must be in JPG, PNG, or PDF format');
         return;
       }
     }
@@ -204,7 +216,7 @@ export function StudentRegistration({ onBack }: StudentRegistrationProps) {
       phone,
       password,
       confirmPassword,
-      memo,
+      idproof,
       photo,
       collegeName,
       department,
@@ -280,7 +292,7 @@ export function StudentRegistration({ onBack }: StudentRegistrationProps) {
       email,
       phone,
       password,
-      memo,
+      idproof,
       photo,
       collegeName,
       department,
@@ -314,23 +326,23 @@ export function StudentRegistration({ onBack }: StudentRegistrationProps) {
         return;
       }
 
-      // Upload Memo
-      const memoFileName = `${Date.now()}-${memo.name}`;
-      const { data: memoUpload, error: memoError } = await supabase.storage
-        .from('memos')
-        .upload(memoFileName, memo);
+      // Upload ID Proof
+      const idProofFileName = `${Date.now()}-${idproof.name}`;
+      const { data: idProofUpload, error: idProofError } = await supabase.storage
+        .from('id-proofs')
+        .upload(idProofFileName, idproof);
 
-      if (memoError) {
-        console.log(memoError);
-        alert(memoError.message);
+      if (idProofError) {
+        console.log(idProofError);
+        alert(idProofError.message);
         return;
       }
 
-      const { data: memoUrlData } = supabase.storage
+      const { data: idProofUrlData } = supabase.storage
         .from('id-proofs')
-        .getPublicUrl(memoFileName);
+        .getPublicUrl(idProofFileName);
 
-      const memoUrl = memoUrlData.publicUrl;
+      const idProofUrl = idProofUrlData.publicUrl;
 
       // Upload Photo
       let photoUrl = '';
@@ -368,7 +380,7 @@ export function StudentRegistration({ onBack }: StudentRegistrationProps) {
             Year_of_Joining: yearOfJoining,
             Passed_Out_Year: passedOutYear,
             Roll_Number: rollNumber,
-            id_proof_url: memoUrl,
+            id_proof_url: idProofUrl,
             photo_url: photoUrl,
             career_interest: careerInterest,
             job_interest: careerInterest === 'Job' ? finalJobInterest : null,
@@ -401,7 +413,7 @@ export function StudentRegistration({ onBack }: StudentRegistrationProps) {
         collegeName: collegeName.trim(),
         department: department.trim(),
         rollNumber: rollNumber.trim(),
-        memo: memo ? memo.name : undefined,
+        idproof: idproof ? idproof.name : undefined,
         careerInterest: careerInterest as 'Job' | 'Business' | 'HigherEducation',
         jobInterest: careerInterest === 'Job' ? finalJobInterest : undefined,
         businessInterest: careerInterest === 'Business' ? finalBusinessInterest : undefined,
@@ -537,10 +549,10 @@ export function StudentRegistration({ onBack }: StudentRegistrationProps) {
 
                 <div className="mb-4">
                   <label className="block text-sm font-medium mb-1">
-                    Memo *
+                    ID proof(only pdf) *
                   </label>
                   <input
-                    name="memo"
+                    name="idproof"
                     type="file"
                     accept=".jpg,.jpeg,.png,.pdf"
                     required

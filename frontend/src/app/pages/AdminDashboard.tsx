@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { PieChart, Pie, Cell, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, AreaChart, Area, ComposedChart, Line, FunnelChart, Funnel, LabelList } from 'recharts';
+import { PieChart, Pie, Cell, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { Link } from 'react-router';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../../supabaseClient';
@@ -14,14 +14,7 @@ import {
   Home,
   FileText,
   Settings,
-  Calendar,
   MessageCircle,
-  Heart,
-  Share2,
-  Paperclip,
-  ChevronLeft,
-  Edit3,
-  Trash2,
   Eye,
   EyeOff,
 } from 'lucide-react';
@@ -42,7 +35,17 @@ type CommunityAlumniRecord = {
   currentStatus?: string;
   createdAt?: string;
 };
-
+type AdminHighlight = {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  date: string;
+  location?: string;
+  images: string[];
+  published: boolean;
+  created_at?: string;
+};
 export function AdminDashboard() {
   const {
     user,
@@ -74,7 +77,7 @@ export function AdminDashboard() {
   const [showPassedOutYearFilter, setShowPassedOutYearFilter] = useState(false);
   const [joiningYear, setJoiningYear] = useState('');
   const [passedOutYear, setPassedOutYear] = useState('');
-  const [homeView, setHomeView] = useState<'overview' | 'posts' | 'events' | 'community'>('overview');
+  const [homeView, setHomeView] = useState<'overview' | 'posts' | 'events' | 'highlights'>('overview');
   const [newAdminEmail, setNewAdminEmail] = useState('');
   const [newAdminPassword, setNewAdminPassword] = useState('');
   const [showNewAdminPassword, setShowNewAdminPassword] = useState(false);
@@ -93,17 +96,20 @@ export function AdminDashboard() {
   const [newEventLocation, setNewEventLocation] = useState('Online');
   const [newEventType, setNewEventType] = useState<'Networking' | 'Workshop' | 'Webinar'>('Webinar');
   const [newEventFile, setNewEventFile] = useState<File | null>(null);
-  const [newCommunityTitle, setNewCommunityTitle] = useState('');
-  const [newCommunityDescription, setNewCommunityDescription] = useState('');
-  const [newCommunityFile, setNewCommunityFile] = useState<File | null>(null);
   const [hoveredSegment, setHoveredSegment] = useState<string | null>(null);
   const [reportAlumni, setReportAlumni] = useState<CommunityAlumniRecord[]>([]);
+  const [showHighlightForm, setShowHighlightForm] = useState(false);
+  const [adminHighlights, setAdminHighlights] = useState<AdminHighlight[]>([]);
+const [highlightTitle, setHighlightTitle] = useState('');
+const [highlightDescription, setHighlightDescription] = useState('');
+const [highlightCategory, setHighlightCategory] = useState('Alumni Meet');
+const [highlightDate, setHighlightDate] = useState(new Date().toISOString().split('T')[0]);
+const [highlightLocation, setHighlightLocation] = useState('');
+const [highlightFiles, setHighlightFiles] = useState<File[]>([]);
 
   useEffect(() => {
-    // Initial fetch
     fetchAllProfiles();
 
-    // Real-time subscription: re-fetch whenever alumni_profiles changes
     const channel = supabase
       .channel('profiles_realtime')
       .on(
@@ -115,48 +121,75 @@ export function AdminDashboard() {
       )
       .subscribe();
 
-    // Cleanup subscription on unmount
     return () => {
       supabase.removeChannel(channel);
     };
   }, []);
+  useEffect(() => {
+  fetchAdminHighlights();
 
-const fetchAllProfiles = async () => {
-  // Fetch alumni/student profiles
-  const { data: alumniData, error: alumniError } = await supabase
-    .from("alumni_profiles")
-    .select(`
-      First_Name,
-      Email_Address,
-      Phone_Number,
-      Passed_Out_Year,
-      Year_of_Joining,
-      role,
-      created_at
-    `);
+  const channel = supabase
+    .channel('alumni_highlights_realtime')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'alumni_highlights' },
+      () => {
+        fetchAdminHighlights();
+      }
+    )
+    .subscribe();
 
-  if (alumniError) {
-    console.error("Error fetching alumni:", alumniError);
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}, []);
+
+  const fetchAllProfiles = async () => {
+    const { data: alumniData, error: alumniError } = await supabase
+      .from("alumni_profiles")
+      .select(`
+        First_Name,
+        Email_Address,
+        Phone_Number,
+        Passed_Out_Year,
+        Year_of_Joining,
+        role,
+        created_at
+      `);
+
+    if (alumniError) {
+      console.error("Error fetching alumni:", alumniError);
+    }
+
+    const validRoles = new Set(['alumni', 'career-aspirant', 'higher-education']);
+
+    const alumniRecords: CommunityAlumniRecord[] = (alumniData || []).map(
+      (item, index) => ({
+        id: `a-${index}`,
+        name: item.First_Name || "",
+        email: item.Email_Address || "",
+        phone: item.Phone_Number || "",
+        graduationYear: String(item.Passed_Out_Year || ""),
+        year: String(item.Year_of_Joining || ""),
+        role: validRoles.has(item.role) ? item.role as CommunityAlumniRecord['role'] : "alumni",
+        createdAt: item.created_at,
+      })
+    );
+
+    setReportAlumni(alumniRecords);
+  };
+  const fetchAdminHighlights = async () => {
+  const { data, error } = await supabase
+    .from('alumni_highlights')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching alumni highlights:', error);
+    return;
   }
 
-  const validRoles = new Set(['alumni', 'career-aspirant', 'higher-education']);
-
-  // Format alumni/student records
-  const alumniRecords: CommunityAlumniRecord[] = (alumniData || []).map(
-    (item, index) => ({
-      id: `a-${index}`,
-      name: item.First_Name || "",
-      email: item.Email_Address || "",
-      phone: item.Phone_Number || "",
-      graduationYear: String(item.Passed_Out_Year || ""),
-      year: String(item.Year_of_Joining || ""),
-      role: validRoles.has(item.role) ? item.role as CommunityAlumniRecord['role'] : "alumni",
-      createdAt: item.created_at,
-    })
-  );
-
-  // Update lists
-  setReportAlumni(alumniRecords);
+  setAdminHighlights(data || []);
 };
 
   useEffect(() => {
@@ -201,8 +234,6 @@ const fetchAllProfiles = async () => {
   };
 
   const handleSubmitCreatePost = async() => {
-    console.log("Publish button clicked");
-    alert("Publish button clicked");
     if (!user || role !== 'admin') return;
     const title = newPostTitle.trim();
     const description = newPostDescription.trim();
@@ -213,42 +244,26 @@ const fetchAllProfiles = async () => {
     }
 
     const attachmentUrl = newPostFile ? URL.createObjectURL(newPostFile) : undefined;
-    const attachmentName = newPostFile?.name;
-    const attachmentType = newPostFile?.type;
-
-    const postData = {
-      alumniId: user.id,
-      content: `${title}\n\n${description}`,
-      type: 'general' as const,
-      likes: 0,
-      comments: 0,
-      image: newPostFile && newPostFile.type.startsWith('image/') ? attachmentUrl : undefined,
-      attachmentUrl,
-      attachmentName,
-      attachmentType,
-    } as any;
 
     const { error } = await supabase
-  .from('admin_posts')
-  .insert([
-    {
-      title,
-      description,
-      created_by: user.id,
-      created_at: new Date().toISOString(),
-      file_url: attachmentUrl
+      .from('admin_posts')
+      .insert([
+        {
+          title,
+          description,
+          created_by: user.id,
+          created_at: new Date().toISOString(),
+          file_url: attachmentUrl
+        }
+      ]);
+
+    if (error) {
+      console.error(error);
+      alert(error.message);
+      return;
     }
-  ]);
 
-if (error) {
-  console.error(error);
-  alert(error.message);
-  return;
-}
-
-alert('Post published successfully');
-
-    //addPost(postData);
+    alert('Post published successfully');
     setNewPostTitle('');
     setNewPostDescription('');
     setNewPostFile(null);
@@ -266,82 +281,106 @@ alert('Post published successfully');
 
     const imageUrl = newEventFile && newEventFile.type.startsWith('image/') ? URL.createObjectURL(newEventFile) : 'https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80';
     const attachmentUrl = newEventFile ? URL.createObjectURL(newEventFile) : undefined;
-    const attachmentName = newEventFile?.name;
-    const attachmentType = newEventFile?.type;
-
-    const eventData = {
-      title,
-      date: newEventDate,
-      time: newEventTime,
-      location: newEventLocation.trim(),
-      type: newEventType,
-      alumniId: user.id,
-      image: imageUrl,
-      description,
-      attachmentUrl,
-      attachmentName,
-      attachmentType,
-    } as any;
 
     const { error } = await supabase
-  .from('events')
-  .insert([
-    {
-      title: title,
-      event_date: newEventDate,
-      event_time: newEventTime,
-      location: newEventLocation.trim(),
-      type: newEventType,
-      description: description,
-      image_url: imageUrl,
-      file_url: attachmentUrl,
-      created_by: user.id
+      .from('events')
+      .insert([
+        {
+          title: title,
+          event_date: newEventDate,
+          event_time: newEventTime,
+          location: newEventLocation.trim(),
+          type: newEventType,
+          description: description,
+          image_url: imageUrl,
+          file_url: attachmentUrl,
+          created_by: user.id
+        }
+      ]);
+
+    if (error) {
+      console.error(error);
+      alert(error.message);
+      return;
     }
-  ]);
 
-if (error) {
-  console.error(error);
-  alert(error.message);
-  return;
-}
-
-alert('Event published successfully');
+    alert('Event published successfully');
     setNewEventTitle('');
     setNewEventDescription('');
     setNewEventFile(null);
   };
+  const handleSubmitCreateHighlight = async () => {
+  if (!user || role !== 'admin') return;
 
-  const handleSubmitCreateCommunity = () => {
-    if (!user || role !== 'admin') return;
-    const title = newCommunityTitle.trim();
-    const description = newCommunityDescription.trim();
+  const title = highlightTitle.trim();
+  const description = highlightDescription.trim();
 
-    if (!title || !description) {
-      alert('Please add a title and discussion description.');
+  if (!title || !description) {
+    alert('Highlight title and description are required.');
+    return;
+  }
+
+  const uploadedImageUrls: string[] = [];
+
+  for (const file of highlightFiles) {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}-${Math.random()
+      .toString(36)
+      .substring(2)}.${fileExt}`;
+
+    const filePath = `highlights/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('alumni_highlights')
+      .upload(filePath, file);
+
+    if (uploadError) {
+      console.error('Image upload error:', uploadError);
+      alert(uploadError.message);
       return;
     }
 
-    const attachmentUrl = newCommunityFile ? URL.createObjectURL(newCommunityFile) : undefined;
-    const attachmentName = newCommunityFile?.name;
-    const attachmentType = newCommunityFile?.type;
+    const { data } = supabase.storage
+      .from('alumni_highlights')
+      .getPublicUrl(filePath);
 
-    addPost({
-      alumniId: user.id,
-      content: `${title}\n\n${description}`,
-      type: 'community',
-      likes: 0,
-      comments: 0,
-      image: newCommunityFile && newCommunityFile.type.startsWith('image/') ? attachmentUrl : undefined,
-      attachmentUrl,
-      attachmentName,
-      attachmentType,
-    } as any);
+    uploadedImageUrls.push(data.publicUrl);
+  }
 
-    setNewCommunityTitle('');
-    setNewCommunityDescription('');
-    setNewCommunityFile(null);
-  };
+  const { error } = await supabase
+    .from('alumni_highlights')
+    .insert([
+      {
+        title,
+        description,
+        category: highlightCategory,
+        date: highlightDate,
+        location: highlightLocation.trim() || null,
+        images: uploadedImageUrls,
+        published: true,
+        created_by: user.id,
+      },
+    ]);
 
+  if (error) {
+    console.error(error);
+    alert(error.message);
+    return;
+  }
+
+  alert('Alumni highlight published successfully');
+
+  setHighlightTitle('');
+  setHighlightDescription('');
+  setHighlightCategory('Alumni Meet');
+  setHighlightDate(new Date().toISOString().split('T')[0]);
+  setHighlightLocation('');
+  setHighlightFiles([]);
+  setShowHighlightForm(false);
+
+  fetchAdminHighlights();
+};
+  
 
   const handleCreateAdmin = async () => {
     if (!user || role !== 'admin') return;
@@ -445,7 +484,6 @@ alert('Event published successfully');
   const timelineData = useMemo(() => {
     const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
     
-    // Initialize monthly data
     const monthlyData = months.map(month => ({
       name: month,
       timelineAlumni: 0,
@@ -458,7 +496,7 @@ alert('Event published successfully');
       const date = new Date(profile.createdAt);
       if (isNaN(date.getTime())) return;
       
-      const monthIndex = date.getMonth(); // 0-11
+      const monthIndex = date.getMonth();
       const role = profile.role;
       
       if (role === 'alumni') {
@@ -466,7 +504,7 @@ alert('Event published successfully');
       } else if (role === 'higher-education') {
         monthlyData[monthIndex].timelineHigherEd++;
       } else if (role === 'career-aspirant') {
-        monthlyData[monthIndex].timelineStudents++; // using students key for graduate
+        monthlyData[monthIndex].timelineStudents++;
       }
     });
 
@@ -552,7 +590,7 @@ alert('Event published successfully');
         {activeTab === 'home' && (
           <div className="space-y-8">
             {homeView === 'overview' ? (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Link
                   to="/admin/post-approval"
                   className="text-left bg-white rounded-3xl border border-slate-200 p-8 shadow-sm transition hover:shadow-lg hover:border-yellow-300 hover:ring-2 hover:ring-yellow-200"
@@ -614,20 +652,22 @@ alert('Event published successfully');
 
                 <button
                   type="button"
-                  onClick={() => setHomeView('community')}
+                  onClick={() => setHomeView('highlights')}
                   className="text-left bg-white rounded-3xl border border-slate-200 p-8 shadow-sm transition hover:shadow-lg hover:border-slate-300"
                 >
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-700">
-                      <Users className="h-6 w-6" />
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-purple-100 text-purple-700">
+                      <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-slate-900">Community</p>
-                      <p className="text-xs text-slate-500">Open discussions and build culture</p>
+                      <p className="text-sm font-semibold text-slate-900">Alumni Highlights</p>
+                      <p className="text-xs text-slate-500">Share alumni meet photos and updates</p>
                     </div>
                   </div>
-                  <p className="text-3xl font-bold text-slate-900">{posts.filter((post) => post.type === 'community').length}</p>
-                  <p className="mt-3 text-sm text-slate-500">Manage community conversations from one place.</p>
+                  <p className="text-3xl font-bold text-slate-900">{adminHighlights.length}</p>
+                  <p className="mt-3 text-sm text-slate-500">Manage alumni highlights and memories.</p>
                 </button>
               </div>
             ) : (
@@ -640,7 +680,9 @@ alert('Event published successfully');
                         onClick={() => setHomeView('overview')}
                         className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
                       >
-                        <ChevronLeft className="h-4 w-4" />
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
                         Back to Home
                       </button>
                     </div>
@@ -670,14 +712,14 @@ alert('Event published successfully');
                       </button>
                       <button
                         type="button"
-                        onClick={() => setHomeView('community')}
+                        onClick={() => setHomeView('highlights')}
                         className={`flex items-center justify-center gap-2 px-6 py-3 border-b-4 text-sm md:text-base font-semibold transition-all rounded-t-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 ${
-                          homeView === 'community'
+                          homeView === 'highlights'
                             ? 'border-yellow-500 text-yellow-700 bg-white shadow-sm'
                             : 'border-transparent text-slate-700 bg-white hover:text-slate-900 hover:bg-slate-50'
                         }`}
                       >
-                        Community
+                        Highlights
                       </button>
                     </div>
                   </div>
@@ -758,12 +800,10 @@ alert('Event published successfully');
                               </div>
                               <div className="flex flex-wrap gap-2">
                                 <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-2 text-sm text-slate-600">
-                                  <Heart className="h-4 w-4 text-red-500" />
-                                  {post.likes}
+                                  {post.likes} likes
                                 </span>
                                 <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-2 text-sm text-slate-600">
-                                  <MessageCircle className="h-4 w-4 text-slate-500" />
-                                  {post.comments}
+                                  {post.comments} comments
                                 </span>
                               </div>
                             </div>
@@ -780,7 +820,6 @@ alert('Event published successfully');
 
                             {post.attachmentUrl && !post.image && (
                               <div className="mt-4 flex items-center gap-2 text-slate-600">
-                                <Paperclip className="h-4 w-4" />
                                 <a
                                   href={post.attachmentUrl}
                                   target="_blank"
@@ -791,21 +830,6 @@ alert('Event published successfully');
                                 </a>
                               </div>
                             )}
-
-                            <div className="mt-5 flex flex-wrap gap-3 text-sm text-slate-600">
-                              <button type="button" className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 hover:border-slate-300 hover:bg-slate-50 transition">
-                                <Heart className="h-4 w-4" />
-                                Like
-                              </button>
-                              <button type="button" className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 hover:border-slate-300 hover:bg-slate-50 transition">
-                                <Share2 className="h-4 w-4" />
-                                Share
-                              </button>
-                              <button type="button" className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 hover:border-slate-300 hover:bg-slate-50 transition">
-                                <MessageCircle className="h-4 w-4" />
-                                Comment
-                              </button>
-                            </div>
                           </div>
                         ))
                       ) : (
@@ -944,7 +968,6 @@ alert('Event published successfully');
 
                               {(event as any).attachmentUrl && !event.image && (
                                 <div className="mt-4 flex items-center gap-2 text-slate-600">
-                                  <Paperclip className="h-4 w-4" />
                                   <a
                                     href={(event as any).attachmentUrl}
                                     target="_blank"
@@ -966,122 +989,153 @@ alert('Event published successfully');
                   </div>
                 )}
 
-                {homeView === 'community' && (
+                {homeView === 'highlights' && (
                   <div className="space-y-6">
                     <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm">
                       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                         <div>
-                          <p className="text-lg font-semibold text-slate-900">Community discussions</p>
-                          <p className="text-sm text-slate-500">Create discussion threads and monitor community participation.</p>
+                          <p className="text-lg font-semibold text-slate-900">Alumni Highlights</p>
+                          <p className="text-sm text-slate-500">Create and manage highlight posts with multiple images for the landing page carousel.</p>
                         </div>
                         <button
                           type="button"
-                          onClick={() => setHomeView('community')}
-                          className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800 transition-colors"
-                        >
-                          <Plus className="h-4 w-4" />
-                          New discussion
-                        </button>
-                      </div>
-
-                      <div className="mt-6 grid gap-3 md:grid-cols-[1fr_0.9fr] items-end">
-                        <div>
-                          <label className="block text-sm font-medium text-slate-700">Discussion title</label>
-                          <input
-                            value={newCommunityTitle}
-                            onChange={(e) => setNewCommunityTitle(e.target.value)}
-                            className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/20"
-                            placeholder="Enter discussion topic"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-slate-700">File attachment</label>
-                          <input
-                            type="file"
-                            onChange={(e) => setNewCommunityFile(e.target.files?.[0] || null)}
-                            className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-700 focus:outline-none"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="mt-4">
-                        <label className="block text-sm font-medium text-slate-700">Discussion details</label>
-                        <textarea
-                          value={newCommunityDescription}
-                          onChange={(e) => setNewCommunityDescription(e.target.value)}
-                          rows={4}
-                          className="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/20"
-                          placeholder="Share what you want the community to discuss..."
-                        />
-                      </div>
-
-                      <div className="flex justify-end">
-                        <button
-                          type="button"
-                          onClick={handleSubmitCreateCommunity}
+                          onClick={() => setShowHighlightForm(!showHighlightForm)}
                           className="inline-flex items-center gap-2 rounded-full bg-yellow-500 px-5 py-3 text-sm font-semibold text-slate-900 hover:bg-yellow-400 transition-colors"
                         >
                           <Plus className="h-4 w-4" />
-                          Start discussion
+                          Create Alumni Highlight
                         </button>
                       </div>
-                    </div>
+                      {showHighlightForm && (
+  <div className="mt-6 space-y-4 border-t border-slate-200 pt-6">
+    <div className="grid gap-4 md:grid-cols-2">
+      <div>
+        <label className="block text-sm font-medium text-slate-700">
+          Highlight Title
+        </label>
+        <input
+          type="text"
+          value={highlightTitle}
+          onChange={(e) => setHighlightTitle(e.target.value)}
+          placeholder="Enter highlight title"
+          className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/20"
+        />
+      </div>
 
+      <div>
+        <label className="block text-sm font-medium text-slate-700">
+          Category
+        </label>
+        <select
+          value={highlightCategory}
+          onChange={(e) => setHighlightCategory(e.target.value)}
+          className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/20"
+        >
+          <option value="Alumni Meet">Alumni Meet</option>
+          <option value="Discussion">Discussion</option>
+          <option value="Guidance Session">Guidance Session</option>
+          <option value="Webinar">Webinar</option>
+          <option value="Guest Lecture">Guest Lecture</option>
+          <option value="Event Memories">Event Memories</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-slate-700">
+          Date
+        </label>
+        <input
+          type="date"
+          value={highlightDate}
+          onChange={(e) => setHighlightDate(e.target.value)}
+          className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/20"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-slate-700">
+          Location
+        </label>
+        <input
+          type="text"
+          value={highlightLocation}
+          onChange={(e) => setHighlightLocation(e.target.value)}
+          placeholder="Enter location"
+          className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/20"
+        />
+      </div>
+    </div>
+
+    <div>
+      <label className="block text-sm font-medium text-slate-700">
+        Description
+      </label>
+      <textarea
+        rows={3}
+        value={highlightDescription}
+        onChange={(e) => setHighlightDescription(e.target.value)}
+        placeholder="Enter highlight description"
+        className="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/20"
+      />
+    </div>
+
+    <div>
+  <label className="block text-sm font-medium text-slate-700">
+    Upload Images
+  </label>
+
+  <input
+    type="file"
+    multiple
+    accept="image/*"
+    onChange={(e) => setHighlightFiles(Array.from(e.target.files || []))}
+    className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-700 focus:outline-none"
+  />
+
+  <p className="mt-1 text-xs text-slate-500">
+    You can upload multiple images for this alumni highlight.
+  </p>
+
+  {highlightFiles.length > 0 && (
+    <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+      {highlightFiles.map((file, index) => (
+        <div
+          key={index}
+          className="rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600"
+        >
+          {file.name}
+        </div>
+      ))}
+    </div>
+  )}
+</div>
+    <div className="flex justify-end">
+      <button
+        type="button"
+        onClick={handleSubmitCreateHighlight}
+        className="inline-flex items-center gap-2 rounded-full bg-yellow-500 px-5 py-3 text-sm font-semibold text-slate-900 hover:bg-yellow-400 transition-colors"
+      >
+        <Plus className="h-4 w-4" />
+        Publish Highlight
+      </button>
+    </div>
+  </div>
+)}
+
+                      
                     <div className="space-y-4">
-                      {posts.filter((post) => post.type === 'community').length > 0 ? (
-                        posts
-                          .filter((post) => post.type === 'community')
-                          .map((post) => (
-                            <div key={post.id} className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm">
-                              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                                <div>
-                                  <h3 className="text-xl font-semibold text-slate-900">{getPostTitle(post)}</h3>
-                                  <p className="mt-2 text-sm text-slate-500">{formatTimestamp(post.timestamp)}</p>
-                                </div>
-                                <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-2 text-sm text-slate-600">
-                                  <MessageCircle className="h-4 w-4" />
-                                  {post.comments} comments
-                                </span>
-                              </div>
-
-                              <p className="mt-4 text-slate-600 whitespace-pre-line">{getPostDescription(post)}</p>
-
-                              {post.image && (
-                                <img
-                                  src={post.image}
-                                  alt="Community discussion"
-                                  className="mt-4 h-56 w-full rounded-3xl object-cover"
-                                />
-                              )}
-
-                              {post.attachmentUrl && !post.image && (
-                                <div className="mt-4 flex items-center gap-2 text-slate-600">
-                                  <Paperclip className="h-4 w-4" />
-                                  <a
-                                    href={post.attachmentUrl}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="font-medium text-slate-900 hover:text-yellow-600"
-                                  >
-                                    {post.attachmentName ?? 'View attachment'}
-                                  </a>
-                                </div>
-                              )}
-                            </div>
-                          ))
-                      ) : (
-                        <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center text-slate-500">
-                          No community discussions yet. Create a thread above to start the conversation.
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
+                      <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center text-slate-500">
+                        No highlights created yet. Click "Create Alumni Highlight" to get started.
+                      </div>
+                      </div>
+                </div>
               </div>
             )}
           </div>
         )}
-
+        </div>
+        )}
         {activeTab === 'reports' && (
           <div className="space-y-6">
             <div className="bg-white/85 backdrop-blur-xl rounded-[28px] border border-slate-200/40 px-4 py-4 shadow-[0_24px_70px_rgba(15,23,42,0.08)]">
@@ -1253,7 +1307,6 @@ alert('Event published successfully');
               {[
                 { title: 'Total Registrations', value: analyticsCounts.totalRegistrations, subtitle: 'All registered users', accent: 'from-sky-400 via-cyan-300 to-slate-100', detail: 'Overall network size' },
                 { title: 'Alumni', value: analyticsCounts.alumniCount, subtitle: `${analyticsCounts.alumniRatio}% of total`, accent: 'from-blue-500 via-sky-400 to-cyan-400', detail: 'Core alumni growth' },
-
                 { title: 'Higher Education', value: analyticsCounts.higherEducationCount, subtitle: `${analyticsCounts.higherEducationRatio}% of total`, accent: 'from-violet-500 via-fuchsia-400 to-pink-300', detail: 'Institutional partners' },
                 { title: 'Career Aspirant', value: analyticsCounts.careerAspirantCount, subtitle: `${analyticsCounts.careerAspirantRatio}% of total`, accent: 'from-amber-400 via-orange-300 to-rose-200', detail: 'Postgraduate network' },
               ].map((card) => (
@@ -1262,12 +1315,10 @@ alert('Event published successfully');
                   className="group flex flex-col justify-between min-h-[220px] rounded-[28px] border border-white/10 bg-white/5 p-6 shadow-xl backdrop-blur-md transition-transform duration-300 hover:-translate-y-1 hover:shadow-2xl"
                 >
                   <div className={`h-1.5 w-24 rounded-full bg-gradient-to-r ${card.accent} shadow-lg`} />
-
                   <div className="flex flex-col justify-between h-full gap-4 pt-4">
                     <div className="min-w-0">
                       <p className="text-sm uppercase tracking-[0.22em] text-white/70 font-semibold truncate">{card.title}</p>
                     </div>
-
                     <div className="flex items-center justify-between gap-4">
                       <div className="min-w-0">
                         <p className="text-sm text-white/50 truncate">{card.subtitle}</p>
@@ -1276,7 +1327,6 @@ alert('Event published successfully');
                         <p className="text-4xl font-bold text-white leading-tight sm:text-3xl md:text-4xl truncate">{card.value}</p>
                       </div>
                     </div>
-
                     <div>
                       <p className="text-sm font-medium text-white/60 truncate">{card.detail}</p>
                     </div>
@@ -1453,14 +1503,12 @@ alert('Event published successfully');
                       cursor={{ fill: 'rgba(255,255,255,0.05)' }}
                     />
                     <Bar dataKey="timelineAlumni" name="Alumni" stackId="a" fill="#0ea5e9" radius={[0, 0, 0, 0]} animationDuration={1000} />
-
                     <Bar dataKey="timelineHigherEd" name="Higher Education" stackId="a" fill="#8b5cf6" radius={[0, 0, 0, 0]} animationDuration={1000} />
                     <Bar dataKey="timelineStudents" name="Career Aspirant" stackId="a" fill="#f59e0b" radius={[4, 4, 0, 0]} animationDuration={1000} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
             </div>
-
           </div>
         )}
 
@@ -1626,7 +1674,9 @@ alert('Event published successfully');
                                   className="group inline-flex items-center justify-center rounded-full bg-white shadow-sm px-3 py-2 hover:shadow-md transform transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-yellow-500/30"
                                 >
                                   <span className="sr-only">Edit credentials</span>
-                                  <Edit3 className="h-5 w-5 text-slate-700 group-hover:text-yellow-600 transition-colors duration-200" />
+                                  <svg className="h-5 w-5 text-slate-700 group-hover:text-yellow-600 transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                  </svg>
                                 </button>
 
                                 {!admin.isCurrent && (
@@ -1637,7 +1687,9 @@ alert('Event published successfully');
                                     className="group inline-flex items-center justify-center rounded-full bg-white shadow-sm px-3 py-2 hover:shadow-md transform transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500/30"
                                   >
                                     <span className="sr-only">Delete credentials</span>
-                                    <Trash2 className="h-5 w-5 text-red-600 group-hover:text-red-700 transition-colors duration-200" />
+                                    <svg className="h-5 w-5 text-red-600 group-hover:text-red-700 transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
                                   </button>
                                 )}
                               </div>
@@ -1659,7 +1711,6 @@ alert('Event published successfully');
           </div>
         )}
       </div>
-
     </div>
   );
 }

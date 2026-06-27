@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../../supabaseClient';
 import { User } from '@supabase/supabase-js';
 import { UserProfile, Role, Post, Job, Event } from '../data/types';
+import { getLocalPosts, addLocalPost, updateLocalPost, deleteLocalPost, getApprovedPosts, getPostsByAuthor } from '../data/localStoragePosts';
+import { showGlobalToast } from '../components/Toast';
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -9,18 +11,17 @@ interface AuthContextType {
   logout: () => void;
   isAuthenticated: boolean;
   role: Role | null;
-  following: string[]; // Array of alumni IDs the user follows
+  following: string[];
   follow: (alumniId: string) => void;
   unfollow: (alumniId: string) => void;
   isFollowing: (alumniId: string) => boolean;
-  // Data management
-  alumni: UserProfile[]; // All alumni data
+  alumni: UserProfile[];
   posts: Post[];
   jobs: Job[];
   events: Event[];
-  addPost: (post: Omit<Post, 'id' | 'timestamp'>) => Promise<void>;
-  addJob: (job: Omit<Job, 'id' | 'postedDate'>) => void;
-  addEvent: (event: Omit<Event, 'id'>) => void;
+  addPost: (post: Omit<Post, 'id' | 'timestamp' | 'status'>) => Promise<void>;
+  addJob: (jobData: Omit<Job, 'id' | 'postedDate'>) => void;
+  addEvent: (eventData: Omit<Event, 'id'>) => void;
   likePost: (postId: string) => Promise<void>;
   commentPost: (postId: string, commentText: string) => Promise<void>;
   sharePost: (postId: string) => Promise<void>;
@@ -29,6 +30,10 @@ interface AuthContextType {
   deleteJob: (id: string) => void;
   deleteEvent: (id: string) => void;
   getAlumniById: (id: string) => UserProfile | undefined;
+  localPosts: Post[];
+  approveLocalPost: (postId: string) => void;
+  rejectLocalPost: (postId: string, reason: string) => void;
+  getLocalPostsByAuthor: (authorId: string) => Post[];
 }
 //hello
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -40,8 +45,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
   const [alumni, setAlumni] = useState<UserProfile[]>([]);
+  const [localPosts, setLocalPosts] = useState<Post[]>([]);
 
-  // Load data from localStorage on mount
   useEffect(() => {
     const savedUser = localStorage.getItem('allumini_user');
     if (savedUser) {
@@ -49,12 +54,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const parsed = JSON.parse(savedUser) as UserProfile;
         setUser(parsed);
 
-        // Attempt to reconcile with latest profile from DB by user_id first, fallback to Email_Address
         (async () => {
           try {
             if (parsed.id || parsed.email) {
-              console.log('[AuthContext] Reconciling saved user with DB profile for', { id: parsed.id, email: parsed.email });
-
               let profileData: any = null;
               let profileError: any = null;
 
@@ -159,17 +161,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    const savedPosts = localStorage.getItem('allumini_posts');
-    if (savedPosts) {
-      try {
-        setPosts(JSON.parse(savedPosts) as Post[]);
-      } catch {
-        localStorage.removeItem('allumini_posts');
-      }
+    // Temporary localStorage approval flow for demo - load local posts
+    const savedLocalPosts = getLocalPosts();
+    if (savedLocalPosts.length > 0) {
+      setLocalPosts(savedLocalPosts as Post[]);
+      console.log('[AuthContext] Loaded local posts from localStorage:', savedLocalPosts.length);
     }
   }, []);
 
-  // Fetch alumni profiles from Supabase on load and keep in sync
   useEffect(() => {
     let mounted = true;
     let channel: any = null;
@@ -178,7 +177,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         console.log('[AuthContext] Fetching alumni_profiles from Supabase...');
         const { data, error } = await supabase.from('alumni_profiles').select('*');
-          if (error) {
+        if (error) {
           console.error('[AuthContext] Error fetching alumni_profiles:', {
             code: error.code,
             message: error.message,
@@ -189,7 +188,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setAlumni([]);
             localStorage.removeItem('allumini_alumni');
           }
-          // If error looks like permission / RLS issue, warn explicitly
           if (error.message && /permission|policy|unauthorized/i.test(error.message)) {
             console.warn('[AuthContext] Possible RLS/permission issue when reading alumni_profiles. Check table policies and anon/public key permissions.');
           }
@@ -198,7 +196,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (!data) {
           console.log('[AuthContext] No alumni_profiles rows returned');
-            if (mounted) {
+          if (mounted) {
             setAlumni([]);
             localStorage.setItem('allumini_alumni', JSON.stringify([]));
           }
@@ -207,7 +205,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         console.log('[AuthContext] alumni_profiles fetched, count =', data.length);
         if (mounted) {
-          // Normalize records to UserProfile-ish objects where possible
           const mapped = data.map((r: any) => ({
             id: String(r.user_id ?? r.id ?? r.Email_Address ?? r.email ?? `u-${Date.now()}`),
             name: ((`${r.First_Name ?? r.first_name ?? ''} ${r.Last_name ?? r.last_name ?? ''}`).trim()) || (r.Email_Address ?? r.email) || 'Unknown',
@@ -218,8 +215,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             email: r.Email_Address ?? r.email ?? undefined,
           }));
 
-            setAlumni(mapped as any);
-            localStorage.setItem('allumini_alumni', JSON.stringify(mapped));
+          setAlumni(mapped as any);
+          localStorage.setItem('allumini_alumni', JSON.stringify(mapped));
           console.log('[AuthContext] setAlumni called, alumni.length =', mapped.length);
         }
       } catch (err) {
@@ -229,7 +226,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     fetchAlumni();
 
-    // Realtime subscription for changes to alumni_profiles to keep local cache fresh
     try {
       channel = supabase
         .channel('public:alumni_profiles')
@@ -255,7 +251,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  // Fetch posts from Supabase and subscribe to realtime updates
   useEffect(() => {
     let mounted = true;
     let channel: any = null;
@@ -263,9 +258,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const fetchPosts = async () => {
       try {
         console.log('[AuthContext] Fetching posts from Supabase...');
-        
-        const { data, error } = await supabase.from('posts').select('*').order('timestamp', { ascending: false });
-        
+        let query = supabase.from('posts').select('*');
+
+        if (user?.role !== 'admin') {
+          query = query.eq('status', 'approved');
+          console.log('[AuthContext] Filtering posts by status: approved');
+        } else {
+          console.log('[AuthContext] Admin viewing all posts (no status filter)');
+        }
+
+        query = query.order('created_at', { ascending: false });
+
+        let { data, error } = await query;
+
+        if (error && /status.*does not exist/i.test(error.message)) {
+          console.warn('[AuthContext] Approval columns are not installed; loading legacy posts.');
+          const legacyResult = await supabase.from('posts').select('*').order('created_at', { ascending: false });
+          data = legacyResult.data;
+          error = legacyResult.error;
+        }
+
         if (error) {
           console.error('[AuthContext] Error fetching posts:', error.message, error);
           if (mounted) {
@@ -283,7 +295,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return;
         }
 
-        // Normalize rows to Post type where possible
         const mapped = data.map((r: any) => ({
           id: String(r.id ?? r.ID ?? `p-${Date.now()}`),
           alumniId: r.alumni_id ?? r.alumniId ?? r.user_id ?? String(r.alumniId ?? 'unknown'),
@@ -291,17 +302,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           content: r.content ?? r.body ?? r.description ?? '',
           timestamp: r.timestamp ?? r.created_at ?? new Date().toISOString(),
           type: (r.type as any) || 'general',
+          status: r.status ?? 'approved',
           likes: Number(r.likes ?? 0),
           comments: Number(r.comments ?? 0),
           image: r.image ?? r.image_url ?? undefined,
           file: r.file ?? undefined,
-          status : r.status,
+          rejectionReason: r.rejection_reason,
+          reviewedBy: r.reviewed_by,
+          reviewedAt: r.reviewed_at,
+          post_details: r.post_details ?? undefined,
         }));
 
         if (mounted) {
           setPosts(mapped as Post[]);
-          //try { localStorage.setItem('allumini_posts', JSON.stringify(mapped)); } catch {}
-          console.log('[AuthContext] posts loaded, count =', mapped.length);
+          try { localStorage.setItem('allumini_posts', JSON.stringify(mapped)); } catch {}
+          console.log('[AuthContext] posts loaded, count =', mapped.length, 'status filter:', user?.role !== 'admin' ? 'approved only' : 'all');
         }
       } catch (err) {
         console.error('[AuthContext] Unexpected error fetching posts:', err);
@@ -352,11 +367,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (payload: UserProfile | User) => {
     console.log('[AuthContext] login() payload received:', payload);
-    // Check if it's a Supabase User
     if ('email' in payload && 'id' in payload && !('role' in payload)) {
       const savedProfile = getSavedUserProfile(payload.email, payload.id);
       if (savedProfile) {
-        // Prefer fresh DB profile by user_id if available
         try {
           const res = await supabase.from('alumni_profiles').select('*').eq('user_id', payload.id).maybeSingle();
           const dbProfile = res.data || null;
@@ -399,7 +412,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           id: payload.id,
         });
 
-        // Refresh stale saved profile from DB in the background (email fallback)
         (async () => {
           if (!payload.email) return;
           try {
@@ -446,7 +458,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      // No saved profile: attempt to fetch DB profile by user_id right away
       try {
         const res = await supabase.from('alumni_profiles').select('*').eq('user_id', payload.id).maybeSingle();
         if (res.error) console.warn('[AuthContext] profile fetch by user_id error:', res.error.message);
@@ -487,7 +498,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error('[AuthContext] Error fetching profile by user_id during login:', err);
       }
 
-      // Reset to fresh fallback profile, then refresh from DB if available
       const fallbackUserProfile: UserProfile = {
         id: payload.id,
         name: payload.user_metadata?.name || payload.email?.split('@')[0] || 'User',
@@ -554,7 +564,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // Handle UserProfile
     if ('role' in payload && typeof payload.role === 'string') {
       console.log('[AuthContext] login() detected UserProfile payload; attempting to enrich from DB by user_id/email.', {
         id: payload.id,
@@ -599,7 +608,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             toStore.links = toStore.links?.length ? toStore.links : (dbProfile.Links ? dbProfile.Links : toStore.links || []);
             toStore.profileComplete = Boolean(toStore.collegeName || toStore.rollNumber || toStore.department || toStore.about);
           } else {
-            // Ensure id exists
             toStore.id = toStore.id || (toStore.email ? toStore.email.split('@')[0] : `u-${Date.now()}`);
             toStore.profileComplete = false;
           }
@@ -610,7 +618,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.log('[AuthContext] Stored user after enrichment:', toStore);
         } catch (err) {
           console.error('[AuthContext] Error enriching/storing UserProfile payload:', err);
-          // fallback to minimal store
           const toStore = payload as UserProfile;
           toStore.id = toStore.id || (toStore.email ? toStore.email.split('@')[0] : `u-${Date.now()}`);
           setUser(toStore);
@@ -621,7 +628,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // If it's a Supabase User that wasn't caught above, convert it
     if ('email' in payload && 'id' in payload) {
       const userProfile: UserProfile = {
         id: payload.id,
@@ -657,14 +663,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return following.includes(alumniId);
   };
 
-  const addPost = async (postData: Omit<Post, 'id' | 'timestamp'>) => {
+  const addPost = async (postData: Omit<Post, 'id' | 'timestamp' | 'status'>) => {
     if (!user || user.role === 'student') return;
 
     try {
       let imageUrl: string | undefined = undefined;
       let fileUrl: string | undefined = undefined;
 
-      // If image is a data URL, convert to blob and upload
       if (postData.image && postData.image.startsWith('data:')) {
         const matches = postData.image.match(/^data:(.*);base64,(.*)$/);
         if (matches) {
@@ -688,76 +693,98 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      // Insert into posts table
+      const postStatus = user.role === 'admin' ? 'approved' : 'pending';
+      console.log('[AuthContext] Creating post with status:', postStatus, 'for user role:', user.role);
+
+      // Temporary localStorage approval flow for demo
+      // Save post to localStorage with pending status for non-admin users
+      const localPostId = `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      const newLocalPost: any = {
+        id: localPostId,
+        alumniId: user.id,
+        title: (postData as any).title ?? undefined,
+        content: postData.content,
+        timestamp: new Date().toISOString(),
+        type: postData.type,
+        status: postStatus,
+        likes: postData.likes ?? 0,
+        comments: postData.comments ?? 0,
+        image: imageUrl ?? (postData.image as any) ?? undefined,
+        file: fileUrl ?? undefined,
+        post_details: (postData as any).post_details ?? undefined,
+        authorName: user.name,
+        authorRole: user.role,
+        authorAvatar: user.avatar,
+        created_at: new Date().toISOString(),
+      };
+
+      // Add to localStorage
+      const updatedLocalPosts = addLocalPost(newLocalPost);
+      setLocalPosts(updatedLocalPosts as Post[]);
+
+      if (postStatus === 'pending') {
+        showGlobalToast('Post created successfully. Please wait for admin approval.', 'success');
+      }
+
+      // Also try to save to Supabase (for when DB is connected)
       const insertRow: any = {
         alumni_id: user.id,
         title: (postData as any).title ?? null,
         content: postData.content,
         type: postData.type,
+        status: postStatus,
         likes: postData.likes ?? 0,
         comments: postData.comments ?? 0,
         image: imageUrl ?? postData.image ?? null,
         file: fileUrl ?? null,
+        post_details: (postData as any).post_details ?? null,
         created_at: new Date().toISOString(),
       };
 
-      //const { data, error } = await supabase.from('posts').insert([insertRow]).select();
-      const { data, error } = await supabase
-  .from('pending_posts')
-  .insert([{
-    title: insertRow.title,
-    content: insertRow.content,
-    image_url: insertRow.image,
-    created_by: user.id,
-    status: 'pending'
-  }])
-  .select();
-  console.log("DATA:",data);
-  console.log("ERROR",error);
-   
+      let supportsApprovalStatus = true;
+      let { data, error } = await supabase.from('pending_posts').insert([insertRow]).select();
+      console.log("INSERT DATA:", data);
+      console.log("INSERT ERROR:", error);
 
-      console.log("[AuthContext] Post creation - INSERT ROW:", insertRow);
-      console.log("[AuthContext] Post creation - SUPABASE ERROR:", error);
+      /*if (error && /status.*does not exist/i.test(error.message)) {
+        const { status: _status, ...legacyRow } = insertRow;
+        const legacyResult = await supabase.from('posts').insert([legacyRow]).select();
+        data = legacyResult.data;
+        error = legacyResult.error;
+        supportsApprovalStatus = false;
+      } */
 
       if (error) {
-        console.error('[AuthContext] Error inserting post into DB:', error.message, error);
-        const fallbackPost: Post = {
-          id: `p-${Date.now()}`,
-          alumniId: user.id,
-          title: (postData as any).title,
-          content: postData.content,
-          timestamp: new Date().toISOString(),
-          type: postData.type,
-          likes: postData.likes ?? 0,
-          comments: postData.comments ?? 0,
-          image: imageUrl ?? (postData.image as any) ?? undefined,
-        };
-        //setPosts(prev => [fallbackPost, ...prev]);
-        try { localStorage.setItem('allumini_posts', JSON.stringify([fallbackPost, ...posts])); } catch {}
+        console.warn('[AuthContext] Supabase insert failed, using localStorage only:', error.message);
+        // Post is already saved in localStorage, so we're good for demo
         return;
       }
 
-      /*if (data && data[0]) {
+      if (data && data[0]) {
         const row = data[0];
         const newPost: Post = {
-          id: String(row.id ?? `p-${Date.now()}`),
+          id: String(row.id ?? localPostId),
           alumniId: row.alumni_id ?? user.id,
           title: row.title ?? undefined,
           content: row.content ?? '',
           timestamp: row.timestamp ?? row.created_at ?? new Date().toISOString(),
           type: row.type ?? 'general',
+          status: row.status ?? (supportsApprovalStatus ? 'pending' : 'approved'),
           likes: Number(row.likes ?? 0),
           comments: Number(row.comments ?? 0),
           image: row.image ?? undefined,
           file: row.file ?? undefined,
+          post_details: row.post_details ?? undefined,
         };
-        setPosts(prev => [newPost, ...prev]);
-        try { localStorage.setItem('allumini_posts', JSON.stringify([newPost, ...posts])); } catch {}
-      } */
-     if (data && data[0]) {
-  alert("Post submitted for admin approval.");
-  return;
-}
+
+        if (newPost.status === 'approved' || user.role === 'admin') {
+          setPosts(prev => [newPost, ...prev]);
+        }
+
+        if (supportsApprovalStatus && postStatus === 'pending') {
+          // Already alerted above
+        }
+      }
     } catch (err) {
       console.error('[AuthContext] addPost unexpected error:', err);
     }
@@ -787,22 +814,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setEvents(newEvents);
     localStorage.setItem('allumini_events', JSON.stringify(newEvents));
   };
-  
-  // Interaction functions for posts
+
   const likePost = async (postId: string) => {
     if (!user) return;
     const post = posts.find(p => p.id === postId);
     if (!post) return;
     try {
-        const { data, error } = await supabase
-          .from('posts')
-          .update({ likes: supabase.raw('likes + 1') })
-          .eq('id', postId)
-          .select()
-          .single();
-        if (!error && data) {
-          setPosts(prev => prev.map(p => p.id === postId ? { ...p, likes: data.likes } : p));
-        }
+      const { data, error } = await supabase
+        .from('posts')
+        .select('likes')
+        .eq('id', postId)
+        .single();
+      if (error || !data) {
+        console.error('[AuthContext] Error fetching post for like:', error);
+        return;
+      }
+      const newLikes = (data.likes || 0) + 1;
+      const { error: updateError } = await supabase
+        .from('posts')
+        .update({ likes: newLikes })
+        .eq('id', postId);
+      if (!updateError) {
+        setPosts(prev => prev.map(p => p.id === postId ? { ...p, likes: newLikes } : p));
+      }
     } catch (e) {
       console.error('[AuthContext] likePost error:', e);
     }
@@ -813,23 +847,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const post = posts.find(p => p.id === postId);
     if (!post) return;
     try {
-        const { error } = await supabase.from('comments').insert({
-          post_id: postId,
-          user_id: user.id,
-          content: commentText,
-        });
-        if (!error) {
-          // Increment comment count on post
-          const { data, error: incError } = await supabase
+      const { error } = await supabase.from('comments').insert({
+        post_id: postId,
+        user_id: user.id,
+        content: commentText,
+      });
+      if (!error) {
+        const { data, error: incError } = await supabase
+          .from('posts')
+          .select('comments')
+          .eq('id', postId)
+          .single();
+        if (!incError && data) {
+          const newComments = (data.comments || 0) + 1;
+          const { error: updateError } = await supabase
             .from('posts')
-            .update({ comments: supabase.raw('comments + 1') })
-            .eq('id', postId)
-            .select()
-            .single();
-          if (!incError && data) {
-            setPosts(prev => prev.map(p => p.id === postId ? { ...p, comments: data.comments } : p));
+            .update({ comments: newComments })
+            .eq('id', postId);
+          if (!updateError) {
+            setPosts(prev => prev.map(p => p.id === postId ? { ...p, comments: newComments } : p));
           }
         }
+      }
     } catch (e) {
       console.error('[AuthContext] commentPost error:', e);
     }
@@ -840,15 +879,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const post = posts.find(p => p.id === postId);
     if (!post) return;
     try {
-      // Increment share count directly on posts table
       const { data, error } = await supabase
         .from('posts')
-        .update({ shares: supabase.raw('shares + 1') })
+        .select('shares')
         .eq('id', postId)
-        .select()
         .single();
-      if (!error && data) {
-        setPosts(prev => prev.map(p => p.id === postId ? { ...p, shares: data.shares } : p));
+      if (error || !data) {
+        console.error('[AuthContext] Error fetching post for share:', error);
+        return;
+      }
+      const newShares = (data.shares || 0) + 1;
+      const { error: updateError } = await supabase
+        .from('posts')
+        .update({ shares: newShares })
+        .eq('id', postId);
+      if (!updateError) {
+        setPosts(prev => prev.map(p => p.id === postId ? { ...p, shares: newShares } : p));
       }
     } catch (e) {
       console.error('[AuthContext] sharePost error:', e);
@@ -858,31 +904,72 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const editPost = async (postId: string, updates: Partial<Post>) => {
     if (!user) return;
     const post = posts.find(p => p.id === postId);
-    if (!post) return;
-    if (user.role !== 'admin' && post.alumniId !== user.id) return;
+    const localPost = localPosts.find(p => p.id === postId);
+    const targetPost = post || localPost;
+    if (!targetPost) return;
+    if (user.role !== 'admin' && targetPost.alumniId !== user.id) return;
+
     try {
-      const { error } = await supabase.from('posts').update(updates).eq('id', postId);
+      // If editing an approved/rejected post (and not admin), reset status to pending
+      const isStatusReset = (targetPost.status === 'approved' || targetPost.status === 'rejected') && user.role !== 'admin';
+      const finalUpdates = isStatusReset
+        ? { ...updates, status: 'pending' as const, rejectionReason: undefined, reviewedBy: undefined, reviewedAt: undefined }
+        : updates;
+
+      // Try Supabase update first
+      const { error } = await supabase.from('posts').update(finalUpdates).eq('id', postId);
       if (!error) {
-        setPosts(prev => prev.map(p => p.id === postId ? { ...p, ...updates } : p));
+        setPosts(prev => prev.map(p => p.id === postId ? { ...p, ...finalUpdates } : p));
+      } else if (error.message && /status.*does not exist/i.test(error.message)) {
+        // Legacy table without status column
+        const { status: _status, ...legacyUpdates } = finalUpdates as any;
+        const { error: legacyError } = await supabase.from('posts').update(legacyUpdates).eq('id', postId);
+        if (!legacyError) {
+          setPosts(prev => prev.map(p => p.id === postId ? { ...p, ...legacyUpdates } : p));
+        }
+      }
+
+      // Always update localStorage
+      const updatedLocal = updateLocalPost(postId, finalUpdates);
+      setLocalPosts(updatedLocal as Post[]);
+
+      if (isStatusReset) {
+        showGlobalToast('Post updated successfully and sent for admin approval.', 'success');
+      } else {
+        showGlobalToast('Post updated successfully.', 'success');
       }
     } catch (e) {
       console.error('[AuthContext] editPost error:', e);
+      showGlobalToast('Something went wrong. Please try again.', 'error');
     }
   };
 
-  const deletePost = (id: string) => {
+  const deletePost = async (id: string) => {
     if (!user) return;
-    // Admin can delete any; alumni can delete own posts
     const target = posts.find(p => p.id === id);
-    if (!target) return;
-    if (user.role !== 'admin' && target.alumniId !== user.id) return;
+    const localTarget = localPosts.find(p => p.id === id);
+    if (!target && !localTarget) return;
+    if (user.role !== 'admin' && (target?.alumniId !== user.id || localTarget?.alumniId !== user.id)) return;
+
+    try {
+      const { error } = await supabase.from('posts').delete().eq('id', id);
+      if (error) {
+        console.warn('[AuthContext] Supabase delete failed, removing from localStorage only:', error.message);
+      }
+    } catch (err) {
+      console.error('[AuthContext] Unexpected error deleting post:', err);
+    }
+
+    // Remove from both states
     const newPosts = posts.filter(post => post.id !== id);
     setPosts(newPosts);
-    localStorage.setItem('allumini_posts', JSON.stringify(newPosts));
-  };
+    const newLocalPosts = localPosts.filter(post => post.id !== id);
+    setLocalPosts(newLocalPosts);
+    try { localStorage.setItem('allumini_posts', JSON.stringify(newPosts)); } catch {}
+    deleteLocalPost(id);
 
-  // Duplicate deletePost removed (permission-aware version retained above)
-    // Duplicate deletePost implementation removed
+    showGlobalToast('Post deleted successfully.', 'success');
+  };
 
   const deleteJob = (id: string) => {
     if (user?.role !== 'admin') return;
@@ -902,16 +989,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (id === user?.id) {
       return user;
     }
-
     return alumni.find(a => a.id === id);
+  };
+
+  // Temporary localStorage approval flow for demo
+  const approveLocalPost = (postId: string) => {
+    const updated = updateLocalPost(postId, { status: 'approved' });
+    setLocalPosts(updated as Post[]);
+    return updated;
+  };
+
+  const rejectLocalPost = (postId: string, reason: string) => {
+    const updated = updateLocalPost(postId, { status: 'rejected', rejectionReason: reason });
+    setLocalPosts(updated as Post[]);
+    return updated;
+  };
+
+  const getLocalPostsByAuthor = (authorId: string) => {
+    return getPostsByAuthor(authorId) as Post[];
   };
 
   const logout = () => {
     setUser(null);
     setFollowing([]);
+    setPosts([]);
+    setJobs([]);
+    setEvents([]);
+    setAlumni([]);
+    setLocalPosts([]);
     localStorage.removeItem('allumini_role');
     localStorage.removeItem('allumini_user');
     localStorage.removeItem('allumini_following');
+    localStorage.removeItem('allumini_posts');
+    localStorage.removeItem('allumini_jobs');
+    localStorage.removeItem('allumini_events');
+    localStorage.removeItem('allumini_alumni');
   };
 
   return (
@@ -939,7 +1051,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       deletePost,
       deleteJob,
       deleteEvent,
-      getAlumniById
+      getAlumniById,
+      localPosts,
+      approveLocalPost,
+      rejectLocalPost,
+      getLocalPostsByAuthor,
     }}>
       {children}
     </AuthContext.Provider>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { NavLink, Link, Outlet, useLocation } from 'react-router';
 import { Menu, X, GraduationCap, User, Bell, Search, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -7,24 +7,91 @@ import { motion, AnimatePresence } from 'motion/react';
 
 export function Layout() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState('home');
   const { user, logout, isAuthenticated } = useAuth();
   const location = useLocation();
 
   const navLinks = [
-    { name: 'Home', href: '/#home' },
-    { name: 'About Us', href: '/#about' },
-    { name: 'Gallery', href: '/#gallery' },
-    { name: 'Send Query', href: '/#contact' },
+    { name: 'Home', href: '#home' },
+    { name: 'About Us', href: '#about' },
+    { name: 'Events', href: '#events' },
+    { name: 'Opportunities', href: '#opportunities' },
+    { name: 'Alumni Highlights', href: '#gallery' },
+    { name: 'Contact', href: '#contact' },
   ];
 
   const toggleMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
 
+  // Smooth scroll to section
+  const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    e.preventDefault();
+    const targetId = href.replace('#', '');
+    const targetElement = document.getElementById(targetId);
+    
+    if (targetElement) {
+      const headerOffset = 80;
+      const elementPosition = targetElement.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+      
+      // Close mobile menu if open
+      if (isMobileMenuOpen) {
+        setIsMobileMenuOpen(false);
+      }
+    }
+  };
+
+  // Track active section on scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      const sections = navLinks.map(link => link.href.replace('#', ''));
+      const scrollPosition = window.scrollY + 100;
+
+      for (const sectionId of sections.reverse()) {
+        const section = document.getElementById(sectionId);
+        if (section) {
+          const sectionTop = section.offsetTop;
+          const sectionHeight = section.offsetHeight;
+          
+          if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
+            setActiveSection(sectionId);
+            break;
+          }
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    handleScroll(); // Initial check
+
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [navLinks]);
+
   // Hide layout components on dashboard
-  const isDashboard = location.pathname === '/dashboard';
+  const isDashboard = location.pathname === '/dashboard' || location.pathname.startsWith('/dashboard/') || ['/mentorship', '/jobs', '/referrals', '/internships', '/higher-education', '/business-startups', '/events'].includes(location.pathname);
   const isAdminPage = location.pathname === '/admin';
   const isLandingPage = location.pathname === '/';
   const isLoginPage = location.pathname === '/login';
   const isRegisterPage = location.pathname === '/register';
+
+  // Add smooth scrolling CSS
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      html {
+        scroll-behavior: smooth;
+      }
+    `;
+    document.head.appendChild(style);
+    
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
 
   if (isDashboard) {
     return <Outlet />;
@@ -43,17 +110,34 @@ export function Layout() {
           </Link>
 
           {/* Desktop Nav */}
-          <div className="hidden md:flex items-center space-x-8">
-            {navLinks.map((link) => (
-              <a
-                key={link.name}
-                href={link.href}
-                className="text-slate-300 hover:text-yellow-400 font-medium transition-colors duration-200"
-              >
-                {link.name}
-              </a>
-            ))}
-          </div>
+          <nav className="hidden md:flex items-center space-x-1">
+            {navLinks.map((link) => {
+              const sectionId = link.href.replace('#', '');
+              const isActive = activeSection === sectionId;
+              
+              return (
+                <a
+                  key={link.name}
+                  href={link.href}
+                  onClick={(e) => scrollToSection(e, link.href)}
+                  className={clsx(
+                    'relative px-4 py-2 text-sm font-medium transition-all duration-200 rounded-lg',
+                    isActive
+                      ? 'text-yellow-400 bg-slate-800'
+                      : 'text-slate-300 hover:text-yellow-400 hover:bg-slate-800'
+                  )}
+                >
+                  {link.name}
+                  {isActive && (
+                    <motion.div
+                      layoutId="navbar-indicator"
+                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-yellow-400 rounded-full"
+                    />
+                  )}
+                </a>
+              );
+            })}
+          </nav>
 
           {/* User Controls */}
           <div className="hidden md:flex items-center space-x-4">
@@ -126,17 +210,30 @@ export function Layout() {
               exit={{ height: 0, opacity: 0 }}
               className="md:hidden bg-slate-800 border-t border-slate-700 overflow-hidden"
             >
-              <nav className="flex flex-col p-4 space-y-4">
-                {navLinks.map((link) => (
-                  <a
-                    key={link.name}
-                    href={link.href}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="text-base font-medium transition-colors duration-200 block py-2 text-slate-300 hover:text-yellow-400"
-                  >
-                    {link.name}
-                  </a>
-                ))}
+              <nav className="flex flex-col p-4 space-y-2">
+                {navLinks.map((link) => {
+                  const sectionId = link.href.replace('#', '');
+                  const isActive = activeSection === sectionId;
+                  
+                  return (
+                    <a
+                      key={link.name}
+                      href={link.href}
+                      onClick={(e) => {
+                        scrollToSection(e, link.href);
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className={clsx(
+                        'text-base font-medium transition-all duration-200 block py-3 px-4 rounded-lg',
+                        isActive
+                          ? 'text-yellow-400 bg-slate-700'
+                          : 'text-slate-300 hover:text-yellow-400 hover:bg-slate-700'
+                      )}
+                    >
+                      {link.name}
+                    </a>
+                  );
+                })}
                 <div className="border-t border-slate-700 pt-4 mt-4">
                   {isLandingPage || isLoginPage || isRegisterPage || isAdminPage ? (
                     // Hide buttons on landing, login, register, and admin pages mobile menu

@@ -4,122 +4,97 @@ const sharp = require("sharp");
 const fs = require("fs");
 const path = require("path");
 
-const validateCollegeId = async (
-  filePath,
-  originalName
-) => {
+const validateCollegeId = async (filePath, originalName) => {
   let extractedText = "";
-const ext = path.extname(originalName).toLowerCase();
-console.log("Extension:", ext);
-    // PDF VALIDATION
-if (ext === ".pdf") {
+  const ext = path.extname(originalName).toLowerCase();
 
-  const pdfBuffer =
-    fs.readFileSync(filePath);
-  const parser = new PDFParse({ data: pdfBuffer });
+  console.log("Extension:", ext);
 
-const pdfData = await parser.getText();
+  if (ext === ".pdf") {
+    const pdfBuffer = fs.readFileSync(filePath);
+    const parser = new PDFParse({ data: pdfBuffer });
+    const pdfData = await parser.getText();
 
-extractedText = pdfData.text.toLowerCase();
-}
-  // IMAGE
-  else if (
-    ext === ".jpg" ||
-    ext === ".jpeg" ||
-    ext === ".png"
-  ) {
-
-    const processedPath =
-      `${filePath}-processed.png`;
+    extractedText = pdfData.text.toLowerCase();
+  } 
+  else if ([".jpg", ".jpeg", ".png"].includes(ext)) {
+    const processedPath = `${filePath}-processed.png`;
 
     await sharp(filePath)
-
-      .resize({ width: 1200 })
-
+      .resize({ width: 1600 })
       .grayscale()
-
+      .normalize()
+      .sharpen()
       .png()
-
       .toFile(processedPath);
 
-    const result =
-      await Tesseract.recognize(
-        processedPath,
-        "eng"
-      );
+    const result = await Tesseract.recognize(processedPath, "eng");
 
-    extractedText =
-      result.data.text.toLowerCase();
+    extractedText = result.data.text.toLowerCase();
 
-    fs.unlinkSync(processedPath);
+    if (fs.existsSync(processedPath)) {
+      fs.unlinkSync(processedPath);
+    }
+  } 
+  else {
+    return {
+      success: false,
+      message: "Only PDF files are allowed.",
+      matchedKeywords: [],
+      extractedText: ""
+    };
   }
 
-  const normalizedText =
-    extractedText
-      .replace(/\s+/g, "")
-      .replace(/[^a-z0-9]/g, "");
+  const normalizedText = extractedText
+    .replace(/\s+/g, "")
+    .replace(/[^a-z0-9]/g, "");
 
-  const requiredKeywords = [
-  "tkrcollegeofengineeringandtechnology",
-  "memorandumofgrade",
-  "hallticketno",
-  "branchspecialization",
-  "semesterregularexaminations",
-  "sgpa",
-  "cgpa",
-  "controllerofexaminations"
-];
+  // TKR must be mandatory
+  const hasTKR =
+    normalizedText.includes("tkr") ||
+    normalizedText.includes("tkrcet") ||
+    normalizedText.includes("tkrcollege") ||
+    normalizedText.includes("tkrcollegeofengineeringtechnology") ||
+    normalizedText.includes("tkrcollegeofengineeringandtechnology");
 
-const subjectKeywords = [
-  "subjectcode",
-  "subjecttitle",
-  "grade",
-  "credits",
-  "passed",
-  "appeared"
-];
+  const idCardKeywords = [
+    "engineeringtechnology",
+    "engineeringandtechnology",
+    "rollno",
+    "rollnumber",
+    "branch",
+    "dob",
+    "dateofbirth",
+    "validity",
+    "valid",
+    "principal"
+  ];
 
-const matchedRequired = [];
-const matchedSubject = [];
+  const matchedKeywords = idCardKeywords.filter((keyword) =>
+    normalizedText.includes(keyword)
+  );
 
-requiredKeywords.forEach(keyword => {
-  if (normalizedText.includes(keyword)) {
-    matchedRequired.push(keyword);
+  console.log("Extracted Text:", extractedText);
+  console.log("Normalized Text:", normalizedText);
+  console.log("TKR Found:", hasTKR);
+  console.log("Matched ID Keywords:", matchedKeywords);
+
+  const isValidTKRIdCard = hasTKR && matchedKeywords.length >= 3;
+
+  if (isValidTKRIdCard) {
+    return {
+      success: true,
+      matchedKeywords,
+      extractedText
+    };
   }
-});
 
-subjectKeywords.forEach(keyword => {
-  if (normalizedText.includes(keyword)) {
-    matchedSubject.push(keyword);
-  }
-});
-
-console.log("Matched Required:", matchedRequired);
-console.log("Matched Subject:", matchedSubject);
-
-// Accept only TKR marks memo type document
-const isTKRCollege =
-  normalizedText.includes("tkrcollegeofengineeringandtechnology") ||
-  normalizedText.includes("tkrcollege") ||
-  normalizedText.includes("tkrcet");
-
-const isMemo =
-  matchedRequired.length >= 4 &&
-  matchedSubject.length >= 3;
-
-if (isTKRCollege && isMemo) {
   return {
-    success: true,
-    matchedKeywords: [...matchedRequired, ...matchedSubject],
+    success: false,
+    message: "Invalid document. Please upload a valid TKR College ID card.",
+    matchedKeywords,
     extractedText
   };
-}
-
-return {
-  success: false,
-  matchedKeywords: [...matchedRequired, ...matchedSubject],
-  extractedText
-};
 };
 
 module.exports = validateCollegeId;

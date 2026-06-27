@@ -2,41 +2,42 @@ const express = require("express");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
-const validateCollegeId =
-  require("./validators/collegeIdValidator");
+
+const validateCollegeId = require("./validators/collegeIdValidator");
+const validateAlumniMemo = require("./validators/memoValidator");
+
 const router = express.Router();
 
-// Allowed extensions
 const allowedExtensions = [".jpg", ".jpeg", ".png", ".pdf"];
 
-// Allowed MIME types
 const allowedMimeTypes = [
   "image/jpeg",
   "image/png",
   "application/pdf",
 ];
 
-// Ensure uploads folder exists
 const uploadDir = "uploads/";
+
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// Storage configuration
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, uploadDir);
   },
+
   filename: function (req, file, cb) {
     const uniqueName =
-      Date.now() + "-" + Math.round(Math.random() * 1e9) +
+      Date.now() +
+      "-" +
+      Math.round(Math.random() * 1e9) +
       path.extname(file.originalname);
 
     cb(null, uniqueName);
   },
 });
 
-// File filter (extension + MIME check)
 const fileFilter = (req, file, cb) => {
   const ext = path.extname(file.originalname).toLowerCase();
 
@@ -54,16 +55,14 @@ const fileFilter = (req, file, cb) => {
   cb(null, true);
 };
 
-// Multer setup
 const upload = multer({
   storage,
   fileFilter,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB
+    fileSize: 5 * 1024 * 1024,
   },
 });
 
-// Helper to safely delete file
 const safeDelete = (filePath) => {
   try {
     if (filePath && fs.existsSync(filePath)) {
@@ -74,14 +73,18 @@ const safeDelete = (filePath) => {
   }
 };
 
-// Route
-router.post(
-  "/verify-id",
-  upload.single("idCard"),
-  async (req, res) => {
+router.post("/verify-id", (req, res) => {
+  upload.single("idCard")(req, res, async (err) => {
     let filePath = null;
 
     try {
+      if (err) {
+        return res.status(400).json({
+          valid: false,
+          reason: err.message,
+        });
+      }
+
       if (!req.file) {
         return res.status(400).json({
           valid: false,
@@ -89,19 +92,54 @@ router.post(
         });
       }
 
+      const role = req.body.role;
+
+      if (!role) {
+        safeDelete(req.file.path);
+
+        return res.status(400).json({
+          valid: false,
+          reason: "Role is required",
+        });
+      }
+
+      filePath = req.file.path;
+
       console.log("Uploading file:", {
+        role,
         originalName: req.file.originalname,
         mimeType: req.file.mimetype,
         size: req.file.size,
         path: req.file.path,
       });
 
-      filePath = req.file.path;
+      let result;
 
-      const result = await validateCollegeId(
-        filePath,
-        req.file.originalname
-      );
+      if (role === "student") {
+        result = await validateCollegeId(
+          filePath,
+          req.file.originalname
+        );
+      } else if (role === "alumni") {
+        result = await validateAlumniMemo(
+          filePath,
+          req.file.originalname
+        );
+      } else if (role === "faculty") {
+        safeDelete(filePath);
+
+        return res.json({
+          valid: true,
+          message: "Faculty document validation skipped.",
+        });
+      } else {
+        safeDelete(filePath);
+
+        return res.status(400).json({
+          valid: false,
+          reason: "Invalid role",
+        });
+      }
 
       console.log("OCR extracted text:", result.extractedText);
       console.log("Matched keywords:", result.matchedKeywords);
@@ -110,13 +148,17 @@ router.post(
       safeDelete(filePath);
 
       if (result.success) {
-        return res.json({ valid: true });
+        return res.json({
+          valid: true,
+          documentType: result.documentType || "TKR College ID",
+          message: result.message || "Document verified successfully.",
+        });
       }
 
       return res.status(400).json({
         valid: false,
-        reason:
-          "Invalid Document",
+        reason: result.message || "Invalid document.",
+        matchedKeywords: result.matchedKeywords || [],
       });
     } catch (error) {
       console.error("Validation error:", error);
@@ -128,7 +170,7 @@ router.post(
         reason: error.message || "Validation failed",
       });
     }
-  }
-);
+  });
+});
 
 module.exports = router;

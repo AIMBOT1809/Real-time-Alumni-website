@@ -25,6 +25,7 @@ export interface UserProfile {
   portfolio?: string;
   resume?: string;
   memo?: string;
+  idproof?: string;
   links?: { title: string; url: string }[];
   cgpa?: string;
   phoneNumber?: string;
@@ -43,6 +44,18 @@ export interface UserProfile {
   yearsOfExperience?: number;
   specialization?: string;
   researchInterests?: string[];
+  // Entrepreneur / Startup Founder fields
+  startupName?: string;
+  founderRole?: string;
+  industry?: string;
+  yearFounded?: string;
+  website?: string;
+  location?: string;
+  employeeCount?: string;
+  startupStage?: string;
+  lookingFor?: string;
+  startupDescription?: string;
+  businessVerification?: string;
 }
 
 export interface Job {
@@ -65,6 +78,9 @@ export interface Event {
   type: 'Networking' | 'Workshop' | 'Webinar';
   alumniId: string;
   image: string;
+  attachmentUrl?: string;
+  attachmentName?: string;
+  attachmentType?: string;
 }
 
 export interface Post {
@@ -73,27 +89,21 @@ export interface Post {
   title?: string;
   content: string;
   timestamp: string;
-  type: 'general' | 'opportunity' | 'event' | 'community';
+  type: 'general' | 'opportunity' | 'event' | 'community' | 'job' | 'internship' | 'mentorship' | 'referral' | 'business' | 'higher-education';
+  status?: 'pending' | 'approved' | 'rejected';
+  rejectionReason?: string;
+  rejection_reason?: string;
+  reviewedBy?: string;
+  reviewedAt?: string;
+  created_at?: string;
+  authorRole?: Role | null;
   likes: number;
   comments: number;
-  shares: number;
+  shares?: number;
   image?: string;
   attachmentUrl?: string;
   attachmentName?: string;
   attachmentType?: string;
   file?: string;
-}
-
-export interface Event {
-  id: string;
-  title: string;
-  date: string;
-  time: string;
-  location: string;
-  type: 'Networking' | 'Workshop' | 'Webinar';
-  alumniId: string;
-  image: string;
-  attachmentUrl?: string;
-  attachmentName?: string;
-  attachmentType?: string;
+  post_details?: Record<string, any>;
 }

@@ -1,30 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { supabase } from '../../supabaseClient';
 import { Post } from '../data/types';
-import {
-  CheckCircle,
-  XCircle,
-  Clock,
-  User,
-  Calendar,
-  FileText,
-  Image as ImageIcon,
-  AlertCircle,
-  Filter,
-  Search,
-  ChevronLeft,
-  Eye,
-  MessageSquare,
-  ThumbsUp,
-  Loader2,
-} from 'lucide-react';
+import { getLocalPosts, updateLocalPost, deleteLocalPost } from '../data/localStoragePosts';
+import { showGlobalToast } from '../components/Toast';
+import { ConfirmModal } from '../components/ConfirmModal';
+// @ts-ignore
+import { FileText, Search, Loader2, Trash2 } from 'lucide-react';
+// @ts-ignore
+import CheckCircle from 'lucide-react/dist/esm/icons/check-circle';
+// @ts-ignore
+import XCircle from 'lucide-react/dist/esm/icons/x-circle';
+// @ts-ignore
+import Clock from 'lucide-react/dist/esm/icons/clock';
+// @ts-ignore
+import User from 'lucide-react/dist/esm/icons/user';
+// @ts-ignore
+import Calendar from 'lucide-react/dist/esm/icons/calendar';
+// @ts-ignore
+import AlertCircle from 'lucide-react/dist/esm/icons/alert-circle';
+// @ts-ignore
+import MessageSquare from 'lucide-react/dist/esm/icons/message-square';
+// @ts-ignore
+import ThumbsUp from 'lucide-react/dist/esm/icons/thumbs-up';
+// @ts-ignore
+import ChevronLeft from 'lucide-react/dist/esm/icons/chevron-left';
 import { Link } from 'react-router';
+import { supabase } from '../../supabaseClient';
 
 type PostStatus = 'pending' | 'approved' | 'rejected';
 
 export function PostApproval() {
-  const { user } = useAuth();
+  const { user, approveLocalPost, rejectLocalPost, alumni } = useAuth();
   const [activeTab, setActiveTab] = useState<PostStatus>('pending');
   const [posts, setPosts] = useState<Post[]>([]);
   const [filteredPosts, setFilteredPosts] = useState<Post[]>([]);
@@ -35,69 +41,84 @@ export function PostApproval() {
   const [showRejectionModal, setShowRejectionModal] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [alumniDetails, setAlumniDetails] = useState<Record<string, any>>({});
+  const [deleteConfirmPost, setDeleteConfirmPost] = useState<Post | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  // Fetch all posts (admin can see all statuses)
+  // Temporary localStorage approval flow for demo
+  // Fetch all posts from localStorage for admin approval
   useEffect(() => {
     if (!user || user.role !== 'admin') return;
 
     const fetchPosts = async () => {
       try {
         setIsLoading(true);
-        console.log('[PostApproval] Fetching posts for admin...');
 
         const { data, error } = await supabase
-          .from('pending_posts')
-          .select('*')
-          .order('created_at', { ascending: false });
+  .from("pending_posts")
+  .select("*")
+  .order("created_at", { ascending: false });
 
-        if (error) {
-          console.error('[PostApproval] Error fetching posts:', error);
-          throw error;
-        }
+if (error) {
+  console.error(error);
+  return;
+}
 
-        const mappedPosts: Post[] = data.map((r: any) => ({
-          id: String(r.id),
-          alumniId: r.alumni_id,
-          title: r.title,
-          content: r.content,
-          timestamp: r.created_at,
-          type: r.type || 'general',
-          status: r.status || 'pending',
-          likes: Number(r.likes || 0),
-          comments: Number(r.comments || 0),
-          image: r.image,
-          file: r.file,
-          rejectionReason: r.rejection_reason,
-          reviewedBy: r.reviewed_by,
-          reviewedAt: r.reviewed_at,
+const mappedPosts: Post[] = (data || []).map((p: any) => ({
+  id: String(p.id),
+  alumniId: p.alumni_id,
+  title: p.title,
+  content: p.content,
+  timestamp: p.created_at,
+  type: p.type || "general",
+  status: p.status || "pending",
+  likes: Number(p.likes || 0),
+  comments: Number(p.comments || 0),
+  image: p.image,
+  file: null,
+  rejectionReason: p.rejectionReason,
+  reviewedBy: p.reviewedBy,
+  reviewedAt: p.reviewedAt,
+  post_details: p.post_details,
+}));
+
+setPosts(mappedPosts);
+        //console.log('[PostApproval] Fetching posts from localStorage for admin...');
+
+        /*const localPosts = getLocalPosts();
+        const mappedPosts: Post[] = localPosts.map((p: any) => ({
+          id: p.id,
+          alumniId: p.alumniId,
+          title: p.title,
+          content: p.content,
+          timestamp: p.timestamp || p.created_at,
+          type: p.type || 'general',
+          status: p.status || 'pending',
+          likes: Number(p.likes || 0),
+          comments: Number(p.comments || 0),
+          image: p.image,
+          file: p.file,
+          rejectionReason: p.rejectionReason,
+          reviewedBy: p.reviewedBy,
+          reviewedAt: p.reviewedAt,
+          post_details: p.post_details,
         }));
 
         setPosts(mappedPosts);
-        console.log('[PostApproval] Posts loaded:', mappedPosts.length);
+        console.log('[PostApproval] Posts loaded from localStorage:', mappedPosts.length); */
 
-        // Fetch alumni details for all unique alumni IDs
-        const alumniIds = [...new Set(mappedPosts.map(p => p.alumniId))];
-        if (alumniIds.length > 0) {
-          const { data: alumniData } = await supabase
-            .from('alumni_profiles')
-            .select('*')
-            .in('user_id', alumniIds);
-
-          if (alumniData) {
-            const alumniMap: Record<string, any> = {};
-            alumniData.forEach(profile => {
-              alumniMap[profile.user_id] = {
-                name: `${profile.First_Name || ''} ${profile.Last_name || ''}`.trim() || profile.Email_Address,
-                email: profile.Email_Address,
-                avatar: profile.Photo_URL || profile.photo_url,
-                college: profile.College_Name,
-                department: profile.Department,
-                role: profile.role || 'alumni',
-              };
-            });
-            setAlumniDetails(alumniMap);
-          }
-        }
+        // Build alumni details map from context alumni list
+        const alumniMap: Record<string, any> = {};
+        alumni.forEach(a => {
+          alumniMap[a.id] = {
+            name: a.name,
+            email: a.email,
+            avatar: a.avatar,
+            college: a.collegeName,
+            department: a.department,
+            role: a.role || 'alumni',
+          };
+        });
+        setAlumniDetails(alumniMap);
       } catch (error) {
         console.error('[PostApproval] Error in fetchPosts:', error);
       } finally {
@@ -107,18 +128,12 @@ export function PostApproval() {
 
     fetchPosts();
 
-    // Set up real-time subscription
-    const channel = supabase
-      .channel('post_approval_updates')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, (payload) => {
-        console.log('[PostApproval] Realtime update:', payload);
-        fetchPosts();
-      })
-      .subscribe();
+    // Poll for changes every 2 seconds (temporary demo approach)
+    //const interval = setInterval(fetchPosts, 2000);
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+   /* return () => {
+      clearInterval(interval);
+    }; */
   }, [user]);
 
   // Filter posts based on active tab and search query
@@ -141,6 +156,7 @@ export function PostApproval() {
     setFilteredPosts(filtered);
   }, [posts, activeTab, searchQuery, alumniDetails]);
 
+  // Temporary localStorage approval flow for demo
   // Approve post
   const handleApprove = async (postId: string) => {
     if (!user) return;
@@ -148,26 +164,11 @@ export function PostApproval() {
     try {
       setActionLoading(postId);
       console.log('[PostApproval] Approving post:', postId);
-
-      /*const { error } = await supabase
-        .from('pending_posts')
-        .update({
-          status: 'approved',
-          reviewed_by: user.id,
-          reviewed_at: new Date().toISOString(),
-        })
-        .eq('id', postId);
-
-      if (error) {
-        console.error('[PostApproval] Error approving post:', error);
-        alert('Failed to approve post: ' + error.message);
-        return;
-      } */
-     // Get post from pending_posts
+      // Get the pending post
 const { data: pendingPost, error: fetchError } = await supabase
-  .from('pending_posts')
-  .select('*')
-  .eq('id', postId)
+  .from("pending_posts")
+  .select("*")
+  .eq("id", postId)
   .single();
 
 if (fetchError) {
@@ -176,24 +177,23 @@ if (fetchError) {
 }
 
 // Insert into posts table
-console.log("PENDING POST:", pendingPost);
 const { error: insertError } = await supabase
-  .from('posts')
-  
+  .from("posts")
   .insert([
     {
+      alumni_id: pendingPost.alumni_id,
       title: pendingPost.title,
       content: pendingPost.content,
-      image: pendingPost.image_url,
-      file: pendingPost.file,
-      alumni_id: pendingPost.alumni_id,
-      type: pendingPost.type,
+      type: "general",
+      likes: "0",
+      comments: "0",
+      image: pendingPost.image || pendingPost.image_url,
+      file: null,
       created_at: pendingPost.created_at,
-      likes: pendingPost.likes || 0,
-      comments: pendingPost.comments || 0,
+      author_role: "alumni",
     },
   ]);
-////hello
+
 if (insertError) {
   console.error(insertError);
   alert(insertError.message);
@@ -202,35 +202,33 @@ if (insertError) {
 
 // Delete from pending_posts
 await supabase
-  .from('pending_posts')
+  .from("pending_posts")
   .delete()
-  .eq('id', postId);
+  .eq("id", postId);
 
-      console.log('[PostApproval] Post approved successfully');
+      // Update localStorage
+      approveLocalPost(postId);
 
-      setPosts(prevPosts =>
-  prevPosts.filter(post => post.id !== postId)
-);
-      
       // Update local state
-      /*setPosts(prevPosts =>
+      setPosts(prevPosts =>
         prevPosts.map(post =>
           post.id === postId
             ? { ...post, status: 'approved' as PostStatus, reviewedBy: user.id, reviewedAt: new Date().toISOString() }
             : post
         )
-      );  */
+      );
 
-      // Show success message
-      alert('Post approved successfully!');
+      console.log('[PostApproval] Post approved successfully');
+      showGlobalToast('Post approved successfully.', 'success');
     } catch (error) {
       console.error('[PostApproval] Unexpected error approving post:', error);
-      alert('An unexpected error occurred while approving the post.');
+      showGlobalToast('Something went wrong. Please try again.', 'error');
     } finally {
       setActionLoading(null);
     }
   };
 
+  // Temporary localStorage approval flow for demo
   // Reject post
   const handleReject = async (postId: string, reason: string) => {
     if (!user) return;
@@ -239,23 +237,8 @@ await supabase
       setActionLoading(postId);
       console.log('[PostApproval] Rejecting post:', postId, 'Reason:', reason);
 
-      const { error } = await supabase
-        .from('posts')
-        .update({
-          status: 'rejected',
-          reviewed_by: user.id,
-          reviewed_at: new Date().toISOString(),
-          rejection_reason: reason || 'No reason provided',
-        })
-        .eq('id', postId);
-
-      if (error) {
-        console.error('[PostApproval] Error rejecting post:', error);
-        alert('Failed to reject post: ' + error.message);
-        return;
-      }
-
-      console.log('[PostApproval] Post rejected successfully');
+      // Update localStorage
+      rejectLocalPost(postId, reason || 'No reason provided');
 
       // Update local state
       setPosts(prevPosts =>
@@ -272,16 +255,18 @@ await supabase
         )
       );
 
+      console.log('[PostApproval] Post rejected successfully');
+
       // Close modal and reset
       setShowRejectionModal(false);
       setSelectedPost(null);
       setRejectionReason('');
       
       // Show success message
-      alert('Post rejected successfully!');
+      showGlobalToast('Post rejected successfully.', 'success');
     } catch (error) {
       console.error('[PostApproval] Unexpected error rejecting post:', error);
-      alert('An unexpected error occurred while rejecting the post.');
+      showGlobalToast('Something went wrong. Please try again.', 'error');
     } finally {
       setActionLoading(null);
     }
@@ -292,6 +277,32 @@ await supabase
     setSelectedPost(post);
     setShowRejectionModal(true);
     setRejectionReason('');
+  };
+
+  // Temporary localStorage approval flow for demo
+  // Delete post
+  const handleDeletePost = async (postId: string) => {
+    if (!user) return;
+    
+    try {
+      setIsDeleting(true);
+      console.log('[PostApproval] Deleting post:', postId);
+
+      // Update localStorage
+      deleteLocalPost(postId);
+
+      // Update local state
+      setPosts(prevPosts => prevPosts.filter(post => post.id !== postId));
+
+      console.log('[PostApproval] Post deleted successfully');
+      showGlobalToast('Post deleted successfully.', 'success');
+      setDeleteConfirmPost(null);
+    } catch (error) {
+      console.error('[PostApproval] Unexpected error deleting post:', error);
+      showGlobalToast('Something went wrong. Please try again.', 'error');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   // Get counts for each tab
@@ -479,14 +490,14 @@ await supabase
                       </div>
                       <span
                         className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          post.status === 'pending'
+                          (post.status || 'pending') === 'pending'
                             ? 'bg-yellow-100 text-yellow-800'
-                            : post.status === 'approved'
+                            : (post.status || 'pending') === 'approved'
                             ? 'bg-green-100 text-green-800'
                             : 'bg-red-100 text-red-800'
                         }`}
                       >
-                        {post.status.charAt(0).toUpperCase() + post.status.slice(1)}
+                        {(post.status || 'pending').charAt(0).toUpperCase() + (post.status || 'pending').slice(1)}
                       </span>
                     </div>
                   </div>
@@ -551,47 +562,60 @@ await supabase
                         Reviewed on {new Date(post.reviewedAt).toLocaleString()}
                       </div>
                     )}
-                  </div>
 
-                  {/* Action Buttons (only for pending posts) */}
-                  {post.status === 'pending' && (
-                    <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end space-x-3">
-                      <button
-                        onClick={() => openRejectionModal(post)}
-                        disabled={isProcessing}
-                        className="px-4 py-2 border border-red-300 text-red-700 rounded-lg font-medium hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
-                      >
-                        {isProcessing ? (
+                    {/* Action Buttons */}
+                    {(post.status === 'pending' || user.role === 'admin') && (
+                      <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end space-x-3">
+                        {post.status === 'pending' && (
                           <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            <span>Processing...</span>
-                          </>
-                        ) : (
-                          <>
-                            <XCircle className="h-4 w-4" />
-                            <span>Reject</span>
+                            <button
+                              onClick={() => openRejectionModal(post)}
+                              disabled={isProcessing}
+                              className="px-4 py-2 border border-red-300 text-red-700 rounded-lg font-medium hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                            >
+                              {isProcessing ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  <span>Processing...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <XCircle className="h-4 w-4" />
+                                  <span>Reject</span>
+                                </>
+                              )}
+                            </button>
+                            <button
+                              onClick={() => handleApprove(post.id)}
+                              disabled={isProcessing}
+                              className="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                            >
+                              {isProcessing ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  <span>Processing...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <CheckCircle className="h-4 w-4" />
+                                  <span>Approve</span>
+                                </>
+                              )}
+                            </button>
                           </>
                         )}
-                      </button>
-                      <button
-                        onClick={() => handleApprove(post.id)}
-                        disabled={isProcessing}
-                        className="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
-                      >
-                        {isProcessing ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            <span>Processing...</span>
-                          </>
-                        ) : (
-                          <>
-                            <CheckCircle className="h-4 w-4" />
-                            <span>Approve</span>
-                          </>
+                        {user.role === 'admin' && (
+                          <button
+                            onClick={() => setDeleteConfirmPost(post)}
+                            className="px-4 py-2 border border-red-300 text-red-700 rounded-lg font-medium hover:bg-red-50 transition-colors flex items-center space-x-2"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            <span>Delete</span>
+                          </button>
                         )}
-                      </button>
-                    </div>
-                  )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })}
@@ -646,6 +670,18 @@ await supabase
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={!!deleteConfirmPost}
+        onClose={() => setDeleteConfirmPost(null)}
+        onConfirm={() => deleteConfirmPost && handleDeletePost(deleteConfirmPost.id)}
+        title="Delete Post"
+        message={`Are you sure you want to delete "${deleteConfirmPost?.title || 'this post'}"? This action cannot be undone.`}
+        confirmText="Delete"
+        type="danger"
+        isLoading={isDeleting}
+      />
     </div>
   );
 }
