@@ -24,7 +24,7 @@ type CommunityAlumniRecord = {
   name: string;
   email: string;
   avatar?: string;
-  role: 'alumni' | 'career-aspirant' | 'higher-education';
+  role: 'alumni' | 'career-aspirant' | 'higher-education' |'entrepreneur';
   company?: string;
   position?: string;
   experience?: string;
@@ -106,7 +106,11 @@ const [highlightCategory, setHighlightCategory] = useState('Alumni Meet');
 const [highlightDate, setHighlightDate] = useState(new Date().toISOString().split('T')[0]);
 const [highlightLocation, setHighlightLocation] = useState('');
 const [highlightFiles, setHighlightFiles] = useState<File[]>([]);
-
+const [dashboardCounts, setDashboardCounts] = useState({
+  pendingPosts: 0,
+  posts: 0,
+  events: 0,
+});
   useEffect(() => {
     fetchAllProfiles();
 
@@ -144,40 +148,84 @@ const [highlightFiles, setHighlightFiles] = useState<File[]>([]);
   };
 }, []);
 
-  const fetchAllProfiles = async () => {
-    const { data: alumniData, error: alumniError } = await supabase
-      .from("alumni_profiles")
-      .select(`
-        First_Name,
-        Email_Address,
-        Phone_Number,
-        Passed_Out_Year,
-        Year_of_Joining,
-        role,
-        created_at
-      `);
+  const normalizeCurrentStatus = (value: any): CommunityAlumniRecord['role'] => {
+  const status = String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/_/g, '-')
+  .replace(/\s+/g, '-');
 
-    if (alumniError) {
-      console.error("Error fetching alumni:", alumniError);
-    }
+  if (
+    status === 'working-professional' ||
+    status === 'workingprofessional' ||
+    status === 'job' ||
+    status === 'alumni'
+  ) {
+    return 'alumni';
+  }
 
-    const validRoles = new Set(['alumni', 'career-aspirant', 'higher-education']);
+  if (
+    status === 'career-aspirant' ||
+    status === 'careeraspirant'
+  ) {
+    return 'career-aspirant';
+  }
 
-    const alumniRecords: CommunityAlumniRecord[] = (alumniData || []).map(
-      (item, index) => ({
-        id: `a-${index}`,
-        name: item.First_Name || "",
-        email: item.Email_Address || "",
-        phone: item.Phone_Number || "",
-        graduationYear: String(item.Passed_Out_Year || ""),
-        year: String(item.Year_of_Joining || ""),
-        role: validRoles.has(item.role) ? item.role as CommunityAlumniRecord['role'] : "alumni",
+  if (
+    status === 'higher-education' ||
+    status === 'highereducation'
+  ) {
+    return 'higher-education';
+  }
+
+  if (
+    status === 'entrepreneur' ||
+    status === 'enterpreneur' ||
+    status === 'business' ||
+    status === 'startup'
+  ) {
+    return 'entrepreneur';
+  }
+
+  return 'alumni';
+};
+
+const fetchAllProfiles = async () => {
+  const { data: alumniData, error: alumniError } = await supabase
+    .from('alumni_profiles')
+    .select('*');
+
+  if (alumniError) {
+    console.error('Error fetching profiles:', alumniError);
+    return;
+  }
+
+  const alumniRecords: CommunityAlumniRecord[] = (alumniData || []).map(
+    (item, index) => {
+      const currentStatusValue =
+        item.currentStatus ||
+        item.current_status ||
+        item.Current_Status ||
+        item.CurrentStatus ||
+        item.status ||
+        item.role;
+
+      return {
+        id: item.id || `a-${index}`,
+        name: item.First_Name || item.name || '',
+        email: item.Email_Address || item.email || '',
+        phone: item.Phone_Number || item.phone || '',
+        graduationYear: String(item.Passed_Out_Year || item.graduationYear || ''),
+        year: String(item.Year_of_Joining || item.year || ''),
+        role: normalizeCurrentStatus(currentStatusValue),
+        currentStatus: currentStatusValue,
         createdAt: item.created_at,
-      })
-    );
+      };
+    }
+  );
 
-    setReportAlumni(alumniRecords);
-  };
+  setReportAlumni(alumniRecords);
+};
   const fetchAdminHighlights = async () => {
   const { data, error } = await supabase
     .from('alumni_highlights')
@@ -191,6 +239,52 @@ const [highlightFiles, setHighlightFiles] = useState<File[]>([]);
 
   setAdminHighlights(data || []);
 };
+const fetchDashboardCounts = async () => {
+  const { count: pendingPostsCount } = await supabase
+    .from('posts')
+    .select('*', { count: 'exact', head: true })
+    .eq('status', 'pending');
+
+  const { count: adminPostsCount } = await supabase
+    .from('admin_posts')
+    .select('*', { count: 'exact', head: true });
+
+  const { count: eventsCount } = await supabase
+    .from('events')
+    .select('*', { count: 'exact', head: true });
+
+  setDashboardCounts({
+    pendingPosts: pendingPostsCount || 0,
+    posts: adminPostsCount || 0,
+    events: eventsCount || 0,
+  });
+};
+useEffect(() => {
+  fetchDashboardCounts();
+
+  const channel = supabase
+    .channel('admin_dashboard_counts')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'posts' },
+      () => fetchDashboardCounts()
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'admin_posts' },
+      () => fetchDashboardCounts()
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'events' },
+      () => fetchDashboardCounts()
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}, []);
 
   useEffect(() => {
     const currentUserEmail = user?.email;
@@ -447,6 +541,7 @@ const [highlightFiles, setHighlightFiles] = useState<File[]>([]);
     const alumniCount = reportAlumni.filter((item) => item.role === 'alumni').length;
     const higherEducationCount = reportAlumni.filter((item) => item.role === 'higher-education').length;
     const careerAspirantCount = reportAlumni.filter((item) => item.role === 'career-aspirant').length;
+    const entrepreneurCount = reportAlumni.filter((item) => item.role === 'entrepreneur').length;
     const effectiveTotal = totalRegistrations || 1;
 
     return {
@@ -457,14 +552,17 @@ const [highlightFiles, setHighlightFiles] = useState<File[]>([]);
       alumniRatio: Math.round((alumniCount / effectiveTotal) * 100),
       higherEducationRatio: Math.round((higherEducationCount / effectiveTotal) * 100),
       careerAspirantRatio: Math.round((careerAspirantCount / effectiveTotal) * 100),
+      entrepreneurCount,
+entrepreneurRatio: Math.round((entrepreneurCount / effectiveTotal) * 100),
     };
   }, [reportAlumni]);
 
   const registrationSegments = useMemo(() => {
     const segments = [
-      { label: 'Alumni', count: analyticsCounts.alumniCount, color: 'from-blue-500 to-sky-400', dashColor: '#0ea5e9' },
+      { label: 'Working Professional', count: analyticsCounts.alumniCount, color: 'from-blue-500 to-sky-400', dashColor: '#0ea5e9' },
       { label: 'Higher Education', count: analyticsCounts.higherEducationCount, color: 'from-violet-500 to-fuchsia-400', dashColor: '#8b5cf6' },
       { label: 'Career Aspirant', count: analyticsCounts.careerAspirantCount, color: 'from-amber-400 to-orange-300', dashColor: '#f59e0b' },
+      { label: 'Entrepreneur', count: analyticsCounts.entrepreneurCount, color: 'from-emerald-400 to-green-300', dashColor: '#10b981' },
     ];
     const total = analyticsCounts.totalRegistrations || 1;
     let offset = 0;
@@ -488,7 +586,8 @@ const [highlightFiles, setHighlightFiles] = useState<File[]>([]);
       name: month,
       timelineAlumni: 0,
       timelineStudents: 0,
-      timelineHigherEd: 0
+      timelineHigherEd: 0,
+      timelineEntrepreneur: 0
     }));
 
     reportAlumni.forEach(profile => {
@@ -505,6 +604,8 @@ const [highlightFiles, setHighlightFiles] = useState<File[]>([]);
         monthlyData[monthIndex].timelineHigherEd++;
       } else if (role === 'career-aspirant') {
         monthlyData[monthIndex].timelineStudents++;
+        } else if (role === 'entrepreneur') {
+  monthlyData[monthIndex].timelineEntrepreneur++;
       }
     });
 
@@ -605,12 +706,12 @@ const [highlightFiles, setHighlightFiles] = useState<File[]>([]);
                     </div>
                   </div>
                   <p className="text-3xl font-bold text-slate-900">
-                    {posts.filter((p) => p.status === 'pending').length}
+                    {dashboardCounts.pendingPosts}
                   </p>
                   <p className="mt-3 text-sm text-slate-500">
-                    {posts.filter((p) => p.status === 'pending').length === 0 
-                      ? 'All posts reviewed!' 
-                      : 'Posts awaiting your approval'}
+                    {dashboardCounts.pendingPosts === 0
+  ? 'All posts reviewed!'
+  : 'Posts awaiting your approval'}
                   </p>
                 </Link>
 
@@ -628,7 +729,7 @@ const [highlightFiles, setHighlightFiles] = useState<File[]>([]);
                       <p className="text-xs text-slate-500">View or create announcements</p>
                     </div>
                   </div>
-                  <p className="text-3xl font-bold text-slate-900">{adminPosts.length}</p>
+                  <p className="text-3xl font-bold text-slate-900">{dashboardCounts.posts}</p>
                   <p className="mt-3 text-sm text-slate-500">Review posts created by this admin.</p>
                 </button>
 
@@ -646,7 +747,7 @@ const [highlightFiles, setHighlightFiles] = useState<File[]>([]);
                       <p className="text-xs text-slate-500">Publish and manage events</p>
                     </div>
                   </div>
-                  <p className="text-3xl font-bold text-slate-900">{adminEvents.length}</p>
+                  <p className="text-3xl font-bold text-slate-900">{dashboardCounts.events}</p>
                   <p className="mt-3 text-sm text-slate-500">Track events created by this admin.</p>
                 </button>
 
@@ -1162,9 +1263,10 @@ const [highlightFiles, setHighlightFiles] = useState<File[]>([]);
                       className="h-full w-full rounded-2xl border-none bg-transparent px-3 text-sm text-slate-900 outline-none focus:ring-0"
                     >
                       <option value="all">All Roles</option>
-                      <option value="alumni">Alumni</option>
+                      <option value="alumni">Working Professional</option>
                       <option value="career-aspirant">Career Aspirant</option>
                       <option value="higher-education">Higher Education</option>
+                      <option value="entrepreneur">Entrepreneur</option>
                     </select>
                   </div>
                 </div>
@@ -1255,9 +1357,16 @@ const [highlightFiles, setHighlightFiles] = useState<File[]>([]);
                           'career-aspirant': 'bg-amber-100 text-amber-800',
                         };
                         const badgeClass = roleBadge[alumnus.role] ?? 'bg-slate-100 text-slate-700';
-                        const roleLabel = alumnus.role === 'higher-education'
-                          ? 'Higher Education'
-                          : alumnus.role.charAt(0).toUpperCase() + alumnus.role.slice(1);
+                        const roleLabel =
+  alumnus.role === 'alumni'
+    ? 'Working Professional'
+    : alumnus.role === 'higher-education'
+      ? 'Higher Education'
+      : alumnus.role === 'career-aspirant'
+        ? 'Career Aspirant'
+        : alumnus.role === 'entrepreneur'
+          ? 'Entrepreneur'
+          : alumnus.role;
                         return (
                           <tr key={alumnus.id} className="hover:bg-slate-50 transition-colors">
                             <td className="px-6 py-4">
@@ -1306,9 +1415,10 @@ const [highlightFiles, setHighlightFiles] = useState<File[]>([]);
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
               {[
                 { title: 'Total Registrations', value: analyticsCounts.totalRegistrations, subtitle: 'All registered users', accent: 'from-sky-400 via-cyan-300 to-slate-100', detail: 'Overall network size' },
-                { title: 'Alumni', value: analyticsCounts.alumniCount, subtitle: `${analyticsCounts.alumniRatio}% of total`, accent: 'from-blue-500 via-sky-400 to-cyan-400', detail: 'Core alumni growth' },
+                { title: 'Working Professional', value: analyticsCounts.alumniCount, subtitle: `${analyticsCounts.alumniRatio}% of total`, accent: 'from-blue-500 via-sky-400 to-cyan-400', detail: 'Working professional growth' },
                 { title: 'Higher Education', value: analyticsCounts.higherEducationCount, subtitle: `${analyticsCounts.higherEducationRatio}% of total`, accent: 'from-violet-500 via-fuchsia-400 to-pink-300', detail: 'Institutional partners' },
                 { title: 'Career Aspirant', value: analyticsCounts.careerAspirantCount, subtitle: `${analyticsCounts.careerAspirantRatio}% of total`, accent: 'from-amber-400 via-orange-300 to-rose-200', detail: 'Postgraduate network' },
+                { title: 'Entrepreneur', value: analyticsCounts.entrepreneurCount, subtitle: `${analyticsCounts.entrepreneurRatio}% of total`, accent: 'from-emerald-400 via-green-300 to-lime-200', detail: 'Entrepreneur network' },
               ].map((card) => (
                 <div
                   key={card.title}
@@ -1502,9 +1612,10 @@ const [highlightFiles, setHighlightFiles] = useState<File[]>([]);
                       contentStyle={{ borderRadius: '8px', border: 'none', backgroundColor: 'rgba(15, 23, 42, 0.9)', color: '#fff', fontSize: '12px' }}
                       cursor={{ fill: 'rgba(255,255,255,0.05)' }}
                     />
-                    <Bar dataKey="timelineAlumni" name="Alumni" stackId="a" fill="#0ea5e9" radius={[0, 0, 0, 0]} animationDuration={1000} />
+                    <Bar dataKey="timelineAlumni" name="Working Professional" stackId="a" fill="#0ea5e9" radius={[0, 0, 0, 0]} animationDuration={1000} />
                     <Bar dataKey="timelineHigherEd" name="Higher Education" stackId="a" fill="#8b5cf6" radius={[0, 0, 0, 0]} animationDuration={1000} />
                     <Bar dataKey="timelineStudents" name="Career Aspirant" stackId="a" fill="#f59e0b" radius={[4, 4, 0, 0]} animationDuration={1000} />
+                    <Bar dataKey="timelineEntrepreneur" name="Entrepreneur" stackId="a" fill="#10b981" radius={[4, 4, 0, 0]} animationDuration={1000} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
