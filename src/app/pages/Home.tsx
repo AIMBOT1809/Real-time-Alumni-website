@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 import { motion } from 'motion/react';
 import collegeLogo from '../../assests/college-logo.png';
 import { supabase } from '../../supabaseClient';
+import { AlumniWallOfFame } from '../components/AlumniWallOfFame';
 
 // Banner images configuration - You can replace these URLs with your own images
 // Local video path: put your video at public/clgvideo.mp4
@@ -293,6 +294,8 @@ useEffect(() => {
           </div>
         </div>
       </section>
+
+      <AlumniWallOfFame />
 
       {/* Statistics Circles Section - Small circles below banner */}
       <section className="relative py-8 px-4 sm:px-6 lg:px-8 bg-slate-50">
