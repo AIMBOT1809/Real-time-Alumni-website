@@ -32,6 +32,24 @@ export default defineConfig({
     },
   },
 
+  server: {
+    host: '0.0.0.0',
+    proxy: {
+      // Proxy document verification endpoint
+      '/verify-id': {
+        target: 'http://127.0.0.1:5000',
+        changeOrigin: true,
+        secure: false,
+      },
+      // Proxy all API calls
+      '/api': {
+        target: 'http://127.0.0.1:5000',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+  },
+
   // File types to support raw imports. Never add .css, .tsx, or .ts files to this.
   assetsInclude: ['**/*.svg', '**/*.csv'],
 })

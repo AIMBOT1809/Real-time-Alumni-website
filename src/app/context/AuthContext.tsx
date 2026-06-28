@@ -94,19 +94,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                   ...parsed,
                   id: parsed.id,
                   name: fullName,
-                  avatar: profileData.Photo_URL || profileData.photo_url || parsed.avatar,
+                  avatar: profileData.photo_url || profileData.Photo_URL || parsed.avatar,
                   collegeName: profileData.College_Name || profileData.college_name || parsed.collegeName,
                   rollNumber: profileData.Roll_Number || profileData.roll_number || parsed.rollNumber,
                   department: profileData.Department || profileData.department || parsed.department,
                   year:
-                    profileData.Passed_Out_Year || profileData.passed_out_year ||
+                    profileData.passed_out_year || profileData.Passed_Out_Year ||
                     profileData.Year_of_Joining || parsed.year || '',
                   email: parsed.email,
-                  phone: profileData.Phone_Number || profileData.phone || parsed.phone,
-                  about: profileData.About || profileData.about || parsed.about,
+                  phone: profileData.Phone_Number || profileData.phone_number || profileData.phone || parsed.phone,
+                  about: profileData.about || profileData.About || parsed.about,
                   linkedin:
                     profileData.LinkedIn_Profile_URL || profileData.linkedin || parsed.linkedin,
-                  resume: profileData.Resume_URL || profileData.resume || parsed.resume,
+                  resume: profileData.Resume_File_Name || profileData.Resume_URL || profileData.resume || parsed.resume,
                   links: parsed.links || [],
                 };
 
@@ -207,13 +207,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('[AuthContext] alumni_profiles fetched, count =', data.length);
         if (mounted) {
           const mapped = data.map((r: any) => ({
-            id: String(r.user_id ?? r.id ?? r.Email_Address ?? r.email ?? `u-${Date.now()}`),
-            name: ((`${r.First_Name ?? r.first_name ?? ''} ${r.Last_name ?? r.last_name ?? ''}`).trim()) || (r.Email_Address ?? r.email) || 'Unknown',
-            avatar: (r.Photo_URL ?? r.photo_url ?? r.avatar_url) || `https://ui-avatars.com/api/?name=${encodeURIComponent((r.First_Name ?? r.first_name ?? r.Email_Address ?? 'User'))}&background=FDE68A&color=111827&size=128`,
-            collegeName: r.College_Name ?? r.college_name ?? '',
-            department: r.Department ?? r.department ?? '',
-            year: r.Passed_Out_Year ?? r.passed_out_year ?? r.Year_of_Joining ?? '',
-            email: r.Email_Address ?? r.email ?? undefined,
+            id: String(r.user_id ?? r.id ?? r.email ?? `u-${Date.now()}`),
+            name: ((`${r.first_name ?? ''} ${r.last_name ?? ''}`).trim()) || (r.email) || 'Unknown',
+            avatar: (r.photo_url ?? r.avatar_url) || `https://ui-avatars.com/api/?name=${encodeURIComponent((r.first_name ?? r.email ?? 'User'))}\u0026background=FDE68A\u0026color=111827\u0026size=128`,
+            collegeName: r.college_name ?? '',
+            department: r.department ?? '',
+            year: r.passed_out_year ?? r.Year_of_Joining ?? '',
+            email: r.email ?? undefined,
+            role: (r.role as any) ?? 'alumni',
+            about: r.about ?? '',
+            linkedin: r.linkedin ?? '',
+            phone: r.phone_number ?? r.phone ?? '',
+            skills: r.skills ?? [],
+            graduationYear: Number(r.passed_out_year ?? new Date().getFullYear()),
+            degree: r.department ? `${r.department} - ${r.college_name ?? ''}` : '',
           }));
 
           setAlumni(mapped as any);
@@ -490,17 +497,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const merged: UserProfile = {
               ...savedProfile,
               name: fullName,
-              avatar: dbProfile.Photo_URL || dbProfile.photo_url || savedProfile.avatar,
+              avatar: dbProfile.photo_url || dbProfile.Photo_URL || savedProfile.avatar,
               collegeName: dbProfile.College_Name || dbProfile.college_name || savedProfile.collegeName,
               rollNumber: dbProfile.Roll_Number || dbProfile.roll_number || savedProfile.rollNumber,
               department: dbProfile.Department || dbProfile.department || savedProfile.department,
-              year: dbProfile.Passed_Out_Year || dbProfile.passed_out_year || dbProfile.Year_of_Joining || savedProfile.year || '',
+              year: dbProfile.passed_out_year || dbProfile.Passed_Out_Year || dbProfile.Year_of_Joining || savedProfile.year || '',
               email: savedProfile.email || dbProfile.Email_Address || dbProfile.email,
-              phone: dbProfile.Phone_Number || dbProfile.phone || savedProfile.phone,
-              about: dbProfile.About || dbProfile.about || savedProfile.about,
+              phone: dbProfile.Phone_Number || dbProfile.phone_number || dbProfile.phone || savedProfile.phone,
+              about: dbProfile.about || dbProfile.About || savedProfile.about,
               linkedin: dbProfile.LinkedIn_Profile_URL || dbProfile.linkedin || savedProfile.linkedin,
-              resume: dbProfile.Resume_URL || dbProfile.resume || savedProfile.resume,
-              skills: savedProfile.skills?.length ? savedProfile.skills : (dbProfile.Skills || []),
+              resume: dbProfile.Resume_File_Name || dbProfile.Resume_URL || dbProfile.resume || savedProfile.resume,
+              skills: savedProfile.skills?.length ? savedProfile.skills : (dbProfile.Skills || dbProfile.skills || []),
               links: savedProfile.links?.length ? savedProfile.links : (dbProfile.Links || []),
             };
             setUser(merged);

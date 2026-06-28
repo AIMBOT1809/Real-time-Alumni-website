@@ -1347,7 +1347,9 @@ const [highlightFiles, setHighlightFiles] = useState<File[]>([]);
                                   alt={alumnus.name}
                                   className="h-8 w-8 rounded-full object-cover"
                                 />
-                                <span className="font-medium text-slate-900">{alumnus.name}</span>
+                                <Link to={`/admin/user/${encodeURIComponent(alumnus.email)}`} className="font-medium text-blue-600 hover:underline">
+                                  {alumnus.name}
+                                </Link>
                               </div>
                             </td>
                             <td className="px-6 py-4">

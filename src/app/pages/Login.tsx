@@ -156,13 +156,12 @@ export function Login() {
       name: fullName
         ? fullName
         : (metadata.name as string) || signedInUser.email?.split('@')[0] || 'User',
-      //role: (metadata.role as any) || 'alumni',
       role:
   signedInUser.email === 'alumniconnect03@gmail.com'
     ? 'admin'
-    : ((metadata.role as any) || 'alumni'),
+    : ((profile?.role as any) || (metadata.role as any) || 'alumni'),
       avatar:
-        profile?.Photo_URL || profile?.photo_url ||
+        profile?.photo_url || profile?.Photo_URL ||
         (metadata.avatar_url as string) ||
         (metadata.avatar as string) ||
         'https://ui-avatars.com/api/?name=User&background=FDE68A&color=111827&size=256',
@@ -172,16 +171,16 @@ export function Login() {
         profile?.Department && profile?.College_Name
           ? `${profile.Department} - ${profile.College_Name}`
           : (metadata.degree as string) || '',
-      skills: (metadata.skills as string[]) || [],
+      skills: (metadata.skills as string[]) || (profile?.Skills || profile?.skills) || [],
       email: signedInUser.email || undefined,
-      phone: profile?.Phone_Number || profile?.phone || metadata.phone || undefined,
+      phone: profile?.Phone_Number || profile?.phone_number || profile?.phone || metadata.phone || undefined,
       collegeName: profile?.College_Name || profile?.college_name || metadata.collegeName || '',
       rollNumber: profile?.Roll_Number || profile?.roll_number || metadata.rollNumber || '',
       department: profile?.Department || profile?.department || metadata.department || '',
-      year: profile?.Passed_Out_Year || profile?.passed_out_year || profile?.Year_of_Joining || profile?.year || metadata.year || '',
-      about: profile?.About || profile?.about || '',
+      year: profile?.passed_out_year || profile?.Passed_Out_Year || profile?.Year_of_Joining || profile?.year || metadata.year || '',
+      about: profile?.about || profile?.About || '',
       linkedin: profile?.LinkedIn_Profile_URL || profile?.linkedin || (metadata.linkedin as string) || '',
-      resume: profile?.Resume_URL || profile?.resume || '',
+      resume: profile?.Resume_File_Name || profile?.Resume_URL || profile?.resume || '',
       links: (metadata.links as { title: string; url: string }[]) || [],
     };
 
