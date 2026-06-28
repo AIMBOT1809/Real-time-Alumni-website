@@ -856,14 +856,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log("INSERT DATA:", data);
       console.log("INSERT ERROR:", error);
 
-      /*if (error && /status.*does not exist/i.test(error.message)) {
-        const { status: _status, ...legacyRow } = insertRow;
-        const legacyResult = await supabase.from('posts').insert([legacyRow]).select();
-        data = legacyResult.data;
-        error = legacyResult.error;
-        supportsApprovalStatus = false;
-      } */
-
       if (error) {
         console.warn('[AuthContext] Supabase insert failed, using localStorage only:', error.message);
         // Post is already saved in localStorage, so we're good for demo
