@@ -57,6 +57,7 @@ export function MainDashboard() {
   const [selectedActivityCard, setSelectedActivityCard] = useState<string | null>(null);
   const [deleteConfirmPost, setDeleteConfirmPost] = useState<string | null>(null);
   const [isDeletingPost, setIsDeletingPost] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     setActiveMenu(getMenuFromPath());

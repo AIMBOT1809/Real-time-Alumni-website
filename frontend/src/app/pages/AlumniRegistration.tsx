@@ -468,6 +468,64 @@ step2Data.forEach((value, key) => {
         photoUrl = photoUrlData.publicUrl;
       }
 
+      // Determine effective company/business name for success check
+      const effectiveCompany = currentStatus === 'entrepreneur' ? startupName : organization;
+
+      // Successful alumni check
+      const status = currentStatus || '';
+      const role = jobRole || '';
+      const company = effectiveCompany || '';
+
+      const normalizedStatus = status.toLowerCase().replace(/[-_/]/g, ' ').trim();
+      const normalizedRole = role.toLowerCase().replace(/[-_/]/g, ' ').trim();
+
+      const isWorkingProfessionalOrBusiness =
+        normalizedStatus.includes('working professional') ||
+        normalizedStatus.includes('business') ||
+        normalizedStatus.includes('startup') ||
+        normalizedStatus.includes('entrepreneur') ||
+        normalizedStatus.includes('business owner');
+
+      const notSuccessfulPatterns = [
+        'career aspirant',
+        'student',
+        'fresher',
+        'intern',
+        'trainee',
+        'job seeker',
+        'looking for job',
+        'unemployed',
+      ];
+      const isFailedStatus = notSuccessfulPatterns.some((p) =>
+        normalizedStatus.includes(p)
+      );
+
+      const successfulKeywords = [
+        'HR Manager', 'Human Resources', 'Recruiter', 'Talent Acquisition',
+        'CEO', 'Founder', 'Co-Founder', 'Director', 'Manager', 'Senior Manager',
+        'Team Lead', 'Lead', 'Project Manager', 'Product Manager', 'Data Analyst',
+        'Data Scientist', 'Senior Software Engineer', 'Software Engineer',
+        'Business Analyst', 'Salesforce Consultant', 'Entrepreneur', 'Business Owner',
+        'Startup Founder', 'HR',
+      ];
+      const isSuccessfulRole = successfulKeywords.some((k) =>
+        normalizedRole.includes(k.toLowerCase())
+      );
+
+      const hasCompany = Boolean(company && company.trim());
+
+      const isSuccessfulAlumni =
+        isWorkingProfessionalOrBusiness &&
+        !isFailedStatus &&
+        isSuccessfulRole &&
+        hasCompany;
+
+      console.log('Registration successful check:', { status, role, company, isSuccessfulAlumni });
+
+      const wallOfFameStatus = isSuccessfulAlumni ? 'approved' : 'not_submitted';
+      const isWallOfFame = isSuccessfulAlumni;
+      const isHiddenFromWall = false;
+      const wallOfFameRejectionReason = null;
       const { error: profileError } = await supabase
         .from('alumni_profiles')
         .insert([
@@ -481,7 +539,7 @@ step2Data.forEach((value, key) => {
             College_Name: collegeName,
             Department: department,
             Year_of_Joining: yearOfJoining,
-            Passed_Out_Year: passedOutYear,
+            passed_out_year: passedOutYear,
             Roll_Number: rollNumber,
             Current_Status: currentStatus,
             Organization_Name: organization,
@@ -509,8 +567,38 @@ step2Data.forEach((value, key) => {
               Startup_Description: startupDescription,
               Business_Verification_URL: businessVerificationUrl,
             }),
+            wall_of_fame_status: wallOfFameStatus,
+            is_wall_of_fame: isWallOfFame,
+            is_hidden_from_wall: isHiddenFromWall,
+            wall_of_fame_rejection_reason: wallOfFameRejectionReason,
           }
         ]);
+      const wallOfFamePayload = {
+        user_id: authData.user?.id,
+        First_Name: firstName,
+        Last_name: lastName,
+        Current_Status: currentStatus,
+        Organization_Name: organization,
+        Role_Position: jobRole,
+        wall_of_fame_status: wallOfFameStatus,
+        is_wall_of_fame: isWallOfFame,
+        is_hidden_from_wall: isHiddenFromWall,
+        wall_of_fame_rejection_reason: wallOfFameRejectionReason,
+      };
+      console.log('Wall of Fame insert payload:', wallOfFamePayload);
+
+      console.log("Alumni registration payload:", {
+        passed_out_year: passedOutYear,
+        fullInsertPayload: {
+          user_id: authData.user?.id,
+          First_Name: firstName,
+          Last_name: lastName,
+          passed_out_year: passedOutYear,
+          wall_of_fame_status: wallOfFameStatus,
+          is_wall_of_fame: isWallOfFame,
+        }
+      });
+
 
       if (profileError) {
         console.log(profileError);

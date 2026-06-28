@@ -13,6 +13,7 @@ export function Layout() {
 
   const navLinks = [
     { name: 'Home', href: '#home' },
+    { name: 'Wall of Fame', href: '#wall-of-fame' },
     { name: 'About Us', href: '#about' },
     { name: 'Events', href: '#events' },
     { name: 'Opportunities', href: '#opportunities' },
