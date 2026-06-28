@@ -74,7 +74,11 @@ export function Layout() {
 
   // Hide layout components on dashboard
   const isDashboard = location.pathname === '/dashboard' || location.pathname.startsWith('/dashboard/') || ['/mentorship', '/jobs', '/referrals', '/internships', '/higher-education', '/business-startups', '/events'].includes(location.pathname);
-  const isAdminPage = location.pathname === '/admin';
+  const isAdminPage =
+  location.pathname === '/admin' ||
+  location.pathname.startsWith('/admin/') ||
+  location.pathname === '/admin-dashboard' ||
+  location.pathname.startsWith('/admin-dashboard/');
   const isLandingPage = location.pathname === '/';
   const isLoginPage = location.pathname === '/login';
   const isRegisterPage = location.pathname === '/register';
@@ -94,9 +98,9 @@ export function Layout() {
     };
   }, []);
 
-  if (isDashboard) {
-    return <Outlet />;
-  }
+  if (isDashboard || isAdminPage) {
+  return <Outlet />;
+}
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 font-sans text-slate-900">
