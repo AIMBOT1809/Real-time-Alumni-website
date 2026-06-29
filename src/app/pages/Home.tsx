@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 import { motion } from 'motion/react';
 import collegeLogo from '../../assests/college-logo.png';
 import { supabase } from '../../supabaseClient';
+<<<<<<< Updated upstream
 import { AlumniWallOfFame } from '../components/AlumniWallOfFame';
 
 // Banner images configuration - You can replace these URLs with your own images
@@ -295,6 +296,7 @@ useEffect(() => {
         </div>
       </section>
 
+<<<<<<< Updated upstream
       <AlumniWallOfFame />
 
       {/* Statistics Circles Section - Small circles below banner */}

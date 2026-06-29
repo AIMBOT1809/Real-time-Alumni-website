@@ -36,9 +36,10 @@ import { Chat } from './Chat';
 import { getApprovedPosts, getPostsByAuthor } from '../data/localStoragePosts';
 import { showGlobalToast } from '../components/Toast';
 import { ConfirmModal } from '../components/ConfirmModal';
+import { PostComment } from '../data/types';
 
 export function MainDashboard() {
-  const { user, role, logout, login, posts, jobs, events, following, getAlumniById, alumni, addPost, deletePost } = useAuth();
+  const { user, role, logout, login, posts, jobs, events, following, getAlumniById, alumni, addPost, deletePost, likePost, commentPost, getPostComments, hasUserLikedPost, sharePost, deleteComment } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const getMenuFromPath = () => {
@@ -51,13 +52,44 @@ export function MainDashboard() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [chatTheme, setChatTheme] = useState<'dark' | 'light'>('dark');
   const [adminPosts, setAdminPosts] = useState<any[]>([]);
-  //const [posts, setPosts] = useState<any[]>([]);
   const [registeredEvents, setRegisteredEvents] = useState<any[]>([]);
   const [attendedEvents, setAttendedEvents] = useState<any[]>([]);
   const [selectedActivityCard, setSelectedActivityCard] = useState<string | null>(null);
+  const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
+  const [postComments, setPostComments] = useState<Record<string, PostComment[]>>({});
+  const [openCommentPost, setOpenCommentPost] = useState<string | null>(null);
+  const [commentText, setCommentText] = useState<Record<string, string>>({});
   const [deleteConfirmPost, setDeleteConfirmPost] = useState<string | null>(null);
   const [isDeletingPost, setIsDeletingPost] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
+
+  // Fetch user's liked posts from database on mount
+  useEffect(() => {
+    const fetchUserLikes = async () => {
+      if (!user?.id) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('post_likes')
+          .select('post_id')
+          .eq('user_id', user.id);
+
+        if (error) {
+          console.error('Error fetching user likes:', error);
+          return;
+        }
+
+        if (data) {
+          const likedPostIds = new Set(data.map(like => like.post_id));
+          setLikedPosts(likedPostIds);
+          console.log(`Loaded ${likedPostIds.size} liked posts from database`);
+        }
+      } catch (err) {
+        console.error('Error fetching user likes:', err);
+      }
+    };
+
+    fetchUserLikes();
+  }, [user?.id]);
 
   useEffect(() => {
     setActiveMenu(getMenuFromPath());
@@ -350,44 +382,6 @@ export function MainDashboard() {
     };
   }, []);
 
-  useEffect(() => {
-  fetchAdminPosts();
-  fetchPosts();
-}, []);
-
-  const fetchAdminPosts = async () => {
-    const { data, error } = await supabase
-      .from('admin_posts')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-  if (error) {
-    console.error(error);
-    return;
-  }
-console.log("ADMIN POSTS:", data);
-  setAdminPosts(data || []);
-};
-
-const fetchPosts = async () => {
-  const { data, error } = await supabase
-    .from("posts")
-    .select("*")
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    console.error(error);
-    return;
-  }
-
-  console.log("POSTS:", data);
-  setPosts(data || []);
-};
-
-  useEffect(() => {
-    fetchAdminPosts();
-  }, []);
-
   const fetchEventRegistrations = async () => {
     try {
       if (!user?.id) return;
@@ -530,6 +524,16 @@ const fetchPosts = async () => {
     navigate('/');
   };
 
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      showGlobalToast('Link copied to clipboard', 'success');
+    } catch (err) {
+      console.error('Failed to copy to clipboard:', err);
+      showGlobalToast('Failed to copy link', 'error');
+    }
+  };
+
   const addSkill = () => {
     if (newSkill.trim() && !skills.includes(newSkill.trim())) {
       setSkills([...skills, newSkill.trim()]);
@@ -580,7 +584,6 @@ const fetchPosts = async () => {
     }
   };
  
- 
 /*
   if (!user) {
     navigate('/login');
@@ -588,9 +591,9 @@ const fetchPosts = async () => {
   }
 */    
 
- // const canPost = !!role && role !== 'student';
- // const followedPosts = posts ||[];
- //const followedPosts = adminPosts;
+// const canPost = !!role && role !== 'student';
+// const followedPosts = posts ||[];
+//const followedPosts = adminPosts;
   const canPost = role === 'faculty' || role === 'alumni';
 
   // Temporary localStorage approval flow for demo
@@ -713,8 +716,8 @@ const fetchPosts = async () => {
                     if (!author) return null;
                     */
                   // const author = {
- // name: "Admin",
- // avatar: "https://ui-avatars.com/api/?name=Admin"
+// name: "Admin",
+// avatar: "https://ui-avatars.com/api/?name=Admin"
 //};
 const author =
   post.source === 'admin'
@@ -796,19 +799,156 @@ const author =
                             <span>{post.comments || 0} comments</span>
                           </div>
                           <div className="flex items-center justify-around border-t border-slate-800 pt-2">
-                            <button className="flex items-center space-x-2 px-4 py-2 text-slate-300 hover:text-red-500 hover:bg-slate-800 rounded-lg transition-colors">
-                              <span className="text-lg">♥</span>
-                              <span>Like</span>
+                            <button 
+                              onClick={async () => {
+                                try {
+                                  await likePost(post.id);
+                                  // Optimistically update UI
+                                  setLikedPosts(prev => {
+                                    const next = new Set(prev);
+                                    if (next.has(post.id)) {
+                                      next.delete(post.id);
+                                    } else {
+                                      next.add(post.id);
+                                    }
+                                    return next;
+                                  });
+                                } catch (error) {
+                                  console.error('[MainDashboard] Error liking post:', error);
+                                  showGlobalToast('Failed to like post', 'error');
+                                }
+                              }}
+                              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                                likedPosts.has(post.id) 
+                                  ? 'text-red-500 bg-slate-800' 
+                                  : 'text-slate-300 hover:text-red-500 hover:bg-slate-800'
+                              }`}
+                            >
+                              <span className="text-lg">{likedPosts.has(post.id) ? '♥' : '♡'}</span>
+                              <span>{likedPosts.has(post.id) ? 'Liked' : 'Like'}</span>
                             </button>
-                            <button className="flex items-center space-x-2 px-4 py-2 text-slate-300 hover:text-blue-500 hover:bg-slate-800 rounded-lg transition-colors">
+                            <button 
+                              onClick={async () => {
+                                if (!openCommentPost) {
+                                  const comments = await getPostComments(post.id);
+                                  setPostComments(prev => ({ ...prev, [post.id]: comments }));
+                                }
+                                setOpenCommentPost(openCommentPost === post.id ? null : post.id);
+                              }}
+                              className="flex items-center space-x-2 px-4 py-2 text-slate-300 hover:text-blue-500 hover:bg-slate-800 rounded-lg transition-colors"
+                            >
                               <span className="text-lg">💬</span>
                               <span>Comment</span>
                             </button>
-                            <button className="flex items-center space-x-2 px-4 py-2 text-slate-300 hover:text-green-500 hover:bg-slate-800 rounded-lg transition-colors">
+                            <button 
+                              onClick={async () => {
+                                const shareData = {
+                                  title: post.title || 'Alumni Post',
+                                  text: post.content.substring(0, 100),
+                                  url: `${window.location.origin}/dashboard/activity?post=${post.id}`,
+                                };
+
+                                // Try Web Share API first (mobile)
+                                if (navigator.share) {
+                                  try {
+                                    await navigator.share(shareData);
+                                    await sharePost(post.id);
+                                    showGlobalToast('Post shared successfully', 'success');
+                                  } catch (err) {
+                                    // User cancelled or error - fallback to copy
+                                    if (err instanceof Error && err.name !== 'AbortError') {
+                                      copyToClipboard(shareData.url);
+                                    }
+                                  }
+                                } else {
+                                  // Fallback: copy URL to clipboard
+                                  copyToClipboard(shareData.url);
+                                  await sharePost(post.id);
+                                  showGlobalToast('Link copied to clipboard', 'success');
+                                }
+                              }}
+                              className="flex items-center space-x-2 px-4 py-2 text-slate-300 hover:text-green-500 hover:bg-slate-800 rounded-lg transition-colors"
+                            >
                               <span className="text-lg">↗</span>
                               <span>Share</span>
                             </button>
                           </div>
+
+                          {/* Comments Section */}
+                          {openCommentPost === post.id && (
+                            <div className="mt-4 pt-4 border-t border-slate-800 space-y-3">
+                              {/* Existing Comments */}
+                              {postComments[post.id] && postComments[post.id].length > 0 && (
+                                <div className="space-y-2 max-h-60 overflow-y-auto">
+                                  {postComments[post.id].map((comment) => (
+                                    <div key={comment.id} className="bg-slate-800 rounded-lg p-3 flex items-start justify-between">
+                                      <div className="flex-1">
+                                        <div className="flex items-center gap-2 mb-1">
+                                          <span className="text-sm font-medium text-white">
+                                            {comment.user_name || comment.user?.name || 'User'}
+                                          </span>
+                                          <span className="text-xs text-slate-500">
+                                            {new Date(comment.created_at).toLocaleDateString()}
+                                          </span>
+                                        </div>
+                                        <p className="text-sm text-slate-300">{comment.content}</p>
+                                      </div>
+                                      {user && comment.user_id === user.id && (
+                                        <button
+                                          onClick={async () => {
+                                            await deleteComment(comment.id, post.id);
+                                            setPostComments(prev => ({
+                                              ...prev,
+                                              [post.id]: prev[post.id].filter(c => c.id !== comment.id)
+                                            }));
+                                          }}
+                                          className="text-red-400 hover:text-red-300 ml-2"
+                                          title="Delete comment"
+                                        >
+                                          <Trash2 size={14} />
+                                        </button>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+
+                              {/* Add Comment Input */}
+                              <div className="flex gap-2">
+                                <input
+                                  type="text"
+                                  placeholder="Write a comment..."
+                                  value={commentText[post.id] || ''}
+                                  onChange={(e) => setCommentText(prev => ({ ...prev, [post.id]: e.target.value }))}
+                                  onKeyPress={(e) => {
+                                    if (e.key === 'Enter' && commentText[post.id]?.trim()) {
+                                      commentPost(post.id, commentText[post.id] || '');
+                                      setCommentText(prev => ({ ...prev, [post.id]: '' }));
+                                      // Refresh comments
+                                      getPostComments(post.id).then(comments => {
+                                        setPostComments(prev => ({ ...prev, [post.id]: comments }));
+                                      });
+                                    }
+                                  }}
+                                  className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
+                                />
+                                <button
+                                  onClick={async () => {
+                                    if (commentText[post.id]?.trim()) {
+                                      await commentPost(post.id, commentText[post.id] || '');
+                                      setCommentText(prev => ({ ...prev, [post.id]: '' }));
+                                      // Refresh comments
+                                      const comments = await getPostComments(post.id);
+                                      setPostComments(prev => ({ ...prev, [post.id]: comments }));
+                                    }
+                                  }}
+                                  className="px-4 py-2 bg-[#FFD700] text-black rounded-lg font-semibold hover:bg-yellow-600 transition-colors"
+                                >
+                                  Post
+                                </button>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </article>
                     );

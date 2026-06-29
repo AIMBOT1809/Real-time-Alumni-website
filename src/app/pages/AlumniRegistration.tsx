@@ -468,6 +468,7 @@ step2Data.forEach((value, key) => {
         photoUrl = photoUrlData.publicUrl;
       }
 
+<<<<<<< Updated upstream
       // Determine effective company/business name for success check
       const effectiveCompany = currentStatus === 'entrepreneur' ? startupName : organization;
 
@@ -567,6 +568,7 @@ step2Data.forEach((value, key) => {
               Startup_Description: startupDescription,
               Business_Verification_URL: businessVerificationUrl,
             }),
+<<<<<<< Updated upstream
             wall_of_fame_status: wallOfFameStatus,
             is_wall_of_fame: isWallOfFame,
             is_hidden_from_wall: isHiddenFromWall,
@@ -587,6 +589,8 @@ step2Data.forEach((value, key) => {
       };
       console.log('Wall of Fame insert payload:', wallOfFamePayload);
 
+          }
+        ]);
 
       if (profileError) {
         console.log(profileError);

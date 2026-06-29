@@ -3,14 +3,30 @@ import { useNavigate } from 'react-router';
 import { BriefcaseBusiness, Building2, CalendarCheck, CheckCircle2, Clock3, GraduationCap, LayoutDashboard, Menu, Rocket, Search, Send, UserCheck, Users, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { addActivityItem } from '../data/activityStore';
+<<<<<<< Updated upstream
 import { useEffect } from "react";
 import { supabase } from "../../supabaseClient";
 
 type SessionTab = 'available' | 'requested' | 'completed';
 type Mentor = { id: number; name: string; initials: string; domain: string; company: string; availability: string; accent: string };
 
+<<<<<<< Updated upstream
 const requestedSeed: any[] = [];
 const completedSeed: any[] = [];
+const mentors: Mentor[] = [
+  { id: 1, name: 'Ananya Rao', initials: 'AR', domain: 'Product Management', company: 'Microsoft', availability: 'Sat, 10:00 AM – 1:00 PM', accent: 'bg-violet-100 text-violet-700' },
+  { id: 2, name: 'Vikram Mehta', initials: 'VM', domain: 'Data Science & AI', company: 'Google', availability: 'Sun, 3:00 PM – 6:00 PM', accent: 'bg-blue-100 text-blue-700' },
+  { id: 3, name: 'Priya Nair', initials: 'PN', domain: 'UX & Product Design', company: 'Adobe', availability: 'Wed, 6:30 PM – 8:30 PM', accent: 'bg-rose-100 text-rose-700' },
+  { id: 4, name: 'Arjun Kapoor', initials: 'AK', domain: 'Software Engineering', company: 'Amazon', availability: 'Sat, 4:00 PM – 7:00 PM', accent: 'bg-emerald-100 text-emerald-700' },
+  { id: 5, name: 'Sneha Iyer', initials: 'SI', domain: 'Finance & Consulting', company: 'Deloitte', availability: 'Fri, 7:00 PM – 9:00 PM', accent: 'bg-amber-100 text-amber-700' },
+  { id: 6, name: 'Rahul Sharma', initials: 'RS', domain: 'Entrepreneurship', company: 'Razorpay', availability: 'Sun, 11:00 AM – 2:00 PM', accent: 'bg-cyan-100 text-cyan-700' },
+];
+
+const requestedSeed = [mentors[1]];
+const completedSeed = [
+  { ...mentors[4], availability: 'Completed on 12 May 2026' },
+  { ...mentors[2], availability: 'Completed on 28 April 2026' },
+];
 
 export function MentorshipSessions() {
   const navigate = useNavigate();
@@ -19,6 +35,7 @@ export function MentorshipSessions() {
   const [requestedMentors, setRequestedMentors] = useState<Mentor[]>(requestedSeed);
   const [search, setSearch] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+<<<<<<< Updated upstream
   const [mentors, setMentors] = useState<any[]>([]);
   const availableMentors = mentors.filter(
   (mentor) =>
@@ -44,6 +61,12 @@ export function MentorshipSessions() {
       )
     : tabMentors;
 }, [search, tabMentors]);
+  const availableMentors = mentors.filter((mentor) => !requestedMentors.some((requested) => requested.id === mentor.id));
+  const tabMentors = activeTab === 'available' ? availableMentors : activeTab === 'requested' ? requestedMentors : completedSeed;
+  const filteredMentors = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    return query ? tabMentors.filter((mentor) => [mentor.name, mentor.domain, mentor.company].some((value) => value.toLowerCase().includes(query))) : tabMentors;
+  }, [search, tabMentors]);
   const tabs: Array<{ id: SessionTab; label: string; count: number }> = [
     { id: 'available', label: 'Available Mentors', count: availableMentors.length },
     { id: 'requested', label: 'Requested Sessions', count: requestedMentors.length },
@@ -60,6 +83,7 @@ export function MentorshipSessions() {
     setSearch('');
   };
 
+<<<<<<< Updated upstream
   const fetchMentors = async () => {
   const { data, error } = await supabase
     .from("posts")
@@ -114,6 +138,7 @@ useEffect(() => {
           </div>
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
             {filteredMentors.map((mentor) => (
+<<<<<<< Updated upstream
               <article
   key={`${activeTab}-${mentor.id}`}
   className="flex min-h-72 flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-yellow-300 hover:shadow-md"
@@ -188,6 +213,16 @@ useEffect(() => {
     )}
   </div>
 </article>
+              <article key={`${activeTab}-${mentor.id}`} className="flex min-h-72 flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-yellow-300 hover:shadow-md">
+                <div className="flex items-start justify-between gap-3"><div className={`flex h-14 w-14 items-center justify-center rounded-2xl text-base font-bold ${mentor.accent}`}>{mentor.initials}</div><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${activeTab === 'available' ? 'bg-emerald-50 text-emerald-700' : activeTab === 'requested' ? 'bg-amber-50 text-amber-700' : 'bg-blue-50 text-blue-700'}`}>{activeTab === 'available' ? 'Available' : activeTab === 'requested' ? 'Pending' : 'Completed'}</span></div>
+                <div className="mt-4"><h3 className="text-lg font-bold text-slate-950">{mentor.name}</h3><p className="mt-1 font-medium text-yellow-700">{mentor.domain}</p></div>
+                <div className="mt-4 space-y-3 text-sm text-slate-600"><div className="flex items-center gap-2.5"><BriefcaseBusiness className="h-4 w-4 shrink-0 text-slate-400" /><span>{mentor.company}</span></div><div className="flex items-start gap-2.5"><Clock3 className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" /><span>{mentor.availability}</span></div></div>
+                <div className="mt-auto pt-5">
+                  {activeTab === 'available' && <button onClick={() => requestMentorship(mentor)} className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-yellow-400 hover:text-slate-950 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"><Send className="h-4 w-4" />Request Mentorship</button>}
+                  {activeTab === 'requested' && <div className="flex items-center justify-center gap-2 rounded-xl bg-amber-50 px-4 py-2.5 text-sm font-semibold text-amber-800"><Clock3 className="h-4 w-4" />Request sent</div>}
+                  {activeTab === 'completed' && <div className="flex items-center justify-center gap-2 rounded-xl bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-800"><CheckCircle2 className="h-4 w-4" />Session completed</div>}
+                </div>
+              </article>
             ))}
           </div>
           {filteredMentors.length === 0 && <div className="rounded-2xl border border-dashed border-slate-300 bg-white py-16 text-center"><Users className="mx-auto h-10 w-10 text-slate-300" /><h3 className="mt-3 font-semibold text-slate-900">No mentors found</h3><p className="mt-1 text-sm text-slate-500">Try a different name, domain, or company.</p></div>}

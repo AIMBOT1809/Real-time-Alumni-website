@@ -5,12 +5,16 @@ import { useAuth } from '../context/AuthContext';
 import { motion } from 'motion/react';
 
 export function Community() {
+<<<<<<< Updated upstream
   const { posts, following, getAlumniById, role, user, isAdminId } = useAuth();
 
   // Filter posts to show followed alumni posts plus admin announcements
   const followedPosts = posts.filter(
     post => following.includes(post.alumniId) || isAdminId(post.alumniId) || (role === 'admin' && user?.id === post.alumniId)
   );
+  const { posts, getAlumniById, isAdminId } = useAuth();
+
+  const feedPosts = posts;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -48,7 +52,9 @@ export function Community() {
 
         {/* Feed */}
         <div className="lg:col-span-3 space-y-6">
+<<<<<<< Updated upstream
           {followedPosts.map((post, index) => {
+          {feedPosts.map((post, index) => {
             const isAdmin = isAdminId(post.alumniId);
             const author = getAlumniById(post.alumniId) || {
               id: post.alumniId,
@@ -119,11 +125,17 @@ export function Community() {
             );
           })}
           
+<<<<<<< Updated upstream
           {followedPosts.length === 0 && (
             <div className="text-center py-12 bg-slate-50 rounded-lg border border-dashed border-slate-300">
               <MessageSquare className="h-12 w-12 text-slate-300 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-slate-900">No posts yet</h3>
               <p className="text-slate-500">Follow some alumni to see their posts here.</p>
+          {feedPosts.length === 0 && (
+            <div className="text-center py-12 bg-slate-50 rounded-lg border border-dashed border-slate-300">
+              <MessageSquare className="h-12 w-12 text-slate-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-slate-900">No posts yet</h3>
+              <p className="text-slate-500">Posts from the community will appear here.</p>
             </div>
           )}
         </div>

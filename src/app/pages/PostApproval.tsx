@@ -184,8 +184,10 @@ const { error: insertError } = await supabase
       alumni_id: pendingPost.alumni_id,
       title: pendingPost.title,
       content: pendingPost.content,
+<<<<<<< Updated upstream
       type: pendingPost.type,
       post_details: pendingPost.post_details,
+      type: "general",
       likes: "0",
       comments: "0",
       image: pendingPost.image || pendingPost.image_url,
@@ -202,6 +204,7 @@ if (insertError) {
 }
 
 // Delete from pending_posts
+<<<<<<< Updated upstream
 console.log("Function postId:", postId);
 console.log("Pending post id:", pendingPost.id);
 
@@ -218,6 +221,10 @@ if (deleteError) {
   console.error("Delete Error:", deleteError);
   alert(deleteError.message);
 }
+await supabase
+  .from("pending_posts")
+  .delete()
+  .eq("id", postId);
 
       // Update localStorage
       approveLocalPost(postId);

@@ -25,11 +25,13 @@ export function Dashboard() {
 
   const isAlumni = role === 'alumni';
 
+<<<<<<< Updated upstream
   // Filter data based on who the user follows plus admin-managed content
   // Show admin content (alumniId === 'admin') to ALL users regardless of follow status
   const followedPosts = posts.filter(
     post => following.includes(post.alumniId) || isAdminId(post.alumniId) || (role === 'admin' && user?.id === post.alumniId) || post.alumniId === 'admin'
   );
+  const feedPosts = posts;
   const followedJobs = jobs.filter(
     job => following.includes(job.alumniId) || isAdminId(job.alumniId) || (role === 'admin' && user?.id === job.alumniId) || job.alumniId === 'admin'
   );
@@ -72,8 +74,11 @@ export function Dashboard() {
                 </div>
                 <h3 className="font-semibold text-slate-900">Messages</h3>
               </div>
+<<<<<<< Updated upstream
               <p className="text-2xl font-bold text-slate-900">{followedPosts.length}</p>
               <p className="text-xs text-slate-500">Posts from followed alumni</p>
+              <p className="text-2xl font-bold text-slate-900">{feedPosts.length}</p>
+              <p className="text-xs text-slate-500">Community posts</p>
             </div>
             
             <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200 hover:shadow-md transition-shadow">

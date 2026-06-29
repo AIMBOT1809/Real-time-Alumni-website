@@ -1,4 +1,7 @@
+<<<<<<< Updated upstream
 ﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+>>>>>>> Stashed changes
 import { NavLink, Link, Outlet, useLocation } from 'react-router';
 import { Menu, X, GraduationCap, User, Bell, Search, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -13,7 +16,9 @@ export function Layout() {
 
   const navLinks = [
     { name: 'Home', href: '#home' },
+<<<<<<< Updated upstream
     { name: 'Wall of Fame', href: '#wall-of-fame' },
+>>>>>>> Stashed changes
     { name: 'About Us', href: '#about' },
     { name: 'Events', href: '#events' },
     { name: 'Opportunities', href: '#opportunities' },

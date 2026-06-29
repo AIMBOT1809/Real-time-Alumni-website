@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router';
 import { BriefcaseBusiness, Building2, CalendarCheck, CheckCircle2, GraduationCap, IndianRupee, LayoutDashboard, Menu, Rocket, Search, Send, Sparkles, UserCheck, Users, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { addActivityItem, getActivity } from '../data/activityStore';
+<<<<<<< Updated upstream
 import { useEffect } from "react";
 import { supabase } from "../../supabaseClient";
 
@@ -18,15 +19,28 @@ type Job = {
   accent: string;
 };
 
+<<<<<<< Updated upstream
 
 export function Jobs() {
   console.log("Jobs component loaded");
+const jobs: Job[] = [
+  { id: 1, company: 'Microsoft', initials: 'MS', role: 'Software Engineer', package: 'INR 18–24 LPA', eligibility: 'B.Tech / M.Tech · 2025–26 batches', skills: ['React', 'TypeScript', 'DSA'], type: 'Full-time', accent: 'bg-blue-100 text-blue-700' },
+  { id: 2, company: 'Deloitte', initials: 'DT', role: 'Business Technology Analyst', package: 'INR 8–12 LPA', eligibility: 'All engineering branches · CGPA 7+', skills: ['SQL', 'Power BI', 'Analytics'], type: 'Full-time', accent: 'bg-emerald-100 text-emerald-700' },
+  { id: 3, company: 'Razorpay', initials: 'RZ', role: 'Frontend Developer Intern', package: 'INR 45K / month', eligibility: 'Pre-final and final-year students', skills: ['JavaScript', 'React', 'CSS'], type: 'Internship', accent: 'bg-violet-100 text-violet-700' },
+  { id: 4, company: 'Amazon', initials: 'AZ', role: 'Cloud Support Associate', package: 'INR 14–18 LPA', eligibility: 'B.E. / B.Tech / MCA · No active backlogs', skills: ['AWS', 'Linux', 'Networking'], type: 'Full-time', accent: 'bg-amber-100 text-amber-700' },
+  { id: 5, company: 'Adobe', initials: 'AD', role: 'Product Design Intern', package: 'INR 60K / month', eligibility: 'Design or engineering students', skills: ['Figma', 'UX Research', 'Prototyping'], type: 'Internship', accent: 'bg-rose-100 text-rose-700' },
+  { id: 6, company: 'Google', initials: 'GO', role: 'Data Analyst', package: 'INR 16–22 LPA', eligibility: 'Bachelor’s degree · 0–2 years experience', skills: ['Python', 'SQL', 'Tableau'], type: 'Full-time', accent: 'bg-cyan-100 text-cyan-700' },
+];
+
+
+export function Jobs() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [search, setSearch] = useState('');
   const [jobType, setJobType] = useState<'All' | Job['type']>('All');
   const [appliedIds, setAppliedIds] = useState<number[]>(() => getActivity(user?.id).appliedJobs.map((item) => Number(item.id)).filter(Number.isFinite));
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+<<<<<<< Updated upstream
   const [jobs, setJobs] = useState<any[]>([]);
   const fetchJobs = async () => {
     console.log("Fetching jobs...");
@@ -88,15 +102,27 @@ useEffect(() => {
   });
 }, [jobs, search]);
 
+  const filteredJobs = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    return jobs.filter((job) => {
+      const matchesType = jobType === 'All' || job.type === jobType;
+      const matchesSearch = !query || [job.company, job.role, job.eligibility, ...job.skills].some((value) => value.toLowerCase().includes(query));
+      return matchesType && matchesSearch;
+    });
+  }, [jobType, search]);
+
   const applyForJob = (jobId: number) => {
     const job = jobs.find((item) => item.id === jobId);
     if (!job || appliedIds.includes(jobId)) return;
     setAppliedIds((current) => [...current, jobId]);
     addActivityItem(user?.id, 'appliedJobs', {
+<<<<<<< Updated upstream
       id: String(job.id), title: job.post_details?.jobRole,
 subtitle: job.post_details?.companyName,
 category: "Job",
       date: new Date().toISOString(), status: 'Application sent',
+      id: String(job.id), title: job.role, subtitle: `${job.company} ? ${job.type}`,
+      date: new Date().toISOString(), status: 'Application sent', category: job.type,
     });
   };
 
@@ -135,6 +161,7 @@ category: "Job",
               return (
                 <article key={job.id} className="flex min-h-[25rem] flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-yellow-300 hover:shadow-md">
                   <div className="flex items-start justify-between gap-3">
+<<<<<<< Updated upstream
                     <div className={`flex h-14 w-14 items-center justify-center rounded-2xl text-base font-bold bg-yellow-100 text-yellow-700`}>{job.post_details?.companyName?.substring(0,2).toUpperCase()}</div>
                     <span className="rounded-full bg-emerald-50 text-emerald-700 px-2.5 py-1 text-xs font-semibold">
 Job
@@ -152,6 +179,14 @@ Job
     {skill}
   </span>
 ))}</dd></div>
+                    <div className={`flex h-14 w-14 items-center justify-center rounded-2xl text-base font-bold ${job.accent}`}>{job.initials}</div>
+                    <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${job.type === 'Full-time' ? 'bg-emerald-50 text-emerald-700' : 'bg-violet-50 text-violet-700'}`}>{job.type}</span>
+                  </div>
+                  <div className="mt-4"><p className="text-sm font-semibold text-yellow-700">{job.company}</p><h3 className="mt-1 text-xl font-bold text-slate-950">{job.role}</h3></div>
+                  <dl className="mt-5 space-y-4 text-sm">
+                    <div><dt className="flex items-center gap-2 font-medium text-slate-500"><IndianRupee className="h-4 w-4" />Package</dt><dd className="mt-1 pl-6 font-semibold text-slate-900">{job.package}</dd></div>
+                    <div><dt className="font-medium text-slate-500">Eligibility</dt><dd className="mt-1 leading-5 text-slate-700">{job.eligibility}</dd></div>
+                    <div><dt className="font-medium text-slate-500">Required skills</dt><dd className="mt-2 flex flex-wrap gap-2">{job.skills.map((skill) => <span key={skill} className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">{skill}</span>)}</dd></div>
                   </dl>
                   <button disabled={applied} onClick={() => applyForJob(job.id)} className={`mt-auto flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 ${applied ? 'cursor-default bg-emerald-50 text-emerald-800' : 'bg-slate-900 text-white hover:bg-yellow-400 hover:text-slate-950'}`}>
                     {applied ? <><CheckCircle2 className="h-4 w-4" />Application sent</> : <><Send className="h-4 w-4" />Apply now</>}
