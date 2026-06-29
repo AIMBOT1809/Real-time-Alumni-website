@@ -921,6 +921,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (user.role === 'alumni') {
         console.log('[AuthContext] Fetching alumni profile for comment author, userId:', user.id);
         
+        const { data: authUser } = await supabase.auth.getUser();
+        console.log('[AuthContext] Debug - auth user ID:', authUser?.user?.id, '| context user ID:', user.id);
+        
         // Query alumni_profiles using .eq('user_id', authUser.id)
         profileQueryResult = await supabase
           .from('alumni_profiles')
@@ -1043,7 +1046,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('[AuthContext] Inserting comment:', insertData);
 
       const { data, error } = await supabase
-        .from('post_comments')
+
+            .from('post_comments')
         .insert(insertData)
         .select();
 
