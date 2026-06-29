@@ -184,7 +184,8 @@ const { error: insertError } = await supabase
       alumni_id: pendingPost.alumni_id,
       title: pendingPost.title,
       content: pendingPost.content,
-      type: "general",
+      type: pendingPost.type,
+      post_details: pendingPost.post_details,
       likes: "0",
       comments: "0",
       image: pendingPost.image || pendingPost.image_url,
@@ -201,10 +202,22 @@ if (insertError) {
 }
 
 // Delete from pending_posts
-await supabase
+console.log("Function postId:", postId);
+console.log("Pending post id:", pendingPost.id);
+
+const { data: deletedData, error: deleteError } = await supabase
   .from("pending_posts")
   .delete()
-  .eq("id", postId);
+  .eq("id", pendingPost.id)
+  .select();
+
+console.log("Deleted rows:", deletedData);
+console.log("Delete error:", deleteError);
+
+if (deleteError) {
+  console.error("Delete Error:", deleteError);
+  alert(deleteError.message);
+}
 
       // Update localStorage
       approveLocalPost(postId);
