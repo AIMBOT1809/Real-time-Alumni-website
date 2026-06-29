@@ -60,7 +60,7 @@ export function StudentRegistration({ onBack }: StudentRegistrationProps) {
     // Backend uses role to call collegeIdValidator.js
     formData.append("role", "student");
 
-    const response = await fetch("http://localhost:5000/verify-id", {
+    const response = await fetch("/verify-id", {
       method: "POST",
       body: formData,
     });

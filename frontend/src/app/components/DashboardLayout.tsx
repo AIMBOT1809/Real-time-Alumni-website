@@ -19,6 +19,8 @@ import UserCheck from 'lucide-react/dist/esm/icons/user-check';
 import UserRound from 'lucide-react/dist/esm/icons/user-round';
 import Users from 'lucide-react/dist/esm/icons/users';
 import X from 'lucide-react/dist/esm/icons/x';
+import ChevronLeft from 'lucide-react/dist/esm/icons/chevron-left';
+import ChevronRight from 'lucide-react/dist/esm/icons/chevron-right';
 import { useAuth } from '../context/AuthContext';
 
 // Temporary localStorage approval flow for demo
@@ -32,7 +34,8 @@ const topNavLinks = [
 // Temporary localStorage approval flow for demo
 // Hide sidebar for faculty
 const sidebarLinks = [
-  { label: 'Mentorship Sessions', icon: GraduationCap,    path: '/mentorship'        },
+  { label: 'Alumni Directory',    icon: Users,             path: '/network'           },
+  { label: 'Mentorship Sessions', icon: GraduationCap,     path: '/mentorship'        },
   { label: 'Jobs',                icon: BriefcaseBusiness, path: '/jobs'              },
   { label: 'Referrals',           icon: UserCheck,         path: '/referrals'         },
   { label: 'Internships',         icon: Building2,         path: '/internships'       },
@@ -43,6 +46,7 @@ const sidebarLinks = [
 
 export function DashboardLayout() {
   const [open, setOpen] = useState(false);
+  const [desktopCollapsed, setDesktopCollapsed] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const { user, role, logout } = useAuth();
   const navigate = useNavigate();
@@ -266,14 +270,22 @@ export function DashboardLayout() {
         {role?.toLowerCase() !== 'faculty' && (
           <aside
             className={`
-              fixed bottom-0 left-0 top-0 z-40 w-72 overflow-y-auto
+              relative fixed bottom-0 left-0 top-0 z-40 overflow-y-auto
               border-r border-slate-800 bg-slate-900 p-4 text-white
-              transition-transform duration-300
+              transition-all duration-300
               lg:sticky lg:top-[156px] lg:h-[calc(100vh-156px)]
-              lg:w-64 lg:shrink-0 lg:translate-x-0
-              ${open ? 'translate-x-0' : '-translate-x-full'}
+              lg:shrink-0 lg:translate-x-0
+              ${desktopCollapsed ? 'lg:w-20' : 'lg:w-64'}
+              ${open ? 'w-72 translate-x-0' : 'w-72 -translate-x-full'}
             `}
           >
+            {/* Desktop toggle button */}
+            <button
+              onClick={() => setDesktopCollapsed(!desktopCollapsed)}
+              className={`hidden lg:flex absolute top-4 z-50 items-center justify-center rounded-lg bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 h-8 w-8 transition ${desktopCollapsed ? 'right-6' : 'right-4'}`}
+            >
+              {desktopCollapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
+            </button>
             {/* Close button – mobile only */}
             <div className="mb-3 flex justify-end lg:hidden">
               <button
@@ -287,21 +299,21 @@ export function DashboardLayout() {
 
             {/* Profile / Introduction Card */}
             <section
-              className="mb-5 rounded-2xl border border-slate-700 bg-slate-800/80 p-4"
+              className={`mb-5 rounded-2xl border border-slate-700 bg-slate-800/80 p-4 ${desktopCollapsed ? 'hidden lg:block lg:p-2' : ''}`}
               aria-label="Profile introduction"
             >
-              <div className="flex items-center gap-3">
+              <div className={`flex items-center ${desktopCollapsed ? 'lg:justify-center' : 'gap-3'}`}>
                 <img
                   src={avatar}
                   alt={user?.name || 'User'}
-                  className="h-14 w-14 rounded-full border-2 border-yellow-400 object-cover"
+                  className={`rounded-full border-2 border-yellow-400 object-cover ${desktopCollapsed ? 'lg:h-10 lg:w-10' : 'h-14 w-14'}`}
                 />
-                <div className="min-w-0">
+                <div className={`min-w-0 ${desktopCollapsed ? 'lg:hidden' : ''}`}>
                   <h2 className="truncate font-semibold text-white">{user?.name || 'User'}</h2>
                   <p className="text-sm capitalize text-yellow-400">{role || (user as any)?.role || 'Member'}</p>
                 </div>
               </div>
-              <div className="mt-3 space-y-1 border-t border-slate-700 pt-3 text-sm text-slate-300">
+              <div className={`mt-3 space-y-1 border-t border-slate-700 pt-3 text-sm text-slate-300 ${desktopCollapsed ? 'lg:hidden' : ''}`}>
                 {profileDetails.filter(Boolean).map((detail) => (
                   <p key={detail} className="truncate">{detail}</p>
                 ))}
@@ -312,7 +324,7 @@ export function DashboardLayout() {
             </section>
 
             {/* Sidebar Nav Links */}
-            <p className="px-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+            <p className={`px-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 ${desktopCollapsed ? 'lg:hidden' : ''}`}>
               Dashboard
             </p>
             <nav className="mt-2 space-y-1" aria-label="Dashboard sidebar navigation">
@@ -321,15 +333,17 @@ export function DashboardLayout() {
                   key={path}
                   to={path}
                   onClick={() => setOpen(false)}
+                  title={desktopCollapsed ? label : undefined}
                   className={({ isActive }: { isActive: boolean }) =>
                     `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition
+                     ${desktopCollapsed ? 'lg:justify-center' : ''}
                      ${isActive
                        ? 'bg-yellow-400 text-slate-950 shadow-sm'
                        : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`
                   }
                 >
                   <Icon className="h-5 w-5 shrink-0" />
-                  {label}
+                  <span className={desktopCollapsed ? 'lg:hidden' : ''}>{label}</span>
                 </NavLink>
               ))}
             </nav>

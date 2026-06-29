@@ -9,6 +9,7 @@ import { Community } from "./pages/Community";
 import { Dashboard } from "./pages/Dashboard";
 import { MainDashboard } from "./pages/MainDashboard";
 import { AdminDashboard } from "./pages/AdminDashboard";
+import { AdminUserProfile } from "./pages/AdminUserProfile";
 import { PostApproval } from "./pages/PostApproval";
 import { Login } from "./pages/Login";
 import { Register } from "./pages/Register";
@@ -31,7 +32,6 @@ export const router = createBrowserRouter([
     Component: Layout,
     children: [
       { index: true, Component: Home },
-      { path: "network", Component: AlumniNetwork },
       { path: "opportunities", Component: Opportunities },
       { path: "community", Component: Community },
       { Component: DashboardLayout, children: [
@@ -39,6 +39,7 @@ export const router = createBrowserRouter([
         { path: "dashboard/activity", Component: ActivityHistory },
         { path: "dashboard/contributions", Component: MyContributions },
         { path: "dashboard/:section", Component: MainDashboard },
+        { path: "network", Component: AlumniNetwork },
         { path: "mentorship", Component: MentorshipSessions },
         { path: "jobs", Component: Jobs },
         { path: "referrals", Component: Referrals },
@@ -48,6 +49,7 @@ export const router = createBrowserRouter([
         { path: "events", Component: Events },
       ]},
       { path: "admin", Component: AdminDashboard },
+      { path: "admin/user/:email", Component: AdminUserProfile },
       { path: "admin/post-approval", Component: PostApproval },
       { path: "login", Component: Login },
       { path: "register", Component: Register },

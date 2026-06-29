@@ -47,7 +47,7 @@ export function AlumniRegistration({ onBack }: AlumniRegistrationProps) {
     // Backend will call memoValidator.js for alumni
     formData.append("role", "alumni");
 
-    const response = await fetch("http://localhost:5000/verify-id", {
+    const response = await fetch("/verify-id", {
       method: "POST",
       body: formData,
     });

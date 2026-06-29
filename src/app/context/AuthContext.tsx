@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../../supabaseClient';
 import { User } from '@supabase/supabase-js';
-import { UserProfile, Role, Post, Job, Event } from '../data/types';
+import { UserProfile, Role, Post, Job, Event, PostComment } from '../data/types';
 import { getLocalPosts, addLocalPost, updateLocalPost, deleteLocalPost, getApprovedPosts, getPostsByAuthor } from '../data/localStoragePosts';
 import { showGlobalToast } from '../components/Toast';
 
@@ -22,8 +22,11 @@ interface AuthContextType {
   addPost: (post: Omit<Post, 'id' | 'timestamp' | 'status'>) => Promise<void>;
   addJob: (jobData: Omit<Job, 'id' | 'postedDate'>) => void;
   addEvent: (eventData: Omit<Event, 'id'>) => void;
-  likePost: (postId: string) => Promise<void>;
+  likePost: (postId: string) => Promise<boolean>;
   commentPost: (postId: string, commentText: string) => Promise<void>;
+  deleteComment: (commentId: string, postId: string) => Promise<void>;
+  getPostComments: (postId: string) => Promise<PostComment[]>;
+  hasUserLikedPost: (postId: string) => Promise<boolean>;
   sharePost: (postId: string) => Promise<void>;
   editPost: (postId: string, updates: Partial<Post>) => Promise<void>;
   deletePost: (id: string) => void;
@@ -34,7 +37,6 @@ interface AuthContextType {
   approveLocalPost: (postId: string) => void;
   rejectLocalPost: (postId: string, reason: string) => void;
   getLocalPostsByAuthor: (authorId: string) => Post[];
-  isAdminId: (id: string) => boolean;
 }
 //hello
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -94,19 +96,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                   ...parsed,
                   id: parsed.id,
                   name: fullName,
-                  avatar: profileData.photo_url || profileData.Photo_URL || parsed.avatar,
+                  avatar: profileData.Photo_URL || profileData.photo_url || parsed.avatar,
                   collegeName: profileData.College_Name || profileData.college_name || parsed.collegeName,
                   rollNumber: profileData.Roll_Number || profileData.roll_number || parsed.rollNumber,
                   department: profileData.Department || profileData.department || parsed.department,
                   year:
-                    profileData.passed_out_year || profileData.Passed_Out_Year ||
+                    profileData.Passed_Out_Year || profileData.passed_out_year ||
                     profileData.Year_of_Joining || parsed.year || '',
                   email: parsed.email,
-                  phone: profileData.Phone_Number || profileData.phone_number || profileData.phone || parsed.phone,
-                  about: profileData.about || profileData.About || parsed.about,
+                  phone: profileData.Phone_Number || profileData.phone || parsed.phone,
+                  about: profileData.About || profileData.about || parsed.about,
                   linkedin:
                     profileData.LinkedIn_Profile_URL || profileData.linkedin || parsed.linkedin,
-                  resume: profileData.Resume_File_Name || profileData.Resume_URL || profileData.resume || parsed.resume,
+                  resume: profileData.Resume_URL || profileData.resume || parsed.resume,
                   links: parsed.links || [],
                 };
 
@@ -207,20 +209,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('[AuthContext] alumni_profiles fetched, count =', data.length);
         if (mounted) {
           const mapped = data.map((r: any) => ({
-            id: String(r.user_id ?? r.id ?? r.email ?? `u-${Date.now()}`),
-            name: ((`${r.first_name ?? ''} ${r.last_name ?? ''}`).trim()) || (r.email) || 'Unknown',
-            avatar: (r.photo_url ?? r.avatar_url) || `https://ui-avatars.com/api/?name=${encodeURIComponent((r.first_name ?? r.email ?? 'User'))}\u0026background=FDE68A\u0026color=111827\u0026size=128`,
-            collegeName: r.college_name ?? '',
-            department: r.department ?? '',
-            year: r.passed_out_year ?? r.Year_of_Joining ?? '',
-            email: r.email ?? undefined,
-            role: (r.role as any) ?? 'alumni',
-            about: r.about ?? '',
-            linkedin: r.linkedin ?? '',
-            phone: r.phone_number ?? r.phone ?? '',
-            skills: r.skills ?? [],
-            graduationYear: Number(r.passed_out_year ?? new Date().getFullYear()),
-            degree: r.department ? `${r.department} - ${r.college_name ?? ''}` : '',
+            id: String(r.user_id ?? r.id ?? r.Email_Address ?? r.email ?? `u-${Date.now()}`),
+            name: ((`${r.First_Name ?? r.first_name ?? ''} ${r.Last_name ?? r.last_name ?? ''}`).trim()) || (r.Email_Address ?? r.email) || 'Unknown',
+            avatar: (r.Photo_URL ?? r.photo_url ?? r.avatar_url) || `https://ui-avatars.com/api/?name=${encodeURIComponent((r.First_Name ?? r.first_name ?? r.Email_Address ?? 'User'))}&background=FDE68A&color=111827&size=128`,
+            collegeName: r.College_Name ?? r.college_name ?? '',
+            department: r.Department ?? r.department ?? '',
+            year: r.Passed_Out_Year ?? r.passed_out_year ?? r.Year_of_Joining ?? '',
+            email: r.Email_Address ?? r.email ?? undefined,
           }));
 
           setAlumni(mapped as any);
@@ -259,76 +254,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  // Fetch events from Supabase events table (admin-created events) and merge with localStorage
-  useEffect(() => {
-    let mounted = true;
-
-    const fetchEventsFromDB = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('events')
-          .select('*')
-          .order('created_at', { ascending: false });
-
-        if (error) {
-          console.warn('[AuthContext] Error fetching events from DB:', error.message);
-          return;
-        }
-
-        if (data && data.length > 0) {
-          const dbEvents: Event[] = data.map((r: any) => ({
-            id: String(r.id ?? `evt-db-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`),
-            title: r.title ?? '',
-            date: r.event_date ?? r.date ?? '',
-            time: r.event_time ?? r.time ?? '',
-            location: r.location ?? '',
-            type: (r.type as Event['type']) || 'Webinar',
-            alumniId: 'admin',
-            image: r.image ?? r.image_url ?? '',
-            attachmentUrl: r.file_url ?? r.attachmentUrl ?? undefined,
-            attachmentName: r.attachmentName ?? undefined,
-            attachmentType: r.attachmentType ?? undefined,
-          }));
-
-          // Merge DB events with localStorage events (avoid duplicates)
-          setEvents(prev => {
-            const existingIds = new Set(prev.map(e => e.id));
-            const newOnes = dbEvents.filter(e => !existingIds.has(e.id));
-            if (newOnes.length > 0) {
-              const merged = [...newOnes, ...prev];
-              try { localStorage.setItem('allumini_events', JSON.stringify(merged)); } catch {}
-              return merged;
-            }
-            return prev;
-          });
-        }
-      } catch (err) {
-        console.warn('[AuthContext] Failed to fetch events from events table:', err);
-      }
-    };
-
-    fetchEventsFromDB();
-
-    // Subscribe to changes on events table
-    let eventChannel: any = null;
-    try {
-      eventChannel = supabase
-        .channel('public:events')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, () => {
-          fetchEventsFromDB();
-        })
-        .subscribe();
-    } catch (err) {
-      console.warn('[AuthContext] Failed to subscribe to events table:', err);
-    }
-
-    return () => {
-      mounted = false;
-      try { if (eventChannel) eventChannel.unsubscribe(); } catch (e) {}
-    };
-  }, []);
-
-  // Merge admin_posts into posts stream
   useEffect(() => {
     let mounted = true;
     let channel: any = null;
@@ -365,27 +290,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return;
         }
 
-        // Also fetch admin_posts and merge them with regular posts
-        let adminPostsData: any[] = [];
-        try {
-          const { data: adminData, error: adminError } = await supabase
-            .from('admin_posts')
-            .select('*')
-            .order('created_at', { ascending: false });
-
-          if (!adminError && adminData) {
-            adminPostsData = adminData;
-          } else if (adminError) {
-            console.warn('[AuthContext] Error fetching admin_posts:', adminError.message);
-          }
-        } catch (adminErr) {
-          console.warn('[AuthContext] Failed to fetch admin_posts:', adminErr);
-        }
-
-        // Combine both sets of posts
-        const allData = [...(data || []), ...adminPostsData];
-
-        if (!allData || allData.length === 0) {
+        if (!data) {
           if (mounted) {
             setPosts([]);
             localStorage.setItem('alumni_posts', JSON.stringify([]));
@@ -393,33 +298,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return;
         }
 
-        const mapped = allData.map((r: any) => {
-          // Check if this is from admin_posts table
-          const isAdminPost = r.created_by !== undefined && !r.alumni_id && !r.alumniId;
-          
-          return {
-            id: String(r.id ?? r.ID ?? `p-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`),
-            alumniId: isAdminPost ? 'admin' : (r.alumni_id ?? r.alumniId ?? r.user_id ?? String(r.alumniId ?? 'unknown')),
-            title: r.title ?? r.Title ?? undefined,
-            content: r.content ?? r.body ?? r.description ?? '',
-            timestamp: r.timestamp ?? r.created_at ?? new Date().toISOString(),
-            type: (r.type as any) || 'general',
-            status: 'approved',
-            likes: Number(r.likes ?? 0),
-            comments: Number(r.comments ?? 0),
-            image: r.image ?? r.image_url ?? (isAdminPost ? r.file_url : undefined) ?? undefined,
-            file: r.file ?? undefined,
-            rejectionReason: r.rejection_reason,
-            reviewedBy: r.reviewed_by,
-            reviewedAt: r.reviewed_at,
-            post_details: r.post_details ?? undefined,
-          };
-        });
+        const mapped = data.map((r: any) => ({
+          id: String(r.id ?? r.ID ?? `p-${Date.now()}`),
+          alumniId: r.alumni_id ?? r.alumniId ?? r.user_id ?? String(r.alumniId ?? 'unknown'),
+          title: r.title ?? r.Title ?? undefined,
+          content: r.content ?? r.body ?? r.description ?? '',
+          timestamp: r.timestamp ?? r.created_at ?? new Date().toISOString(),
+          type: (r.type as any) || 'general',
+          status: r.status ?? 'approved',
+          likes: Number(r.likes ?? 0),
+          comments: Number(r.comments ?? 0),
+          image: r.image ?? r.image_url ?? undefined,
+          file: r.file ?? undefined,
+          rejectionReason: r.rejection_reason,
+          reviewedBy: r.reviewed_by,
+          reviewedAt: r.reviewed_at,
+          post_details: r.post_details ?? undefined,
+        }));
 
         if (mounted) {
           setPosts(mapped as Post[]);
           try { localStorage.setItem('allumini_posts', JSON.stringify(mapped)); } catch {}
-          console.log('[AuthContext] posts loaded, count =', mapped.length, '(includes admin_posts)', 'status filter:', user?.role !== 'admin' ? 'approved only' : 'all');
+          console.log('[AuthContext] posts loaded, count =', mapped.length, 'status filter:', user?.role !== 'admin' ? 'approved only' : 'all');
         }
       } catch (err) {
         console.error('[AuthContext] Unexpected error fetching posts:', err);
@@ -429,40 +329,58 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     fetchPosts();
 
     try {
-      channel = supabase
+      // Create separate channels for better reliability
+      const postsChannel = supabase
         .channel('public:posts')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, (payload) => {
-          console.log('[AuthContext] Realtime update for posts:', payload);
+          console.log('[AuthContext] Realtime update for posts:', payload.eventType);
           fetchPosts();
         })
         .subscribe((status, err) => {
-          if (status === 'SUBSCRIBED') console.log('[AuthContext] Realtime channel subscribed for posts');
-          if (err) console.error('[AuthContext] Realtime channel error (posts):', err);
+          if (status === 'SUBSCRIBED') console.log('[AuthContext] Posts channel subscribed');
+          if (err) console.error('[AuthContext] Posts channel error:', err);
         });
-    } catch (err) {
-      console.error('[AuthContext] Failed to create realtime channel for posts:', err);
-    }
 
-    // Subscribe to admin_posts changes too
-    let adminChannel: any = null;
-    try {
-      adminChannel = supabase
-        .channel('public:admin_posts')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'admin_posts' }, (payload) => {
-          console.log('[AuthContext] Realtime update for admin_posts:', payload);
+      const likesChannel = supabase
+        .channel('public:post_likes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'post_likes' }, (payload: any) => {
+          console.log('[AuthContext] Realtime update for post_likes:', payload.eventType, 'post_id:', payload.new?.post_id || payload.old?.post_id);
+          // Refetch posts to update like counts
           fetchPosts();
         })
-        .subscribe();
+        .subscribe((status, err) => {
+          if (status === 'SUBSCRIBED') console.log('[AuthContext] Post likes channel subscribed');
+          if (err) console.error('[AuthContext] Post likes channel error:', err);
+        });
+
+      const commentsChannel = supabase
+        .channel('public:post_comments')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'post_comments' }, (payload: any) => {
+          console.log('[AuthContext] Realtime update for post_comments:', payload.eventType, 'post_id:', payload.new?.post_id || payload.old?.post_id);
+          // Refetch posts to update comment counts
+          fetchPosts();
+        })
+        .subscribe((status, err) => {
+          if (status === 'SUBSCRIBED') console.log('[AuthContext] Post comments channel subscribed');
+          if (err) console.error('[AuthContext] Post comments channel error:', err);
+        });
+
+      // Store all channels for cleanup
+      channel = { unsubscribe: async () => {
+        await postsChannel.unsubscribe();
+        await likesChannel.unsubscribe();
+        await commentsChannel.unsubscribe();
+      }};
     } catch (err) {
-      console.warn('[AuthContext] Failed to subscribe to admin_posts:', err);
+      console.error('[AuthContext] Failed to create realtime channel:', err);
     }
 
     return () => {
       mounted = false;
       try { if (channel) channel.unsubscribe(); } catch (e) {}
-      try { if (adminChannel) adminChannel.unsubscribe(); } catch (e) {}
     };
   }, []);
+
   const getSavedUserProfile = (email?: string, id?: string): UserProfile | null => {
     const savedUser = localStorage.getItem('allumini_user');
     if (!savedUser) return null;
@@ -497,17 +415,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const merged: UserProfile = {
               ...savedProfile,
               name: fullName,
-              avatar: dbProfile.photo_url || dbProfile.Photo_URL || savedProfile.avatar,
+              avatar: dbProfile.Photo_URL || dbProfile.photo_url || savedProfile.avatar,
               collegeName: dbProfile.College_Name || dbProfile.college_name || savedProfile.collegeName,
               rollNumber: dbProfile.Roll_Number || dbProfile.roll_number || savedProfile.rollNumber,
               department: dbProfile.Department || dbProfile.department || savedProfile.department,
-              year: dbProfile.passed_out_year || dbProfile.Passed_Out_Year || dbProfile.Year_of_Joining || savedProfile.year || '',
+              year: dbProfile.Passed_Out_Year || dbProfile.passed_out_year || dbProfile.Year_of_Joining || savedProfile.year || '',
               email: savedProfile.email || dbProfile.Email_Address || dbProfile.email,
-              phone: dbProfile.Phone_Number || dbProfile.phone_number || dbProfile.phone || savedProfile.phone,
-              about: dbProfile.about || dbProfile.About || savedProfile.about,
+              phone: dbProfile.Phone_Number || dbProfile.phone || savedProfile.phone,
+              about: dbProfile.About || dbProfile.about || savedProfile.about,
               linkedin: dbProfile.LinkedIn_Profile_URL || dbProfile.linkedin || savedProfile.linkedin,
-              resume: dbProfile.Resume_File_Name || dbProfile.Resume_URL || dbProfile.resume || savedProfile.resume,
-              skills: savedProfile.skills?.length ? savedProfile.skills : (dbProfile.Skills || dbProfile.skills || []),
+              resume: dbProfile.Resume_URL || dbProfile.resume || savedProfile.resume,
+              skills: savedProfile.skills?.length ? savedProfile.skills : (dbProfile.Skills || []),
               links: savedProfile.links?.length ? savedProfile.links : (dbProfile.Links || []),
             };
             setUser(merged);
@@ -863,7 +781,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log("INSERT DATA:", data);
       console.log("INSERT ERROR:", error);
 
-<<<<<<< Updated upstream
       /*if (error && /status.*does not exist/i.test(error.message)) {
         const { status: _status, ...legacyRow } = insertRow;
         const legacyResult = await supabase.from('posts').insert([legacyRow]).select();
@@ -933,62 +850,365 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('allumini_events', JSON.stringify(newEvents));
   };
 
-  const likePost = async (postId: string) => {
-    if (!user) return;
-    const post = posts.find(p => p.id === postId);
-    if (!post) return;
+  const likePost = async (postId: string): Promise<boolean> => {
+    if (!user) return false;
+    
     try {
-      const { data, error } = await supabase
-        .from('posts')
-        .select('likes')
-        .eq('id', postId)
-        .single();
-      if (error || !data) {
-        console.error('[AuthContext] Error fetching post for like:', error);
-        return;
+      console.log('[AuthContext] likePost called for postId:', postId, 'userId:', user.id);
+      
+      const { data: existingLike, error: selectError } = await supabase
+        .from('post_likes')
+        .select('id')
+        .eq('post_id', postId)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (selectError) {
+        console.error('[AuthContext] Error checking existing like:', selectError);
+        return false;
       }
-      const newLikes = (data.likes || 0) + 1;
-      const { error: updateError } = await supabase
-        .from('posts')
-        .update({ likes: newLikes })
-        .eq('id', postId);
-      if (!updateError) {
-        setPosts(prev => prev.map(p => p.id === postId ? { ...p, likes: newLikes } : p));
+
+      if (existingLike) {
+        console.log('[AuthContext] Removing like for postId:', postId);
+        const { error: deleteError } = await supabase
+          .from('post_likes')
+          .delete()
+          .eq('post_id', postId)
+          .eq('user_id', user.id);
+        
+        if (deleteError) {
+          console.error('[AuthContext] Error removing like:', deleteError);
+          return false;
+        }
+        return true;
+      } else {
+        console.log('[AuthContext] Adding like for postId:', postId);
+        const { error: insertError } = await supabase
+          .from('post_likes')
+          .insert({ post_id: postId, user_id: user.id });
+        
+        if (insertError) {
+          console.error('[AuthContext] Error adding like:', insertError);
+          return false;
+        }
+        return true;
       }
     } catch (e) {
-      console.error('[AuthContext] likePost error:', e);
+      console.error('[AuthContext] likePost unexpected error:', e);
+      return false;
     }
   };
 
-  const commentPost = async (postId: string, commentText: string) => {
-    if (!user) return;
-    const post = posts.find(p => p.id === postId);
-    if (!post) return;
+  const commentPost = async (postId: string, commentText: string): Promise<void> => {
+    if (!user || !commentText.trim()) {
+      console.error('[AuthContext] commentPost blocked: no user or empty text', { user: !!user, text: commentText });
+      return;
+    }
+
     try {
-      const { error } = await supabase.from('comments').insert({
-        post_id: postId,
-        user_id: user.id,
-        content: commentText,
+      console.log('[AuthContext] commentPost called:', {
+        postId,
+        userId: user.id,
+        userRole: user.role,
+        textLength: commentText.trim().length,
+        textPreview: commentText.trim().substring(0, 50)
       });
-      if (!error) {
-        const { data, error: incError } = await supabase
-          .from('posts')
-          .select('comments')
-          .eq('id', postId)
-          .single();
-        if (!incError && data) {
-          const newComments = (data.comments || 0) + 1;
-          const { error: updateError } = await supabase
-            .from('posts')
-            .update({ comments: newComments })
-            .eq('id', postId);
-          if (!updateError) {
-            setPosts(prev => prev.map(p => p.id === postId ? { ...p, comments: newComments } : p));
+
+    // Fetch First_Name from alumni_profiles for alumni users
+      let userName: string | undefined;
+      let profileQueryResult: { data: any; error: any } | null = null;
+
+      if (user.role === 'alumni') {
+        console.log('[AuthContext] Fetching alumni profile for comment author, userId:', user.id);
+        
+        const { data: authUser } = await supabase.auth.getUser();
+        console.log('[AuthContext] Debug - auth user ID:', authUser?.user?.id, '| context user ID:', user.id);
+        
+        // Query alumni_profiles using .eq('user_id', authUser.id)
+        profileQueryResult = await supabase
+          .from('alumni_profiles')
+          .select('First_Name, user_id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        // Log the query result
+        console.log('[AuthContext] Alumni profile query result:', {
+          userId: user.id,
+          data: profileQueryResult.data,
+          error: profileQueryResult.error,
+          hasData: !!profileQueryResult.data,
+          hasError: !!profileQueryResult.error
+        });
+
+        // Log any Supabase errors
+        if (profileQueryResult.error) {
+          console.error('[AuthContext] Supabase error fetching alumni profile for comment:', {
+            userId: user.id,
+            errorMessage: profileQueryResult.error.message,
+            errorCode: profileQueryResult.error.code,
+            errorDetails: profileQueryResult.error.details,
+            errorHint: profileQueryResult.error.hint,
+            fullError: profileQueryResult.error
+          });
+          showGlobalToast(`Failed to add comment: Database error while verifying profile. Please try again later.`, 'error');
+          return;
+        }
+
+        // Verify auth.users.id matches alumni_profiles.user_id and check for rows
+        if (profileQueryResult.data) {
+          // Verify the user_id matches
+          if (profileQueryResult.data.user_id !== user.id) {
+            console.error('[AuthContext] User ID mismatch - auth.users.id does not match alumni_profiles.user_id:', {
+              authUserId: user.id,
+              profileUserId: profileQueryResult.data.user_id
+            });
+            showGlobalToast(`Failed to add comment: Profile verification failed. Please contact support.`, 'error');
+            return;
           }
+
+          // Store the retrieved First_Name in post_comments.user_name
+          userName = profileQueryResult.data.First_Name?.trim();
+          console.log('[AuthContext] Successfully fetched First_Name from alumni_profiles:', userName, 'for userId:', user.id);
+        } else {
+          // Profile lookup returned no rows - stop insert and log exact reason
+          const noProfileReason = `No alumni_profiles row found for user_id: ${user.id}. User must complete alumni registration before commenting.`;
+          console.error('[AuthContext] Comment insertion blocked - no alumni profile found:', {
+            userId: user.id,
+            reason: noProfileReason,
+            queryResult: profileQueryResult
+          });
+          showGlobalToast(`Failed to add comment: Alumni profile not found. Please complete your profile first.`, 'error');
+          return;
+        }
+      } else if (user.role === 'student') {
+        console.log('[AuthContext] Fetching student profile for comment author, userId:', user.id);
+        profileQueryResult = await supabase
+          .from('student_profiles')
+          .select('First_Name')
+          .eq('user_id', user.id)
+          .maybeSingle();
+      } else if (user.role === 'faculty') {
+        console.log('[AuthContext] Fetching faculty profile for comment author, userId:', user.id);
+        profileQueryResult = await supabase
+          .from('faculty_profiles')
+          .select('First_Name')
+          .eq('user_id', user.id)
+          .maybeSingle();
+      }
+
+      // Handle student and faculty profile results (unchanged)
+      if (user.role !== 'alumni' && profileQueryResult) {
+        const { data: profileData, error: profileError } = profileQueryResult;
+
+        if (profileError) {
+          console.error('[AuthContext] Error fetching profile for comment:', {
+            role: user.role,
+            userId: user.id,
+            error: profileError.message,
+            code: profileError.code,
+            details: profileError.details,
+            hint: profileError.hint,
+            fullError: profileError
+          });
+          showGlobalToast(`Failed to add comment: Could not verify user profile. Please try again later.`, 'error');
+          return;
+        }
+
+        if (profileData) {
+          userName = profileData.First_Name?.trim();
+          console.log('[AuthContext] Fetched First_Name for comment from', user.role + '_profiles:', userName);
+        } else {
+          console.error('[AuthContext] No profile found for comment author:', {
+            role: user.role,
+            userId: user.id,
+            queryResult: profileQueryResult
+          });
+          showGlobalToast(`Failed to add comment: User profile not found. Please complete your profile first.`, 'error');
+          return;
         }
       }
+
+      // Fallback for roles without profile tables (e.g., admin)
+      if (!userName) {
+        userName = user.name?.split(' ')[0] || user.email?.split('@')[0] || 'User';
+        console.log('[AuthContext] No profile table for role', user.role, '- using fallback name:', userName);
+      }
+
+      const insertData = {
+        post_id: postId,
+        user_id: user.id,
+        content: commentText.trim(),
+        user_name: userName,
+        user_role: user.role,
+        user_avatar: user.avatar || '',
+      };
+
+      console.log('[AuthContext] Inserting comment:', insertData);
+
+      const { data, error } = await supabase
+
+            .from('post_comments')
+        .insert(insertData)
+        .select();
+
+      if (error) {
+        console.error('[AuthContext] Error adding comment:', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          fullError: error
+        });
+        showGlobalToast(`Failed to add comment: ${error.message || 'Unknown error'}`, 'error');
+        return;
+      }
+
+      console.log('[AuthContext] Comment added successfully:', data);
+      showGlobalToast('Comment added', 'success');
     } catch (e) {
-      console.error('[AuthContext] commentPost error:', e);
+      console.error('[AuthContext] commentPost unexpected error:', e);
+      showGlobalToast('Something went wrong', 'error');
+    }
+  };
+
+  const deleteComment = async (commentId: string, postId: string) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('post_comments')
+        .delete()
+        .eq('id', commentId)
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('[AuthContext] Error deleting comment:', error);
+        showGlobalToast('Failed to delete comment', 'error');
+        return;
+      }
+
+      showGlobalToast('Comment deleted', 'success');
+    } catch (e) {
+      console.error('[AuthContext] deleteComment error:', e);
+      showGlobalToast('Something went wrong', 'error');
+    }
+  };
+
+  const getPostComments = async (postId: string): Promise<PostComment[]> => {
+    if (!user) return [];
+
+    try {
+      const { data, error } = await supabase
+        .from('post_comments')
+        .select('*')
+        .eq('post_id', postId)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error('[AuthContext] Error fetching comments:', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+        });
+        return [];
+      }
+
+      if (!data || data.length === 0) {
+        return [];
+      }
+
+      // Fetch user details from all profile tables
+      const userIds = [...new Set(data.map(c => c.user_id))];
+      const [alumniRes, studentRes, facultyRes] = await Promise.all([
+        supabase.from('alumni_profiles').select('user_id, First_Name, Last_Name, Photo_URL').in('user_id', userIds),
+        supabase.from('student_profiles').select('user_id, First_Name, Last_Name, photo_url').in('user_id', userIds),
+        supabase.from('faculty_profiles').select('user_id, First_Name, Last_Name, photo_url').in('user_id', userIds),
+      ]);
+
+      if (alumniRes.error) {
+        console.warn('[AuthContext] Error fetching alumni profiles for comments:', alumniRes.error.message);
+      }
+      if (studentRes.error) {
+        console.warn('[AuthContext] Error fetching student profiles for comments:', studentRes.error.message);
+      }
+      if (facultyRes.error) {
+        console.warn('[AuthContext] Error fetching faculty profiles for comments:', facultyRes.error.message);
+      }
+
+      const profileMap = new Map<string, { name: string; avatar: string; role: Role }>();
+
+      (alumniRes.data || []).forEach((p: any) => {
+        const name = (p.First_Name || '').trim() || 'User';
+        profileMap.set(p.user_id, {
+          name,
+          avatar: p.Photo_URL || '',
+          role: 'alumni',
+        });
+      });
+
+      (studentRes.data || []).forEach((p: any) => {
+        const name = (p.First_Name || '').trim() || 'User';
+        profileMap.set(p.user_id, {
+          name,
+          avatar: p.photo_url || '',
+          role: 'student',
+        });
+      });
+
+      (facultyRes.data || []).forEach((p: any) => {
+        const name = (p.First_Name || '').trim() || 'User';
+        profileMap.set(p.user_id, {
+          name,
+          avatar: p.photo_url || '',
+          role: 'faculty',
+        });
+      });
+
+      return data.map((comment: any) => {
+        const profile = profileMap.get(comment.user_id);
+        return {
+          id: comment.id,
+          post_id: comment.post_id,
+          user_id: comment.user_id,
+          content: comment.content,
+          created_at: comment.created_at,
+          updated_at: comment.updated_at,
+          user_name: comment.user_name,
+          user_role: comment.user_role,
+          user_avatar: comment.user_avatar,
+          user: profile ? {
+            id: comment.user_id,
+            name: comment.user_name || profile.name,
+            avatar: profile.avatar,
+            role: profile.role,
+            graduationYear: new Date().getFullYear(),
+            degree: '',
+            skills: [],
+          } : undefined,
+        };
+      });
+    } catch (e) {
+      console.error('[AuthContext] getPostComments error:', e);
+      return [];
+    }
+  };
+
+  const hasUserLikedPost = async (postId: string): Promise<boolean> => {
+    if (!user) return false;
+
+    try {
+      const { data, error } = await supabase
+        .from('post_likes')
+        .select('id')
+        .eq('post_id', postId)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      return !!data && !error;
+    } catch (e) {
+      console.error('[AuthContext] hasUserLikedPost error:', e);
+      return false;
     }
   };
 
@@ -1127,12 +1347,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return getPostsByAuthor(authorId) as Post[];
   };
 
-  const isAdminId = (id: string) => {
-    if (!id || id === 'admin') return true;
-    const profile = getAlumniById(id);
-    return profile?.role === 'admin' || profile?.email === 'alumniconnect03@gmail.com';
-  };
-
   const logout = () => {
     setUser(null);
     setFollowing([]);
@@ -1170,6 +1384,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       addEvent,
       likePost,
       commentPost,
+      deleteComment,
+      getPostComments,
+      hasUserLikedPost,
       sharePost,
       editPost,
       deletePost,
@@ -1180,7 +1397,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       approveLocalPost,
       rejectLocalPost,
       getLocalPostsByAuthor,
-      isAdminId,
     }}>
       {children}
     </AuthContext.Provider>
