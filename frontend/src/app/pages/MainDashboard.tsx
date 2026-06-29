@@ -61,6 +61,7 @@ export function MainDashboard() {
   const [commentText, setCommentText] = useState<Record<string, string>>({});
   const [deleteConfirmPost, setDeleteConfirmPost] = useState<string | null>(null);
   const [isDeletingPost, setIsDeletingPost] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Fetch user's liked posts from database on mount
   useEffect(() => {
@@ -380,6 +381,43 @@ export function MainDashboard() {
         }
       }
     };
+  }, []);
+    useEffect(() => {
+  fetchAdminPosts();
+  fetchPosts();
+}, []);
+
+  const fetchAdminPosts = async () => {
+    const { data, error } = await supabase
+      .from('admin_posts')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+console.log("ADMIN POSTS:", data);
+  setAdminPosts(data || []);
+};
+
+const fetchPosts = async () => {
+  const { data, error } = await supabase
+    .from("posts")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  console.log("POSTS:", data);
+  setPosts(data || []);
+};
+
+  useEffect(() => {
+    fetchAdminPosts();
   }, []);
 
   const fetchEventRegistrations = async () => {
