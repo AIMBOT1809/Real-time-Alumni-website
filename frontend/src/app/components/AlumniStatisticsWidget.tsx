@@ -14,50 +14,87 @@ interface AlumniStats {
   total: number;
   working: number;
   higherStudies: number;
-  careerAspirants: number;
+  entrepreneur: number;
 }
 
 const COLORS = {
   total: '#FFD700',
   working: '#3B82F6',
   higherStudies: '#10B981',
-  careerAspirants: '#F59E0B',
+  entrepreneur: '#F59E0B',
 };
 
-const DEMO_STATS: AlumniStats = {
-  total: 40,
-  working: 15,
-  higherStudies: 13,
-  careerAspirants: 12,
+const INITIAL_STATS: AlumniStats = {
+  total: 0,
+  working: 0,
+  higherStudies: 0,
+  entrepreneur: 0,
 };
 
 const STATUS_KEYWORDS = {
   working: ['job', 'working', 'working professional', 'employed', 'service', 'software', 'engineer', 'developer', 'consultant', 'analyst', 'manager', 'executive', 'associate', 'intern'],
   higherStudies: ['higher education', 'higher studies', 'studying', 'student', 'masters', 'phd', 'mba', 'postgraduate', 'research'],
-  careerAspirant: ['career aspirant', 'aspirant', 'looking for job', 'job seeker', 'fresher', 'unemployed'],
+  entrepreneur: ['entrepreneur', 'business', 'startup', 'founder', 'self employed'],
 };
 
-function classifyStatus(status: string): 'working' | 'higher-studies' | 'career-aspirant' | null {
-  const s = status.toLowerCase().trim();
-  if (!s || s === 'null' || s === 'undefined') return null;
-
-  for (const kw of STATUS_KEYWORDS.working) {
-    if (s === kw || s.includes(kw)) return 'working';
-  }
-  for (const kw of STATUS_KEYWORDS.higherStudies) {
-    if (s === kw || s.includes(kw)) return 'higher-studies';
-  }
-  for (const kw of STATUS_KEYWORDS.careerAspirant) {
-    if (s === kw || s.includes(kw)) return 'career-aspirant';
-  }
-  return null;
+function normalize(value: any) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/[-_]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
+function classifyAlumni(row: any): 'working' | 'higher-studies' | 'entrepreneur' | null {
+  const text = normalize(Object.values(row).filter(Boolean).join(' '));
+
+  if (!text) return null;
+
+  if (
+    text.includes('entrepreneur') ||
+    text.includes('business') ||
+    text.includes('startup') ||
+    text.includes('founder') ||
+    text.includes('owner') ||
+    text.includes('self employed')
+  ) {
+    return 'entrepreneur';
+  }
+
+  if (
+    text.includes('higher education') ||
+    text.includes('higher studies') ||
+    text.includes('masters') ||
+    text.includes('mtech') ||
+    text.includes('mba') ||
+    text.includes('phd') ||
+    text.includes('university') ||
+    text.includes('studying')
+  ) {
+    return 'higher-studies';
+  }
+
+  if (
+    text.includes('working professional') ||
+    text.includes('working') ||
+    text.includes('job') ||
+    text.includes('employed') ||
+    text.includes('software') ||
+    text.includes('engineer') ||
+    text.includes('developer') ||
+    text.includes('analyst') ||
+    text.includes('manager') ||
+    text.includes('intern')
+  ) {
+    return 'working';
+  }
+
+  return null;
+}
 export function AlumniStatisticsWidget() {
-  const [stats, setStats] = useState<AlumniStats>(DEMO_STATS);
+  const [stats, setStats] = useState<AlumniStats>(INITIAL_STATS);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [usingDemo, setUsingDemo] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -70,8 +107,7 @@ export function AlumniStatisticsWidget() {
 
         const { data, error: fetchError } = await supabase
           .from('alumni_profiles')
-          .select('Current_Status, current_status, currentStatus, role, Role')
-          .not('role', 'eq', 'faculty');
+          .select('*')
 
         if (fetchError) {
           console.error('[AlumniStatisticsWidget] Supabase fetch error:', {
@@ -82,8 +118,7 @@ export function AlumniStatisticsWidget() {
           });
           if (mounted) {
             console.log('[AlumniStatisticsWidget] Using demo statistics');
-            setStats(DEMO_STATS);
-            setUsingDemo(true);
+            setStats(INITIAL_STATS);
             setLoading(false);
           }
           return;
@@ -94,8 +129,7 @@ export function AlumniStatisticsWidget() {
         if (!data || data.length === 0) {
           console.log('[AlumniStatisticsWidget] No alumni records found, using demo statistics');
           if (mounted) {
-            setStats(DEMO_STATS);
-            setUsingDemo(true);
+            setStats(INITIAL_STATS);
             setLoading(false);
           }
           return;
@@ -105,17 +139,15 @@ export function AlumniStatisticsWidget() {
 
         let working = 0;
         let higherStudies = 0;
-        let careerAspirants = 0;
+        let entrepreneur = 0;
         let uncategorized = 0;
 
         data.forEach((row: any) => {
-          const rawStatus = row.Current_Status ?? row.current_status ?? row.currentStatus ?? '';
-          const status = String(rawStatus).trim();
-          const category = classifyStatus(status);
+          const category = classifyAlumni(row);
 
           if (category === 'working') working++;
           else if (category === 'higher-studies') higherStudies++;
-          else if (category === 'career-aspirant') careerAspirants++;
+          else if (category === 'entrepreneur') entrepreneur++;
           else {
             uncategorized++;
             console.log(`[AlumniStatisticsWidget] Uncategorized status: "${status}"`);
@@ -123,10 +155,10 @@ export function AlumniStatisticsWidget() {
         });
 
         const total = data.length;
-        console.log(`[AlumniStatisticsWidget] Stats: total=${total}, working=${working}, higherStudies=${higherStudies}, careerAspirants=${careerAspirants}, uncategorized=${uncategorized}`);
+        console.log(`[AlumniStatisticsWidget] Stats: total=${total}, working=${working}, higherStudies=${higherStudies}, careerAspirants=${entrepreneur}, uncategorized=${uncategorized}`);
 
         if (mounted) {
-          setStats({ total, working, higherStudies, careerAspirants });
+          setStats({ total, working, higherStudies, entrepreneur });
           setLoading(false);
         }
       } catch (err) {
@@ -136,8 +168,7 @@ export function AlumniStatisticsWidget() {
         });
         if (mounted) {
           console.log('[AlumniStatisticsWidget] Using demo statistics due to error');
-          setStats(DEMO_STATS);
-          setUsingDemo(true);
+          setStats(INITIAL_STATS);
           setLoading(false);
         }
       }
@@ -153,7 +184,7 @@ export function AlumniStatisticsWidget() {
   const chartData = [
     { name: 'Working Professionals', value: stats.working, color: COLORS.working },
     { name: 'Higher Studies', value: stats.higherStudies, color: COLORS.higherStudies },
-    { name: 'Career Aspirants', value: stats.careerAspirants, color: COLORS.careerAspirants },
+    { name: 'Entrepreneur', value: stats.entrepreneur, color: COLORS.entrepreneur },
   ].filter(item => item.value > 0);
 
   const CustomTooltip = ({ active, payload }: any) => {
@@ -267,12 +298,12 @@ export function AlumniStatisticsWidget() {
               <Rocket className="h-5 w-5 text-amber-400" />
             </div>
             <div>
-              <p className="text-xs text-slate-400 uppercase tracking-wider">Career Aspirants</p>
+              <p className="text-xs text-slate-400 uppercase tracking-wider">Entrepreneur</p>
               <p className="text-2xl font-bold text-white">
                 {loading ? (
                   <span className="inline-block w-8 h-6 bg-slate-700 rounded animate-pulse" />
                 ) : (
-                  stats.careerAspirants
+                  stats.entrepreneur
                 )}
               </p>
             </div>
