@@ -108,7 +108,7 @@ category: "Job",
           <div className="mb-7 flex items-start gap-3">
             <div>
               <p className="mb-2 text-sm font-semibold text-yellow-600">ALUMNI CAREER BOARD</p>
-              <h1 className="text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">FRONTEND Jobs PAGE</h1>
+              <h1 className="text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">Jobs</h1>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">Explore curated roles and internships shared by the alumni community.</p>
             </div>
           </div>

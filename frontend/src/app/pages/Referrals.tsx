@@ -3,23 +3,21 @@ import { useNavigate } from 'react-router';
 import { BriefcaseBusiness, Building2, CalendarCheck, CheckCircle2, Clock3, GraduationCap, LayoutDashboard, Menu, Plus, Rocket, Search, Send, ShieldCheck, UserCheck, Users, X, XCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { addActivityItem } from '../data/activityStore';
+import { useEffect } from "react";
+import { supabase } from "../../supabaseClient";
 
 type ReferralStatus = 'Pending' | 'Accepted' | 'Rejected';
 type ReferralOpportunity = { id: number; company: string; role: string; alumnus: string; eligibility: string; skills: string[]; initials: string; accent: string };
 type ReferralRequest = { id: number; company: string; role: string; alumnus: string; status: ReferralStatus; updated: string };
 
-const initialOpportunities: ReferralOpportunity[] = [
-  { id: 1, company: 'Microsoft', role: 'Software Engineer', alumnus: 'Ananya Rao', eligibility: '2025–26 graduates · CGPA 7.5+', skills: ['TypeScript', 'React', 'DSA'], initials: 'MS', accent: 'bg-blue-100 text-blue-700' },
-  { id: 2, company: 'Deloitte', role: 'Business Technology Analyst', alumnus: 'Vivek Mehta', eligibility: 'All engineering branches · No backlogs', skills: ['SQL', 'Analytics', 'Communication'], initials: 'DT', accent: 'bg-emerald-100 text-emerald-700' },
-  { id: 3, company: 'Adobe', role: 'Product Designer', alumnus: 'Priya Nair', eligibility: 'Design portfolio required · 0–2 years', skills: ['Figma', 'UX Research', 'Prototyping'], initials: 'AD', accent: 'bg-rose-100 text-rose-700' },
-  { id: 4, company: 'Amazon', role: 'Cloud Support Associate', alumnus: 'Arjun Kapoor', eligibility: 'B.Tech / MCA · Strong fundamentals', skills: ['AWS', 'Linux', 'Networking'], initials: 'AZ', accent: 'bg-amber-100 text-amber-700' },
-];
+/*const initialOpportunities: ReferralOpportunity[] = [
+  { id: 1, company: 'Microsoft', role: 'Software Engineer', alumnus: 'Ananya Rao', eligibility: '2025ï¿½26 graduates ï¿½ CGPA 7.5+', skills: ['TypeScript', 'React', 'DSA'], initials: 'MS', accent: 'bg-blue-100 text-blue-700' },
+  { id: 2, company: 'Deloitte', role: 'Business Technology Analyst', alumnus: 'Vivek Mehta', eligibility: 'All engineering branches ï¿½ No backlogs', skills: ['SQL', 'Analytics', 'Communication'], initials: 'DT', accent: 'bg-emerald-100 text-emerald-700' },
+  { id: 3, company: 'Adobe', role: 'Product Designer', alumnus: 'Priya Nair', eligibility: 'Design portfolio required ï¿½ 0ï¿½2 years', skills: ['Figma', 'UX Research', 'Prototyping'], initials: 'AD', accent: 'bg-rose-100 text-rose-700' },
+  { id: 4, company: 'Amazon', role: 'Cloud Support Associate', alumnus: 'Arjun Kapoor', eligibility: 'B.Tech / MCA ï¿½ Strong fundamentals', skills: ['AWS', 'Linux', 'Networking'], initials: 'AZ', accent: 'bg-amber-100 text-amber-700' },
+];   */
 
-const initialRequests: ReferralRequest[] = [
-  { id: 101, company: 'Google', role: 'Data Analyst', alumnus: 'Vikram Mehta', status: 'Pending', updated: 'Requested 18 Jun 2026' },
-  { id: 102, company: 'Razorpay', role: 'Frontend Developer', alumnus: 'Rahul Sharma', status: 'Accepted', updated: 'Accepted 14 Jun 2026' },
-  { id: 103, company: 'Deloitte', role: 'Strategy Analyst', alumnus: 'Sneha Iyer', status: 'Rejected', updated: 'Updated 9 Jun 2026' },
-];
+const initialRequests: ReferralRequest[] = [];
 
 
 const statusStyles: Record<ReferralStatus, { icon: typeof Clock3; card: string; iconBox: string }> = {
@@ -31,7 +29,7 @@ const statusStyles: Record<ReferralStatus, { icon: typeof Clock3; card: string; 
 export function Referrals() {
   const navigate = useNavigate();
   const { role, user } = useAuth();
-  const [opportunities, setOpportunities] = useState(initialOpportunities);
+  const [opportunities, setOpportunities] = useState<any[]>([]);
   const [requests, setRequests] = useState(initialRequests);
   const [activeStatus, setActiveStatus] = useState<ReferralStatus>('Pending');
   const [search, setSearch] = useState('');
@@ -42,9 +40,23 @@ export function Referrals() {
   const canPost = role === 'alumni';
   const canRequest = role === 'student';
   const filteredOpportunities = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    return opportunities.filter((item) => !query || [item.company, item.role, item.alumnus, item.eligibility, ...item.skills].some((value) => value.toLowerCase().includes(query)));
-  }, [opportunities, search]);
+  const query = search.trim().toLowerCase();
+
+  return opportunities.filter((item) => {
+    return (
+      !query ||
+      [
+        item.post_details?.companyName,
+        item.post_details?.jobRole,
+        item.post_details?.requiredSkills,
+      ]
+        .filter(Boolean)
+        .some((value: string) =>
+          value.toLowerCase().includes(query)
+        )
+    );
+  });
+}, [opportunities, search]);
   const filteredRequests = requests.filter((request) => request.status === activeStatus);
 
   const requestReferral = (opportunity: ReferralOpportunity) => {
@@ -65,6 +77,41 @@ export function Referrals() {
     setForm({ company: '', role: '', eligibility: '', skills: '' });
     setShowPostForm(false);
   };
+
+  const fetchReferrals = async () => {
+  const { data, error } = await supabase
+    .from("posts")
+    .select("*")
+    .eq("status", "approved")
+    .eq("type", "referral")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.log(error);
+    return;
+  }
+
+  const formatted = (data || []).map((item: any) => {
+    let details = item.post_details;
+
+    try {
+      if (typeof details === "string") {
+        details = JSON.parse(details);
+      }
+    } catch {}
+
+    return {
+      ...item,
+      post_details: details,
+    };
+  });
+
+  setOpportunities(formatted);
+};
+
+useEffect(() => {
+  fetchReferrals();
+}, []);
 
   return (
     <div className="-mx-4 -my-8 min-h-[calc(100vh-4rem)] bg-slate-50">
@@ -94,7 +141,7 @@ export function Referrals() {
               })}
             </div>
             <div className="mt-4 space-y-3">
-              {filteredRequests.map((request) => <article key={request.id} className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between"><div><div className="flex items-center gap-2"><h3 className="font-bold text-slate-950">{request.role}</h3><span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${statusStyles[request.status].iconBox}`}>{request.status}</span></div><p className="mt-1 text-sm text-slate-600">{request.company} · Referred by {request.alumnus}</p></div><p className="text-xs font-medium text-slate-500">{request.updated}</p></article>)}
+              {filteredRequests.map((request) => <article key={request.id} className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between"><div><div className="flex items-center gap-2"><h3 className="font-bold text-slate-950">{request.role}</h3><span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${statusStyles[request.status].iconBox}`}>{request.status}</span></div><p className="mt-1 text-sm text-slate-600">{request.company} ï¿½ Referred by {request.alumnus}</p></div><p className="text-xs font-medium text-slate-500">{request.updated}</p></article>)}
             </div>
           </section>
 
@@ -103,7 +150,75 @@ export function Referrals() {
             <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
               {filteredOpportunities.map((opportunity) => {
                 const requested = requests.some((request) => request.company === opportunity.company && request.role === opportunity.role);
-                return <article key={opportunity.id} className="flex min-h-80 flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-yellow-300 hover:shadow-md"><div className="flex items-start justify-between"><div className={`flex h-14 w-14 items-center justify-center rounded-2xl font-bold ${opportunity.accent}`}>{opportunity.initials}</div><span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">Referral open</span></div><div className="mt-4"><p className="text-sm font-semibold text-yellow-700">{opportunity.company}</p><h3 className="mt-1 text-xl font-bold text-slate-950">{opportunity.role}</h3><p className="mt-2 text-sm text-slate-500">Posted by {opportunity.alumnus}</p></div><p className="mt-4 text-sm leading-6 text-slate-600">{opportunity.eligibility}</p><div className="mt-3 flex flex-wrap gap-2">{opportunity.skills.map((skill) => <span key={skill} className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">{skill}</span>)}</div><button disabled={!canRequest || requested} onClick={() => requestReferral(opportunity)} className={`mt-auto flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${requested ? 'bg-amber-50 text-amber-800' : canRequest ? 'bg-slate-900 text-white hover:bg-yellow-400 hover:text-slate-950' : 'cursor-not-allowed bg-slate-100 text-slate-400'}`}>{requested ? <><Clock3 className="h-4 w-4" />Request pending</> : <><Send className="h-4 w-4" />{canRequest ? 'Request referral' : 'Student requests only'}</>}</button></article>;
+                return <article
+  key={opportunity.id}
+  className="flex min-h-80 flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-yellow-300 hover:shadow-md"
+>
+  <div className="flex items-start justify-between">
+    <div className="flex h-14 w-14 items-center justify-center rounded-2xl font-bold bg-yellow-100 text-yellow-700">
+      {opportunity.post_details?.companyName?.substring(0, 2).toUpperCase()}
+    </div>
+
+    <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
+      Referral Open
+    </span>
+  </div>
+
+  <div className="mt-4">
+    <p className="text-sm font-semibold text-yellow-700">
+      {opportunity.post_details?.companyName}
+    </p>
+
+    <h3 className="mt-1 text-xl font-bold text-slate-950">
+      {opportunity.post_details?.jobRole}
+    </h3>
+
+    <p className="mt-2 text-sm text-slate-500">
+      Posted by {opportunity.author_name || "Alumni"}
+    </p>
+  </div>
+
+  <p className="mt-4 text-sm leading-6 text-slate-600">
+    {opportunity.post_details?.experience}
+  </p>
+
+  <div className="mt-3 flex flex-wrap gap-2">
+    {(opportunity.post_details?.requiredSkills?.split(",") || []).map(
+      (skill: string) => (
+        <span
+          key={skill}
+          className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700"
+        >
+          {skill}
+        </span>
+      )
+    )}
+  </div>
+
+  <button
+    disabled={!canRequest || requested}
+    onClick={() => requestReferral(opportunity)}
+    className={`mt-auto flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
+      requested
+        ? "bg-amber-50 text-amber-800"
+        : canRequest
+        ? "bg-slate-900 text-white hover:bg-yellow-400 hover:text-slate-950"
+        : "cursor-not-allowed bg-slate-100 text-slate-400"
+    }`}
+  >
+    {requested ? (
+      <>
+        <Clock3 className="h-4 w-4" />
+        Request pending
+      </>
+    ) : (
+      <>
+        <Send className="h-4 w-4" />
+        {canRequest ? "Request referral" : "Student requests only"}
+      </>
+    )}
+  </button>
+</article>;
               })}
             </div>
           </section>
