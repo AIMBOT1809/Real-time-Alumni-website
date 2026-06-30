@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../../supabaseClient';
 import { User } from '@supabase/supabase-js';
-import { UserProfile, Role, Post, Job, Event, PostComment } from '../data/types';
+import { UserProfile, Role, Post, Job, Event, PostComment, AdminPost, AdminPostLike, AdminPostComment } from '../data/types';
 import { getLocalPosts, addLocalPost, updateLocalPost, deleteLocalPost, getApprovedPosts, getPostsByAuthor } from '../data/localStoragePosts';
 import { showGlobalToast } from '../components/Toast';
 
@@ -19,15 +19,22 @@ interface AuthContextType {
   posts: Post[];
   jobs: Job[];
   events: Event[];
+  adminPosts: AdminPost[];
   addPost: (post: Omit<Post, 'id' | 'timestamp' | 'status'>) => Promise<void>;
   addJob: (jobData: Omit<Job, 'id' | 'postedDate'>) => void;
   addEvent: (eventData: Omit<Event, 'id'>) => void;
   likePost: (postId: string) => Promise<boolean>;
+  likeAdminPost: (adminPostId: string) => Promise<boolean>;
   commentPost: (postId: string, commentText: string, parentCommentId?: string) => Promise<void>;
+  commentAdminPost: (adminPostId: string, commentText: string, parentCommentId?: string) => Promise<void>;
   deleteComment: (commentId: string, postId: string) => Promise<void>;
+  deleteAdminPostComment: (commentId: string, adminPostId: string) => Promise<void>;
   getPostComments: (postId: string) => Promise<PostComment[]>;
+  getAdminPostComments: (adminPostId: string) => Promise<AdminPostComment[]>;
   hasUserLikedPost: (postId: string) => Promise<boolean>;
+  hasUserLikedAdminPost: (adminPostId: string) => Promise<boolean>;
   sharePost: (postId: string) => Promise<void>;
+  shareAdminPost: (adminPostId: string) => Promise<void>;
   editPost: (postId: string, updates: Partial<Post>) => Promise<void>;
   deletePost: (id: string) => void;
   deleteJob: (id: string) => void;
@@ -37,6 +44,7 @@ interface AuthContextType {
   approveLocalPost: (postId: string) => void;
   rejectLocalPost: (postId: string, reason: string) => void;
   getLocalPostsByAuthor: (authorId: string) => Post[];
+  fetchAdminPosts: () => Promise<void>;
 }
 //hello
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -49,6 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [events, setEvents] = useState<Event[]>([]);
   const [alumni, setAlumni] = useState<UserProfile[]>([]);
   const [localPosts, setLocalPosts] = useState<Post[]>([]);
+  const [adminPosts, setAdminPosts] = useState<AdminPost[]>([]);
 
   useEffect(() => {
     const savedUser = localStorage.getItem('allumini_user');
@@ -1351,6 +1360,337 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return getPostsByAuthor(authorId) as Post[];
   };
 
+  const fetchAdminPosts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('admin_posts')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('[AuthContext] Error fetching admin posts:', error);
+        return;
+      }
+
+      const mapped = (data || []).map((r: any) => ({
+        id: String(r.id),
+        title: r.title ?? undefined,
+        content: r.content ?? '',
+        created_at: r.created_at ?? new Date().toISOString(),
+        updated_at: r.updated_at,
+        likes: Number(r.likes ?? 0),
+        comments: Number(r.comments ?? 0),
+        shares: Number(r.shares ?? 0),
+        image: r.image ?? undefined,
+        attachment_url: r.attachment_url ?? undefined,
+        attachment_name: r.attachment_name ?? undefined,
+        attachment_type: r.attachment_type ?? undefined,
+        post_details: r.post_details ?? undefined,
+      }));
+
+      setAdminPosts(mapped as AdminPost[]);
+      console.log('[AuthContext] admin posts loaded, count =', mapped.length);
+    } catch (err) {
+      console.error('[AuthContext] Unexpected error fetching admin posts:', err);
+    }
+  };
+
+  // Expose fetchAdminPosts via a ref-like pattern by attaching to window for MainDashboard access
+  if (typeof window !== 'undefined') {
+    (window as any).__fetchAdminPosts = fetchAdminPosts;
+  }
+
+  const likeAdminPost = async (adminPostId: string): Promise<boolean> => {
+    if (!user) return false;
+
+    try {
+      const { data: existingLike, error: selectError } = await supabase
+        .from('admin_post_likes')
+        .select('id')
+        .eq('admin_post_id', adminPostId)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (selectError) {
+        console.error('[AuthContext] Error checking existing admin post like:', selectError);
+        return false;
+      }
+
+      if (existingLike) {
+        const { error: deleteError } = await supabase
+          .from('admin_post_likes')
+          .delete()
+          .eq('admin_post_id', adminPostId)
+          .eq('user_id', user.id);
+
+        if (deleteError) {
+          console.error('[AuthContext] Error removing admin post like:', deleteError);
+          return false;
+        }
+      } else {
+        const { error: insertError } = await supabase
+          .from('admin_post_likes')
+          .insert({ admin_post_id: adminPostId, user_id: user.id });
+
+        if (insertError) {
+          console.error('[AuthContext] Error adding admin post like:', insertError);
+          return false;
+        }
+      }
+
+      const { count: likeCount, error: countError } = await supabase
+        .from('admin_post_likes')
+        .select('*', { count: 'exact', head: true })
+        .eq('admin_post_id', adminPostId);
+
+      if (countError) {
+        console.error('[AuthContext] Error counting admin post likes:', countError);
+      } else {
+        const newLikes = likeCount ?? 0;
+        const { error: updateError } = await supabase
+          .from('admin_posts')
+          .update({ likes: newLikes })
+          .eq('id', adminPostId);
+
+        if (updateError) {
+          console.error('[AuthContext] Error updating admin post likes count:', updateError);
+        } else {
+          setAdminPosts(prev => prev.map(p => p.id === adminPostId ? { ...p, likes: newLikes } : p));
+        }
+      }
+
+      return true;
+    } catch (e) {
+      console.error('[AuthContext] likeAdminPost unexpected error:', e);
+      return false;
+    }
+  };
+
+  const commentAdminPost = async (adminPostId: string, commentText: string, parentCommentId?: string): Promise<void> => {
+    if (!user || !commentText.trim()) return;
+
+    try {
+      let userName = user.name?.split(' ')[0] || user.email?.split('@')[0] || 'User';
+
+      const insertData: any = {
+        admin_post_id: adminPostId,
+        user_id: user.id,
+        content: commentText.trim(),
+        user_name: userName,
+        user_role: user.role,
+        user_avatar: user.avatar || '',
+      };
+
+      if (parentCommentId) {
+        insertData.parent_comment_id = parentCommentId;
+      }
+
+      const { error } = await supabase
+        .from('admin_post_comments')
+        .insert(insertData);
+
+      if (error) {
+        console.error('[AuthContext] Error adding admin post comment:', error);
+        showGlobalToast(`Failed to add comment: ${error.message || 'Unknown error'}`, 'error');
+        return;
+      }
+
+      // Sync comments count from admin_post_comments into admin_posts.comments
+      const { count: commentCount, error: countError } = await supabase
+        .from('admin_post_comments')
+        .select('*', { count: 'exact', head: true })
+        .eq('admin_post_id', adminPostId);
+
+      if (countError) {
+        console.error('[AuthContext] Error counting admin post comments:', countError);
+      } else {
+        const newComments = commentCount ?? 0;
+        const { error: updateError } = await supabase
+          .from('admin_posts')
+          .update({ comments: newComments })
+          .eq('id', adminPostId);
+
+        if (updateError) {
+          console.error('[AuthContext] Error updating admin post comments count:', updateError);
+        } else {
+          setAdminPosts(prev => prev.map(p => p.id === adminPostId ? { ...p, comments: newComments } : p));
+        }
+      }
+
+      showGlobalToast('Comment added', 'success');
+    } catch (e) {
+      console.error('[AuthContext] commentAdminPost unexpected error:', e);
+      showGlobalToast('Something went wrong', 'error');
+    }
+  };
+
+  const deleteAdminPostComment = async (commentId: string, adminPostId: string) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('admin_post_comments')
+        .delete()
+        .eq('id', commentId)
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('[AuthContext] Error deleting admin post comment:', error);
+        showGlobalToast('Failed to delete comment', 'error');
+        return;
+      }
+
+      // Sync comments count from admin_post_comments into admin_posts.comments
+      const { count: commentCount, error: countError } = await supabase
+        .from('admin_post_comments')
+        .select('*', { count: 'exact', head: true })
+        .eq('admin_post_id', adminPostId);
+
+      if (countError) {
+        console.error('[AuthContext] Error counting admin post comments after delete:', countError);
+      } else {
+        const newComments = commentCount ?? 0;
+        const { error: updateError } = await supabase
+          .from('admin_posts')
+          .update({ comments: newComments })
+          .eq('id', adminPostId);
+
+        if (updateError) {
+          console.error('[AuthContext] Error updating admin post comments count after delete:', updateError);
+        } else {
+          setAdminPosts(prev => prev.map(p => p.id === adminPostId ? { ...p, comments: newComments } : p));
+        }
+      }
+
+      showGlobalToast('Comment deleted', 'success');
+    } catch (e) {
+      console.error('[AuthContext] deleteAdminPostComment error:', e);
+      showGlobalToast('Something went wrong', 'error');
+    }
+  };
+
+  const getAdminPostComments = async (adminPostId: string): Promise<AdminPostComment[]> => {
+    if (!user) return [];
+
+    try {
+      const { data, error } = await supabase
+        .from('admin_post_comments')
+        .select('*')
+        .eq('admin_post_id', adminPostId)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error('[AuthContext] Error fetching admin post comments:', error);
+        return [];
+      }
+
+      if (!data || data.length === 0) {
+        return [];
+      }
+
+      const userIds = [...new Set(data.map(c => c.user_id))];
+      const [alumniRes, studentRes, facultyRes] = await Promise.all([
+        supabase.from('alumni_profiles').select('user_id, First_Name, Last_Name, Photo_URL').in('user_id', userIds),
+        supabase.from('student_profiles').select('user_id, First_Name, Last_Name, photo_url').in('user_id', userIds),
+        supabase.from('faculty_profiles').select('user_id, First_Name, Last_Name, photo_url').in('user_id', userIds),
+      ]);
+
+      const profileMap = new Map<string, { name: string; avatar: string; role: Role }>();
+
+      (alumniRes.data || []).forEach((p: any) => {
+        const name = (p.First_Name || '').trim() || 'User';
+        profileMap.set(p.user_id, { name, avatar: p.Photo_URL || '', role: 'alumni' });
+      });
+
+      (studentRes.data || []).forEach((p: any) => {
+        const name = (p.First_Name || '').trim() || 'User';
+        profileMap.set(p.user_id, { name, avatar: p.photo_url || '', role: 'student' });
+      });
+
+      (facultyRes.data || []).forEach((p: any) => {
+        const name = (p.First_Name || '').trim() || 'User';
+        profileMap.set(p.user_id, { name, avatar: p.photo_url || '', role: 'faculty' });
+      });
+
+      return data.map((comment: any) => {
+        const profile = profileMap.get(comment.user_id);
+        return {
+          id: comment.id,
+          admin_post_id: comment.admin_post_id,
+          user_id: comment.user_id,
+          content: comment.content,
+          created_at: comment.created_at,
+          updated_at: comment.updated_at,
+          parent_comment_id: comment.parent_comment_id,
+          user_name: comment.user_name,
+          user_role: comment.user_role,
+          user_avatar: comment.user_avatar,
+          user: profile ? {
+            id: comment.user_id,
+            name: comment.user_name || profile.name,
+            avatar: profile.avatar,
+            role: profile.role,
+            graduationYear: new Date().getFullYear(),
+            degree: '',
+            skills: [],
+          } : undefined,
+        };
+      });
+    } catch (e) {
+      console.error('[AuthContext] getAdminPostComments error:', e);
+      return [];
+    }
+  };
+
+  const hasUserLikedAdminPost = async (adminPostId: string): Promise<boolean> => {
+    if (!user) return false;
+
+    try {
+      const { data, error } = await supabase
+        .from('admin_post_likes')
+        .select('id')
+        .eq('admin_post_id', adminPostId)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      return !!data && !error;
+    } catch (e) {
+      console.error('[AuthContext] hasUserLikedAdminPost error:', e);
+      return false;
+    }
+  };
+
+  const shareAdminPost = async (adminPostId: string) => {
+    if (!user) return;
+    const post = adminPosts.find(p => p.id === adminPostId);
+    if (!post) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('admin_posts')
+        .select('shares')
+        .eq('id', adminPostId)
+        .single();
+
+      if (error || !data) {
+        console.error('[AuthContext] Error fetching admin post for share:', error);
+        return;
+      }
+
+      const newShares = (data.shares || 0) + 1;
+      const { error: updateError } = await supabase
+        .from('admin_posts')
+        .update({ shares: newShares })
+        .eq('id', adminPostId);
+
+      if (!updateError) {
+        setAdminPosts(prev => prev.map(p => p.id === adminPostId ? { ...p, shares: newShares } : p));
+      }
+    } catch (e) {
+      console.error('[AuthContext] shareAdminPost error:', e);
+    }
+  };
+
   const logout = () => {
     setUser(null);
     setFollowing([]);
@@ -1383,15 +1723,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       posts,
       jobs,
       events,
+      adminPosts,
       addPost,
       addJob,
       addEvent,
       likePost,
+      likeAdminPost,
       commentPost,
+      commentAdminPost,
       deleteComment,
+      deleteAdminPostComment,
       getPostComments,
+      getAdminPostComments,
       hasUserLikedPost,
+      hasUserLikedAdminPost,
       sharePost,
+      shareAdminPost,
       editPost,
       deletePost,
       deleteJob,
@@ -1401,6 +1748,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       approveLocalPost,
       rejectLocalPost,
       getLocalPostsByAuthor,
+      fetchAdminPosts,
     }}>
       {children}
     </AuthContext.Provider>

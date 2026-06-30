@@ -255,5 +255,79 @@ export interface PostComment {
   user_avatar?: string;
 
   user?: UserProfile;
+
 }
 
+
+
+export interface AdminPost {
+
+  id: string;
+
+  title?: string;
+
+  content: string;
+
+  created_at: string;
+
+  updated_at?: string;
+
+  likes: number;
+
+  comments: number;
+
+  shares?: number;
+
+  image?: string;
+
+  attachment_url?: string;
+
+  attachment_name?: string;
+
+  attachment_type?: string;
+
+  post_details?: Record<string, any>;
+
+}
+
+
+
+export interface AdminPostLike {
+
+  id: string;
+
+  admin_post_id: string;
+
+  user_id: string;
+
+  created_at: string;
+
+}
+
+
+
+export interface AdminPostComment {
+
+  id: string;
+
+  admin_post_id: string;
+
+  user_id: string;
+
+  content: string;
+
+  created_at: string;
+
+  updated_at: string;
+
+  parent_comment_id?: string | null;
+
+  user_name?: string;
+
+  user_role?: string;
+
+  user_avatar?: string;
+
+  user?: UserProfile;
+
+}

@@ -36,11 +36,11 @@ import { Chat } from './Chat';
 import { getApprovedPosts, getPostsByAuthor } from '../data/localStoragePosts';
 import { showGlobalToast } from '../components/Toast';
 import { ConfirmModal } from '../components/ConfirmModal';
-import { PostComment } from '../data/types';
+import { PostComment, AdminPost, AdminPostComment } from '../data/types';
 
 // Recursive component for rendering threaded comments
 interface CommentItemProps {
-  comment: PostComment & { replies: PostComment[] };
+  comment: any;
   postId: string;
   user: any;
   replyingTo: Record<string, string | null>;
@@ -130,10 +130,10 @@ function CommentItem({
             {/* Recursively render nested replies with increased depth */}
             {comment.replies && comment.replies.length > 0 && (
               <div className="mt-2 space-y-2">
-                {comment.replies.map((reply) => (
+                {comment.replies.map((reply: any) => (
                   <CommentItem
                     key={reply.id}
-                    comment={reply as PostComment & { replies: PostComment[] }}
+                    comment={reply}
                     postId={postId}
                     user={user}
                     replyingTo={replyingTo}
@@ -168,7 +168,7 @@ function CommentItem({
 }
 
 export function MainDashboard() {
-  const { user, role, logout, login, posts, jobs, events, following, getAlumniById, alumni, addPost, deletePost, likePost, commentPost, getPostComments, hasUserLikedPost, sharePost, deleteComment } = useAuth();
+  const { user, role, logout, login, posts, jobs, events, following, getAlumniById, alumni, addPost, deletePost, likePost, commentPost, getPostComments, hasUserLikedPost, sharePost, deleteComment, adminPosts, likeAdminPost, commentAdminPost, getAdminPostComments, hasUserLikedAdminPost, shareAdminPost, fetchAdminPosts } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const getMenuFromPath = () => {
@@ -180,12 +180,11 @@ export function MainDashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [chatTheme, setChatTheme] = useState<'dark' | 'light'>('dark');
-  const [adminPosts, setAdminPosts] = useState<any[]>([]);
   const [registeredEvents, setRegisteredEvents] = useState<any[]>([]);
   const [attendedEvents, setAttendedEvents] = useState<any[]>([]);
   const [selectedActivityCard, setSelectedActivityCard] = useState<string | null>(null);
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
-  const [postComments, setPostComments] = useState<Record<string, PostComment[]>>({});
+  const [postComments, setPostComments] = useState<Record<string, (PostComment | AdminPostComment)[]>>({});
   const [openCommentPost, setOpenCommentPost] = useState<string | null>(null);
   const [commentText, setCommentText] = useState<Record<string, string>>({});
   const [replyingTo, setReplyingTo] = useState<Record<string, string | null>>({});
@@ -194,10 +193,21 @@ export function MainDashboard() {
   const [isDeletingPost, setIsDeletingPost] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Helper to route post interactions based on post source
+  const getPostActions = (post: any) => {
+    const isAdminPost = post.source === 'admin';
+    return {
+      like: isAdminPost ? likeAdminPost : likePost,
+      comment: isAdminPost ? commentAdminPost : commentPost,
+      getComments: isAdminPost ? getAdminPostComments : getPostComments,
+      share: isAdminPost ? shareAdminPost : sharePost,
+    };
+  };
+
   // Helper function to build threaded comment tree
-  const buildCommentTree = (comments: PostComment[]): (PostComment & { replies: PostComment[] })[] => {
-    const commentMap = new Map<string, PostComment & { replies: PostComment[] }>();
-    const rootComments: (PostComment & { replies: PostComment[] })[] = [];
+  const buildCommentTree = (comments: any[]): any[] => {
+    const commentMap = new Map<string, any>();
+    const rootComments: any[] = [];
 
     // First pass: create map of all comments with empty replies array
     comments.forEach(comment => {
@@ -549,23 +559,6 @@ export function MainDashboard() {
     };
   }, []);
 
-  const fetchAdminPosts = async () => {
-    const { data, error } = await supabase
-      .from('admin_posts')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-  if (error) {
-    console.error(error);
-    return;
-  }
-console.log("ADMIN POSTS:", data);
-  setAdminPosts(data || []);
-};
-
-  useEffect(() => {
-    fetchAdminPosts();
-  }, []);
 
   const fetchEventRegistrations = async () => {
     try {
@@ -645,6 +638,11 @@ console.log("ADMIN POSTS:", data);
     if (!user?.id) return;
     fetchEventRegistrations();
   }, [user?.id]);
+
+  // Fetch admin posts on mount
+  useEffect(() => {
+    fetchAdminPosts();
+  }, [fetchAdminPosts]);
 
   if (!user) return null;
 
@@ -787,12 +785,16 @@ console.log("ADMIN POSTS:", data);
     ...(adminPosts || []).map((post) => ({
       ...post,
       source: 'admin',
+      status: 'approved',
+      alumniId: 'admin',
+      timestamp: post.created_at,
+      type: 'general',
     })),
     ...(posts || []).map((post) => ({
       ...post,
       source: 'user',
       description: post.content,
-      created_at: post.timestamp,
+      created_at: post.timestamp || post.created_at,
       file_url: post.image,
     })),
     // Add approved local posts from localStorage
@@ -800,8 +802,12 @@ console.log("ADMIN POSTS:", data);
       ...post,
       source: 'local',
       description: post.content,
-      created_at: post.timestamp || post.created_at,
+      created_at: post.timestamp || post.created_at || new Date().toISOString(),
       file_url: post.image,
+      status: 'approved',
+      alumniId: post.alumniId || 'unknown',
+      timestamp: post.timestamp || post.created_at,
+      type: post.type || 'general',
     })),
   ].filter((post, index, self) => 
     // Filter out pending/rejected posts and deduplicate
@@ -937,9 +943,11 @@ const author =
                                 <p className="text-xs text-slate-500">
                                   {(() => {
                                     try {
-                                      const d = new Date(post.created_at);
-                                      return isNaN(d.getTime()) ? post.timestamp : d.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
-                                    } catch { return post.timestamp; }
+                                      const dateValue = post.created_at || post.timestamp;
+                                      if (!dateValue) return 'Recently';
+                                      const d = new Date(dateValue);
+                                      return isNaN(d.getTime()) ? 'Recently' : d.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+                                    } catch { return 'Recently'; }
                                   })()}
                                 </p>
                               </div>
@@ -986,8 +994,9 @@ const author =
                           <div className="flex items-center justify-around border-t border-slate-800 pt-2">
                             <button 
                               onClick={async () => {
+                                const actions = getPostActions(post);
                                 try {
-                                  await likePost(post.id);
+                                  await actions.like(post.id);
                                   // Optimistically update UI
                                   setLikedPosts(prev => {
                                     const next = new Set(prev);
@@ -1014,8 +1023,9 @@ const author =
                             </button>
                             <button 
                               onClick={async () => {
+                                const actions = getPostActions(post);
                                 if (!openCommentPost) {
-                                  const comments = await getPostComments(post.id);
+                                  const comments = await actions.getComments(post.id);
                                   setPostComments(prev => ({ ...prev, [post.id]: comments }));
                                 }
                                 setOpenCommentPost(openCommentPost === post.id ? null : post.id);
@@ -1027,6 +1037,7 @@ const author =
                             </button>
                             <button 
                               onClick={async () => {
+                                const actions = getPostActions(post);
                                 const shareData = {
                                   title: post.title || 'Alumni Post',
                                   text: post.content.substring(0, 100),
@@ -1037,7 +1048,7 @@ const author =
                                 if (navigator.share) {
                                   try {
                                     await navigator.share(shareData);
-                                    await sharePost(post.id);
+                                    await actions.share(post.id);
                                     showGlobalToast('Post shared successfully', 'success');
                                   } catch (err) {
                                     // User cancelled or error - fallback to copy
@@ -1048,7 +1059,7 @@ const author =
                                 } else {
                                   // Fallback: copy URL to clipboard
                                   copyToClipboard(shareData.url);
-                                  await sharePost(post.id);
+                                  await actions.share(post.id);
                                   showGlobalToast('Link copied to clipboard', 'success');
                                 }
                               }}
@@ -1081,12 +1092,13 @@ const author =
                                             setReplyText(prev => ({ ...prev, [post.id]: text }));
                                           }}
                                           onReplySubmit={async (parentId) => {
+                                            const actions = getPostActions(post);
                                             const text = replyText[post.id];
                                             if (text?.trim()) {
-                                              await commentPost(post.id, text, parentId);
+                                              await actions.comment(post.id, text, parentId);
                                               setReplyingTo(prev => ({ ...prev, [post.id]: null }));
                                               setReplyText(prev => ({ ...prev, [post.id]: '' }));
-                                              const comments = await getPostComments(post.id);
+                                              const comments = await actions.getComments(post.id);
                                               setPostComments(prev => ({ ...prev, [post.id]: comments }));
                                             }
                                           }}
@@ -1111,11 +1123,12 @@ const author =
                                   value={commentText[post.id] || ''}
                                   onChange={(e) => setCommentText(prev => ({ ...prev, [post.id]: e.target.value }))}
                                   onKeyPress={(e) => {
+                                    const actions = getPostActions(post);
                                     if (e.key === 'Enter' && commentText[post.id]?.trim()) {
-                                      commentPost(post.id, commentText[post.id] || '');
+                                      actions.comment(post.id, commentText[post.id] || '');
                                       setCommentText(prev => ({ ...prev, [post.id]: '' }));
                                       // Refresh comments
-                                      getPostComments(post.id).then(comments => {
+                                      actions.getComments(post.id).then(comments => {
                                         setPostComments(prev => ({ ...prev, [post.id]: comments }));
                                       });
                                     }
@@ -1124,11 +1137,12 @@ const author =
                                 />
                                 <button
                                   onClick={async () => {
+                                    const actions = getPostActions(post);
                                     if (commentText[post.id]?.trim()) {
-                                      await commentPost(post.id, commentText[post.id] || '');
+                                      await actions.comment(post.id, commentText[post.id] || '');
                                       setCommentText(prev => ({ ...prev, [post.id]: '' }));
                                       // Refresh comments
-                                      const comments = await getPostComments(post.id);
+                                      const comments = await actions.getComments(post.id);
                                       setPostComments(prev => ({ ...prev, [post.id]: comments }));
                                     }
                                   }}
