@@ -38,6 +38,135 @@ import { showGlobalToast } from '../components/Toast';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { PostComment } from '../data/types';
 
+// Recursive component for rendering threaded comments
+interface CommentItemProps {
+  comment: PostComment & { replies: PostComment[] };
+  postId: string;
+  user: any;
+  replyingTo: Record<string, string | null>;
+  replyText: Record<string, string>;
+  onReplyClick: (commentId: string) => void;
+  onReplyTextChange: (text: string) => void;
+  onReplySubmit: (parentId: string) => Promise<void>;
+  onDelete: (commentId: string) => Promise<void>;
+}
+
+function CommentItem({
+  comment,
+  postId,
+  user,
+  replyingTo,
+  replyText,
+  onReplyClick,
+  onReplyTextChange,
+  onReplySubmit,
+  onDelete,
+  depth = 0,
+}: CommentItemProps & { depth?: number }) {
+  const isReplying = replyingTo[postId] === comment.id;
+  const isReply = depth > 0;
+
+  return (
+    <div className={`${isReply ? 'ml-6 relative' : ''}`}>
+      {/* Connecting line for replies */}
+      {isReply && (
+        <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-slate-600 -ml-3" />
+      )}
+      
+      <div className={`${isReply ? 'bg-slate-700/50' : 'bg-slate-800'} rounded-lg p-3 ${isReply ? 'border-l-2 border-slate-600' : ''}`}>
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <span className={`${isReply ? 'text-xs' : 'text-sm'} font-medium text-white`}>
+                {comment.user_name || comment.user?.name || 'User'}
+              </span>
+              <span className="text-xs text-slate-500">
+                {new Date(comment.created_at).toLocaleDateString()}
+              </span>
+            </div>
+            <p className={`${isReply ? 'text-xs' : 'text-sm'} text-slate-300`}>
+              {comment.content}
+            </p>
+
+            {/* Reply Button */}
+            {user && (
+              <button
+                onClick={() => onReplyClick(comment.id)}
+                className={`${isReply ? 'text-xs' : 'text-xs'} text-blue-400 hover:text-blue-300 mt-1`}
+              >
+                Reply
+              </button>
+            )}
+
+            {/* Reply Input */}
+            {isReplying && (
+              <div className={`mt-2 flex gap-2`}>
+                <input
+                  type="text"
+                  placeholder="Write a reply..."
+                  value={replyText[postId] || ''}
+                  onChange={(e) => onReplyTextChange(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && replyText[postId]?.trim()) {
+                      onReplySubmit(comment.id);
+                    }
+                  }}
+                  className={`flex-1 bg-slate-600 border border-slate-500 rounded-lg px-3 py-1 text-white text-xs placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#FFD700]`}
+                  autoFocus
+                />
+                <button
+                  onClick={async () => {
+                    if (replyText[postId]?.trim()) {
+                      await onReplySubmit(comment.id);
+                    }
+                  }}
+                  className={`px-3 py-1 bg-[#FFD700] text-black rounded-lg text-xs font-semibold hover:bg-yellow-600 transition-colors`}
+                >
+                  Reply
+                </button>
+              </div>
+            )}
+
+            {/* Recursively render nested replies with increased depth */}
+            {comment.replies && comment.replies.length > 0 && (
+              <div className="mt-2 space-y-2">
+                {comment.replies.map((reply) => (
+                  <CommentItem
+                    key={reply.id}
+                    comment={reply as PostComment & { replies: PostComment[] }}
+                    postId={postId}
+                    user={user}
+                    replyingTo={replyingTo}
+                    replyText={replyText}
+                    onReplyClick={onReplyClick}
+                    onReplyTextChange={onReplyTextChange}
+                    onReplySubmit={onReplySubmit}
+                    onDelete={onDelete}
+                    depth={depth + 1}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Delete button - only for comment author */}
+          {user && comment.user_id === user.id && (
+            <button
+              onClick={async () => {
+                await onDelete(comment.id);
+              }}
+              className="text-red-400 hover:text-red-300 ml-2"
+              title="Delete comment"
+            >
+              <Trash2 size={isReply ? 12 : 14} />
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function MainDashboard() {
   const { user, role, logout, login, posts, jobs, events, following, getAlumniById, alumni, addPost, deletePost, likePost, commentPost, getPostComments, hasUserLikedPost, sharePost, deleteComment } = useAuth();
   const navigate = useNavigate();
@@ -59,9 +188,46 @@ export function MainDashboard() {
   const [postComments, setPostComments] = useState<Record<string, PostComment[]>>({});
   const [openCommentPost, setOpenCommentPost] = useState<string | null>(null);
   const [commentText, setCommentText] = useState<Record<string, string>>({});
+  const [replyingTo, setReplyingTo] = useState<Record<string, string | null>>({});
+  const [replyText, setReplyText] = useState<Record<string, string>>({});
   const [deleteConfirmPost, setDeleteConfirmPost] = useState<string | null>(null);
   const [isDeletingPost, setIsDeletingPost] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Helper function to build threaded comment tree
+  const buildCommentTree = (comments: PostComment[]): (PostComment & { replies: PostComment[] })[] => {
+    const commentMap = new Map<string, PostComment & { replies: PostComment[] }>();
+    const rootComments: (PostComment & { replies: PostComment[] })[] = [];
+
+    // First pass: create map of all comments with empty replies array
+    comments.forEach(comment => {
+      commentMap.set(comment.id, { ...comment, replies: [] });
+    });
+
+    // Second pass: build tree structure
+    comments.forEach(comment => {
+      const commentWithReplies = commentMap.get(comment.id)!;
+      
+      if (comment.parent_comment_id) {
+        // This is a reply - add it to parent's replies
+        const parent = commentMap.get(comment.parent_comment_id);
+        if (parent) {
+          parent.replies.push(commentWithReplies);
+        } else {
+          // Parent not found in current set, treat as root (orphaned reply)
+          rootComments.push(commentWithReplies);
+        }
+      } else {
+        // This is a top-level comment
+        rootComments.push(commentWithReplies);
+      }
+    });
+
+    // Sort root comments by creation time
+    return rootComments.sort((a, b) => 
+      new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+  };
 
   // Fetch user's liked posts from database on mount
   useEffect(() => {
@@ -382,10 +548,6 @@ export function MainDashboard() {
       }
     };
   }, []);
-    useEffect(() => {
-  fetchAdminPosts();
-  fetchPosts();
-}, []);
 
   const fetchAdminPosts = async () => {
     const { data, error } = await supabase
@@ -399,21 +561,6 @@ export function MainDashboard() {
   }
 console.log("ADMIN POSTS:", data);
   setAdminPosts(data || []);
-};
-
-const fetchPosts = async () => {
-  const { data, error } = await supabase
-    .from("posts")
-    .select("*")
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    console.error(error);
-    return;
-  }
-
-  console.log("POSTS:", data);
-  setPosts(data || []);
 };
 
   useEffect(() => {
@@ -912,44 +1059,49 @@ const author =
                             </button>
                           </div>
 
-                          {/* Comments Section */}
-                          {openCommentPost === post.id && (
-                            <div className="mt-4 pt-4 border-t border-slate-800 space-y-3">
-                              {/* Existing Comments */}
-                              {postComments[post.id] && postComments[post.id].length > 0 && (
-                                <div className="space-y-2 max-h-60 overflow-y-auto">
-                                  {postComments[post.id].map((comment) => (
-                                    <div key={comment.id} className="bg-slate-800 rounded-lg p-3 flex items-start justify-between">
-                                      <div className="flex-1">
-                                        <div className="flex items-center gap-2 mb-1">
-                                          <span className="text-sm font-medium text-white">
-                                            {comment.user_name || comment.user?.name || 'User'}
-                                          </span>
-                                          <span className="text-xs text-slate-500">
-                                            {new Date(comment.created_at).toLocaleDateString()}
-                                          </span>
-                                        </div>
-                                        <p className="text-sm text-slate-300">{comment.content}</p>
-                                      </div>
-                                      {user && comment.user_id === user.id && (
-                                        <button
-                                          onClick={async () => {
-                                            await deleteComment(comment.id, post.id);
+                              {/* Comments Section */}
+                              {openCommentPost === post.id && (
+                                <div className="mt-4 pt-4 border-t border-slate-800 space-y-3">
+                                  {/* Existing Comments */}
+                                  {postComments[post.id] && postComments[post.id].length > 0 && (
+                                    <div className="space-y-2 max-h-96 overflow-y-auto">
+                                      {buildCommentTree(postComments[post.id]).map((comment) => (
+                                        <CommentItem
+                                          key={comment.id}
+                                          comment={comment}
+                                          postId={post.id}
+                                          user={user}
+                                          replyingTo={replyingTo}
+                                          replyText={replyText}
+                                          onReplyClick={(commentId) => {
+                                            setReplyingTo(prev => ({ ...prev, [post.id]: commentId }));
+                                            setReplyText(prev => ({ ...prev, [post.id]: '' }));
+                                          }}
+                                          onReplyTextChange={(text) => {
+                                            setReplyText(prev => ({ ...prev, [post.id]: text }));
+                                          }}
+                                          onReplySubmit={async (parentId) => {
+                                            const text = replyText[post.id];
+                                            if (text?.trim()) {
+                                              await commentPost(post.id, text, parentId);
+                                              setReplyingTo(prev => ({ ...prev, [post.id]: null }));
+                                              setReplyText(prev => ({ ...prev, [post.id]: '' }));
+                                              const comments = await getPostComments(post.id);
+                                              setPostComments(prev => ({ ...prev, [post.id]: comments }));
+                                            }
+                                          }}
+                                          onDelete={async (commentId) => {
+                                            await deleteComment(commentId, post.id);
                                             setPostComments(prev => ({
                                               ...prev,
-                                              [post.id]: prev[post.id].filter(c => c.id !== comment.id)
+                                              [post.id]: prev[post.id].filter(c => c.id !== commentId)
                                             }));
                                           }}
-                                          className="text-red-400 hover:text-red-300 ml-2"
-                                          title="Delete comment"
-                                        >
-                                          <Trash2 size={14} />
-                                        </button>
-                                      )}
+                                          depth={0}
+                                        />
+                                      ))}
                                     </div>
-                                  ))}
-                                </div>
-                              )}
+                                  )}
 
                               {/* Add Comment Input */}
                               <div className="flex gap-2">

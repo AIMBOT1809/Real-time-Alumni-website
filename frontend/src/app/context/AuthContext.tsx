@@ -23,7 +23,7 @@ interface AuthContextType {
   addJob: (jobData: Omit<Job, 'id' | 'postedDate'>) => void;
   addEvent: (eventData: Omit<Event, 'id'>) => void;
   likePost: (postId: string) => Promise<boolean>;
-  commentPost: (postId: string, commentText: string) => Promise<void>;
+  commentPost: (postId: string, commentText: string, parentCommentId?: string) => Promise<void>;
   deleteComment: (commentId: string, postId: string) => Promise<void>;
   getPostComments: (postId: string) => Promise<PostComment[]>;
   hasUserLikedPost: (postId: string) => Promise<boolean>;
@@ -899,7 +899,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const commentPost = async (postId: string, commentText: string): Promise<void> => {
+  const commentPost = async (postId: string, commentText: string, parentCommentId?: string): Promise<void> => {
     if (!user || !commentText.trim()) {
       console.error('[AuthContext] commentPost blocked: no user or empty text', { user: !!user, text: commentText });
       return;
@@ -1034,7 +1034,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('[AuthContext] No profile table for role', user.role, '- using fallback name:', userName);
       }
 
-      const insertData = {
+      const insertData: any = {
         post_id: postId,
         user_id: user.id,
         content: commentText.trim(),
@@ -1043,11 +1043,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user_avatar: user.avatar || '',
       };
 
+      if (parentCommentId) {
+        insertData.parent_comment_id = parentCommentId;
+      }
+
       console.log('[AuthContext] Inserting comment:', insertData);
 
       const { data, error } = await supabase
-
-            .from('post_comments')
+        .from('post_comments')
         .insert(insertData)
         .select();
 
@@ -1174,6 +1177,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           content: comment.content,
           created_at: comment.created_at,
           updated_at: comment.updated_at,
+          parent_comment_id: comment.parent_comment_id,
           user_name: comment.user_name,
           user_role: comment.user_role,
           user_avatar: comment.user_avatar,

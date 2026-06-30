@@ -246,6 +246,8 @@ export interface PostComment {
 
   updated_at: string;
 
+  parent_comment_id?: string | null;
+
   user_name?: string;
 
   user_role?: string;
