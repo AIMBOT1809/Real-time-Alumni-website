@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../supabaseClient';
 import { User } from '@supabase/supabase-js';
-import { UserProfile, Role, Post, Job, Event, PostComment, AdminPost, AdminPostLike, AdminPostComment } from '../data/types';
+import { UserProfile, Role, Post, Job, Event, PostComment, AdminPost, AdminPostLike, AdminPostComment, Notification } from '../data/types';
 import { getLocalPosts, addLocalPost, updateLocalPost, deleteLocalPost, getApprovedPosts, getPostsByAuthor } from '../data/localStoragePosts';
 import { showGlobalToast } from '../components/Toast';
 
@@ -35,6 +35,11 @@ interface AuthContextType {
   hasUserLikedAdminPost: (adminPostId: string) => Promise<boolean>;
   sharePost: (postId: string) => Promise<void>;
   shareAdminPost: (adminPostId: string) => Promise<void>;
+  notifications: Notification[];
+  unreadNotificationCount: number;
+  fetchNotifications: () => Promise<void>;
+  markNotificationRead: (notificationId: string) => Promise<void>;
+  markAllNotificationsRead: () => Promise<void>;
   editPost: (postId: string, updates: Partial<Post>) => Promise<void>;
   deletePost: (id: string) => void;
   deleteJob: (id: string) => void;
@@ -58,6 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [alumni, setAlumni] = useState<UserProfile[]>([]);
   const [localPosts, setLocalPosts] = useState<Post[]>([]);
   const [adminPosts, setAdminPosts] = useState<AdminPost[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
 
   useEffect(() => {
     const savedUser = localStorage.getItem('allumini_user');
@@ -941,6 +947,202 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('allumini_events', JSON.stringify(newEvents));
   };
 
+  const fetchNotifications = useCallback(async (): Promise<void> => {
+    if (!user) {
+      setNotifications([]);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('recipient_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('[AuthContext] Error fetching notifications:', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+        });
+        return;
+      }
+
+      setNotifications((data ?? []) as Notification[]);
+    } catch (err) {
+      console.error('[AuthContext] fetchNotifications error:', err);
+    }
+  }, [user]);
+
+  const markNotificationRead = useCallback(async (notificationId: string): Promise<void> => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('id', notificationId)
+        .eq('recipient_id', user.id);
+
+      if (error) {
+        console.error('[AuthContext] Error marking notification read:', error);
+        return;
+      }
+
+      setNotifications(prev =>
+        prev.map(notification =>
+          notification.id === notificationId ? { ...notification, is_read: true } : notification
+        )
+      );
+    } catch (err) {
+      console.error('[AuthContext] markNotificationRead error:', err);
+    }
+  }, [user]);
+
+  const markAllNotificationsRead = useCallback(async (): Promise<void> => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('recipient_id', user.id)
+        .eq('is_read', false);
+
+      if (error) {
+        console.error('[AuthContext] Error marking all notifications read:', error);
+        return;
+      }
+
+      setNotifications(prev => prev.map(notification => ({ ...notification, is_read: true })));
+    } catch (err) {
+      console.error('[AuthContext] markAllNotificationsRead error:', err);
+    }
+  }, [user]);
+
+  const unreadNotificationCount = notifications.reduce(
+    (count, notification) => count + (notification.is_read ? 0 : 1),
+    0
+  );
+
+  useEffect(() => {
+    if (!user) {
+      setNotifications([]);
+      return;
+    }
+
+    fetchNotifications();
+
+    let notificationsChannel: any = null;
+    try {
+      notificationsChannel = supabase
+        .channel(`notifications:${user.id}`)
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'notifications', filter: `recipient_id=eq.${user.id}` },
+          (payload: any) => {
+            console.log('[AuthContext] Realtime update for notifications:', payload.eventType);
+            fetchNotifications();
+          }
+        )
+        .subscribe((status, err) => {
+          if (status === 'SUBSCRIBED') console.log('[AuthContext] Notifications channel subscribed');
+          if (err) console.error('[AuthContext] Notifications channel error:', err);
+        });
+    } catch (err) {
+      console.error('[AuthContext] Failed to create realtime channel for notifications:', err);
+    }
+
+    return () => {
+      try {
+        if (notificationsChannel) notificationsChannel.unsubscribe();
+      } catch (e) {
+        console.error('[AuthContext] Error unsubscribing notifications channel:', e);
+      }
+    };
+  }, [user, fetchNotifications]);
+
+  const createCommentNotifications = async (
+    commentId: string,
+    postId: string,
+    commentText: string,
+    parentCommentId?: string
+  ): Promise<void> => {
+    if (!user) return;
+
+    try {
+      const trimmedMessage = commentText.trim().replace(/\s+/g, ' ');
+      const preview = trimmedMessage.length > 80 ? `${trimmedMessage.slice(0, 77)}...` : trimmedMessage;
+      const actorName = user.name?.split(' ')[0] || user.email?.split('@')[0] || 'Someone';
+      const notificationsToInsert: any[] = [];
+
+      const { data: postData, error: postError } = await supabase
+        .from('posts')
+        .select('alumni_id')
+        .eq('id', postId)
+        .maybeSingle();
+
+      if (postError) {
+        console.error('[AuthContext] Error fetching post owner for notification:', postError);
+      }
+
+      const postOwnerId = postData?.alumni_id;
+      let parentCommentOwnerId: string | undefined;
+
+      if (parentCommentId) {
+        const { data: parentCommentData, error: parentCommentError } = await supabase
+          .from('post_comments')
+          .select('user_id')
+          .eq('id', parentCommentId)
+          .maybeSingle();
+
+        if (parentCommentError) {
+          console.error('[AuthContext] Error fetching parent comment for notification:', parentCommentError);
+        } else if (parentCommentData?.user_id) {
+          parentCommentOwnerId = parentCommentData.user_id;
+          if (parentCommentOwnerId !== user.id) {
+            notificationsToInsert.push({
+              recipient_id: parentCommentOwnerId,
+              sender_id: user.id,
+              type: 'comment',
+              post_id: postId,
+              comment_id: commentId,
+              message: `${actorName} replied to your comment: "${preview}"`,
+              is_read: false,
+            });
+          }
+        }
+      }
+
+      if (postOwnerId && postOwnerId !== user.id && postOwnerId !== parentCommentOwnerId) {
+        notificationsToInsert.push({
+          recipient_id: postOwnerId,
+          sender_id: user.id,
+          type: 'comment',
+          post_id: postId,
+          comment_id: commentId,
+          message: parentCommentId
+            ? `${actorName} also commented on your post: "${preview}"`
+            : `${actorName} commented on your post: "${preview}"`,
+          is_read: false,
+        });
+      }
+
+      if (notificationsToInsert.length === 0) {
+        return;
+      }
+
+      const { error } = await supabase.from('notifications').insert(notificationsToInsert);
+      if (error) {
+        console.error('[AuthContext] Error inserting comment notifications:', error);
+      }
+    } catch (err) {
+      console.error('[AuthContext] createCommentNotifications error:', err);
+    }
+  };
+
   const likePost = async (postId: string): Promise<boolean> => {
     if (!user) return false;
     
@@ -1159,6 +1361,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       console.log('[AuthContext] Comment added successfully:', data);
       showGlobalToast('Comment added', 'success');
+
+      const insertedCommentId = Array.isArray(data) ? data[0]?.id : (data as any)?.id;
+      if (insertedCommentId) {
+        await createCommentNotifications(insertedCommentId, postId, commentText, parentCommentId);
+      }
     } catch (e) {
       console.error('[AuthContext] commentPost unexpected error:', e);
       showGlobalToast('Something went wrong', 'error');
@@ -1831,6 +2038,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       rejectLocalPost,
       getLocalPostsByAuthor,
       fetchAdminPosts,
+      notifications,
+      unreadNotificationCount,
+      fetchNotifications,
+      markNotificationRead,
+      markAllNotificationsRead,
     }}>
       {children}
     </AuthContext.Provider>

@@ -48,7 +48,7 @@ export function DashboardLayout() {
   const [open, setOpen] = useState(false);
   const [desktopCollapsed, setDesktopCollapsed] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const { user, role, logout } = useAuth();
+  const { user, role, logout, unreadNotificationCount } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -148,7 +148,11 @@ export function DashboardLayout() {
               }
             >
               <Bell className="h-5 w-5" />
-              <span className="absolute right-1 top-1 h-2 w-2 rounded-full border-2 border-slate-900 bg-red-500" />
+              {unreadNotificationCount > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-semibold leading-none text-white">
+                  {unreadNotificationCount > 9 ? '9+' : unreadNotificationCount}
+                </span>
+              )}
             </NavLink>
 
             {/* User Avatar */}
