@@ -426,33 +426,54 @@ useEffect(() => {
         const fileExt = newEventFile.name.split('.').pop();
         const fileName = `events/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
 
-        // Try to upload - if bucket doesn't exist, try to create it
-        let { error: uploadError } = await supabase.storage
-          .from('event_images')
-          .upload(fileName, newEventFile);
+        console.log('Attempting to upload file:', fileName);
+        console.log('File type:', newEventFile.type);
+        console.log('File size:', (newEventFile.size / 1024).toFixed(2), 'KB');
 
-        // If bucket not found, try to create it
-        if (uploadError && uploadError.message?.includes('bucket')) {
-          console.log('event_images bucket not found, attempting to create it...');
-          const { error: createError } = await supabase.storage.createBucket('event_images', {
-            public: true,
-          });
-          if (createError) {
-            console.error('Failed to create bucket:', createError);
-          } else {
-            // Retry upload after creating bucket
-            const retryResult = await supabase.storage
-              .from('event_images')
-              .upload(fileName, newEventFile);
-            uploadError = retryResult.error;
+        // First, check if bucket exists
+        const { data: buckets, error: listError } = await supabase.storage.listBuckets();
+        
+        if (listError) {
+          console.error('Error listing buckets:', listError);
+        } else {
+          const bucketExists = buckets?.some(bucket => bucket.name === 'event_images');
+          console.log('event_images bucket exists:', bucketExists);
+          
+          if (!bucketExists) {
+            console.log('Creating event_images bucket...');
+            const { error: createError } = await supabase.storage.createBucket('event_images', {
+              public: true,
+              fileSizeLimit: 52428800, // 50MB
+            });
+            
+            if (createError) {
+              console.error('Failed to create bucket:', createError);
+            } else {
+              console.log('Bucket created successfully');
+              // Wait for bucket to be ready
+              await new Promise(resolve => setTimeout(resolve, 2000));
+            }
           }
         }
 
+        // Try to upload
+        let { error: uploadError } = await supabase.storage
+          .from('event_images')
+          .upload(fileName, newEventFile, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
         if (uploadError) {
-          console.error('Image upload error (using default image):', uploadError);
-          // Don't block event creation - just use default image
+          console.error('Upload error:', uploadError);
+          console.error('Error message:', uploadError.message);
+          console.error('Error details:', uploadError);
         } else {
+          // Get the public URL
           const { data } = supabase.storage.from('event_images').getPublicUrl(fileName);
+          
+          console.log('✅ Upload successful!');
+          console.log('Public URL:', data.publicUrl);
 
           if (newEventFile.type.startsWith('image/')) {
             imageUrl = data.publicUrl;
@@ -461,7 +482,7 @@ useEffect(() => {
           }
         }
       } catch (uploadErr) {
-        console.error('Upload exception (using default image):', uploadErr);
+        console.error('Upload exception:', uploadErr);
         // Don't block event creation
       }
     }
