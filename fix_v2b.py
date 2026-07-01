@@ -1,0 +1,15 @@
+with open('c:/Users/Anthariksh/Real-time-Alumni-website/frontend/src/app/pages/MainDashboard.tsx', 'r', encoding='utf-8') as f:
+    content = f.read()
+
+# 2. Update formData initialization
+old = "  const [formData, setFormData] = useState({\n    collegeName: user?.collegeName || '',\n    rollNumber: user?.rollNumber || '',\n    department: user?.department || '',\n    year: user?.year || '',\n    yearOfJoining: user?.yearOfJoining || undefined,\n    passedOutYear: user?.passedOutYear || undefined,\n    about: user?.about || '',\n    linkedin: user?.linkedin || '',\n    resume: user?.resume || '',\n    avatar: user?.avatar || '',\n  });"
+new = "  const [formData, setFormData] = useState({\n    collegeName: user?.collegeName || '',\n    rollNumber: user?.rollNumber || '',\n    department: user?.department || '',\n    year: user?.year || '',\n    yearOfJoining: user?.yearOfJoining || undefined,\n    passedOutYear: user?.passedOutYear || undefined,\n    about: user?.about || '',\n    linkedin: user?.linkedin || '',\n    resume: user?.resume || '',\n    avatar: user?.avatar || '',\n    careerStatus: user?.careerStatus || '',\n    companyName: user?.companyName || '',\n    roleDesignation: user?.roleDesignation || '',\n    experience: user?.experience || '',\n    workLocation: user?.workLocation || '',\n    careerHighlight: user?.careerHighlight || user?.achievement || '',\n    achievement: user?.achievement || user?.careerHighlight || '',\n    businessName: user?.businessName || '',\n    businessRole: user?.businessRole || '',\n    industryDomain: user?.industryDomain || user?.businessDomain || '',\n    businessDomain: user?.businessDomain || user?.industryDomain || '',\n    businessHighlight: user?.businessHighlight || '',\n    universityCollegeName: user?.universityCollegeName || '',\n    courseProgram: user?.courseProgram || '',\n    higherEducationSpecialization: user?.higherEducationSpecialization || '',\n    higherEducationCountry: user?.higherEducationCountry || '',\n    higherEducationCity: user?.higherEducationCity || '',\n    admissionYear: user?.admissionYear || '',\n    interestedCareerField: user?.interestedCareerField || '',\n    targetRole: user?.targetRole || '',\n    freelanceDomain: user?.freelanceDomain || '',\n    servicesProvided: user?.servicesProvided || '',\n    freelanceExperience: user?.freelanceExperience || '',\n    workHighlight: user?.workHighlight || '',\n    otherStatusDescription: user?.otherStatusDescription || '',\n    professionalHighlight: user?.professionalHighlight || '',\n    educationHighlight: user?.educationHighlight || '',\n    freelanceHighlight: user?.freelanceHighlight || '',\n    otherHighlight: user?.otherHighlight || '',\n    careerProofUrl: user?.wallOfFameProofUrl || '',\n    wallOfFameProofUrl: user?.wallOfFameProofUrl || '',\n  });"
+if old in content:
+    content = content.replace(old, new, 1)
+    print("2. Updated formData init")
+else:
+    print("2. Failed")
+
+with open('c:/Users/Anthariksh/Real-time-Alumni-website/frontend/src/app/pages/MainDashboard.tsx', 'w', encoding='utf-8') as f:
+    f.write(content)
+print("Saved part 2")

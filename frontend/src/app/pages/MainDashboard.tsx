@@ -36,9 +36,139 @@ import { Chat } from './Chat';
 import { getApprovedPosts, getPostsByAuthor } from '../data/localStoragePosts';
 import { showGlobalToast } from '../components/Toast';
 import { ConfirmModal } from '../components/ConfirmModal';
+import { PostComment, AdminPost, AdminPostComment } from '../data/types';
+
+// Recursive component for rendering threaded comments
+interface CommentItemProps {
+  comment: any;
+  postId: string;
+  user: any;
+  replyingTo: Record<string, string | null>;
+  replyText: Record<string, string>;
+  onReplyClick: (commentId: string) => void;
+  onReplyTextChange: (text: string) => void;
+  onReplySubmit: (parentId: string) => Promise<void>;
+  onDelete: (commentId: string) => Promise<void>;
+}
+
+function CommentItem({
+  comment,
+  postId,
+  user,
+  replyingTo,
+  replyText,
+  onReplyClick,
+  onReplyTextChange,
+  onReplySubmit,
+  onDelete,
+  depth = 0,
+}: CommentItemProps & { depth?: number }) {
+  const isReplying = replyingTo[postId] === comment.id;
+  const isReply = depth > 0;
+
+  return (
+    <div className={`${isReply ? 'ml-6 relative' : ''}`}>
+      {/* Connecting line for replies */}
+      {isReply && (
+        <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-slate-600 -ml-3" />
+      )}
+      
+      <div className={`${isReply ? 'bg-slate-700/50' : 'bg-slate-800'} rounded-lg p-3 ${isReply ? 'border-l-2 border-slate-600' : ''}`}>
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <span className={`${isReply ? 'text-xs' : 'text-sm'} font-medium text-white`}>
+                {comment.user_name || comment.user?.name || 'User'}
+              </span>
+              <span className="text-xs text-slate-500">
+                {new Date(comment.created_at).toLocaleDateString()}
+              </span>
+            </div>
+            <p className={`${isReply ? 'text-xs' : 'text-sm'} text-slate-300`}>
+              {comment.content}
+            </p>
+
+            {/* Reply Button */}
+            {user && (
+              <button
+                onClick={() => onReplyClick(comment.id)}
+                className={`${isReply ? 'text-xs' : 'text-xs'} text-blue-400 hover:text-blue-300 mt-1`}
+              >
+                Reply
+              </button>
+            )}
+
+            {/* Reply Input */}
+            {isReplying && (
+              <div className={`mt-2 flex gap-2`}>
+                <input
+                  type="text"
+                  placeholder="Write a reply..."
+                  value={replyText[postId] || ''}
+                  onChange={(e) => onReplyTextChange(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && replyText[postId]?.trim()) {
+                      onReplySubmit(comment.id);
+                    }
+                  }}
+                  className={`flex-1 bg-slate-600 border border-slate-500 rounded-lg px-3 py-1 text-white text-xs placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#FFD700]`}
+                  autoFocus
+                />
+                <button
+                  onClick={async () => {
+                    if (replyText[postId]?.trim()) {
+                      await onReplySubmit(comment.id);
+                    }
+                  }}
+                  className={`px-3 py-1 bg-[#FFD700] text-black rounded-lg text-xs font-semibold hover:bg-yellow-600 transition-colors`}
+                >
+                  Reply
+                </button>
+              </div>
+            )}
+
+            {/* Recursively render nested replies with increased depth */}
+            {comment.replies && comment.replies.length > 0 && (
+              <div className="mt-2 space-y-2">
+                {comment.replies.map((reply: any) => (
+                  <CommentItem
+                    key={reply.id}
+                    comment={reply}
+                    postId={postId}
+                    user={user}
+                    replyingTo={replyingTo}
+                    replyText={replyText}
+                    onReplyClick={onReplyClick}
+                    onReplyTextChange={onReplyTextChange}
+                    onReplySubmit={onReplySubmit}
+                    onDelete={onDelete}
+                    depth={depth + 1}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Delete button - only for comment author */}
+          {user && comment.user_id === user.id && (
+            <button
+              onClick={async () => {
+                await onDelete(comment.id);
+              }}
+              className="text-red-400 hover:text-red-300 ml-2"
+              title="Delete comment"
+            >
+              <Trash2 size={isReply ? 12 : 14} />
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function MainDashboard() {
-  const { user, role, logout, login, posts, jobs, events, following, getAlumniById, alumni, addPost, deletePost } = useAuth();
+  const { user, role, logout, login, posts, jobs, events, following, getAlumniById, alumni, addPost, deletePost, likePost, commentPost, getPostComments, hasUserLikedPost, sharePost, deleteComment, adminPosts, likeAdminPost, commentAdminPost, getAdminPostComments, hasUserLikedAdminPost, shareAdminPost, fetchAdminPosts } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const getMenuFromPath = () => {
@@ -50,13 +180,93 @@ export function MainDashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [chatTheme, setChatTheme] = useState<'dark' | 'light'>('dark');
-  const [adminPosts, setAdminPosts] = useState<any[]>([]);
-  //const [posts, setPosts] = useState<any[]>([]);
   const [registeredEvents, setRegisteredEvents] = useState<any[]>([]);
   const [attendedEvents, setAttendedEvents] = useState<any[]>([]);
   const [selectedActivityCard, setSelectedActivityCard] = useState<string | null>(null);
+  const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
+  const [postComments, setPostComments] = useState<Record<string, (PostComment | AdminPostComment)[]>>({});
+  const [openCommentPost, setOpenCommentPost] = useState<string | null>(null);
+  const [commentText, setCommentText] = useState<Record<string, string>>({});
+  const [replyingTo, setReplyingTo] = useState<Record<string, string | null>>({});
+  const [replyText, setReplyText] = useState<Record<string, string>>({});
   const [deleteConfirmPost, setDeleteConfirmPost] = useState<string | null>(null);
   const [isDeletingPost, setIsDeletingPost] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Helper to route post interactions based on post source
+  const getPostActions = (post: any) => {
+    const isAdminPost = post.source === 'admin';
+    return {
+      like: isAdminPost ? likeAdminPost : likePost,
+      comment: isAdminPost ? commentAdminPost : commentPost,
+      getComments: isAdminPost ? getAdminPostComments : getPostComments,
+      share: isAdminPost ? shareAdminPost : sharePost,
+    };
+  };
+
+  // Helper function to build threaded comment tree
+  const buildCommentTree = (comments: any[]): any[] => {
+    const commentMap = new Map<string, any>();
+    const rootComments: any[] = [];
+
+    // First pass: create map of all comments with empty replies array
+    comments.forEach(comment => {
+      commentMap.set(comment.id, { ...comment, replies: [] });
+    });
+
+    // Second pass: build tree structure
+    comments.forEach(comment => {
+      const commentWithReplies = commentMap.get(comment.id)!;
+      
+      if (comment.parent_comment_id) {
+        // This is a reply - add it to parent's replies
+        const parent = commentMap.get(comment.parent_comment_id);
+        if (parent) {
+          parent.replies.push(commentWithReplies);
+        } else {
+          // Parent not found in current set, treat as root (orphaned reply)
+          rootComments.push(commentWithReplies);
+        }
+      } else {
+        // This is a top-level comment
+        rootComments.push(commentWithReplies);
+      }
+    });
+
+    // Sort root comments by creation time
+    return rootComments.sort((a, b) => 
+      new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+  };
+
+  // Fetch user's liked posts from database on mount
+  useEffect(() => {
+    const fetchUserLikes = async () => {
+      if (!user?.id) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('post_likes')
+          .select('post_id')
+          .eq('user_id', user.id);
+
+        if (error) {
+          console.error('Error fetching user likes:', error);
+          return;
+        }
+
+        if (data) {
+          const likedPostIds = new Set(data.map(like => like.post_id));
+          setLikedPosts(likedPostIds);
+          console.log(`Loaded ${likedPostIds.size} liked posts from database`);
+        }
+      } catch (err) {
+        console.error('Error fetching user likes:', err);
+      }
+    };
+
+    fetchUserLikes();
+  }, [user?.id]);
 
   useEffect(() => {
     setActiveMenu(getMenuFromPath());
@@ -349,43 +559,6 @@ export function MainDashboard() {
     };
   }, []);
 
-  useEffect(() => {
-  fetchAdminPosts();
-  fetchPosts();
-}, []);
-
-  const fetchAdminPosts = async () => {
-    const { data, error } = await supabase
-      .from('admin_posts')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-  if (error) {
-    console.error(error);
-    return;
-  }
-console.log("ADMIN POSTS:", data);
-  setAdminPosts(data || []);
-};
-
-const fetchPosts = async () => {
-  const { data, error } = await supabase
-    .from("posts")
-    .select("*")
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    console.error(error);
-    return;
-  }
-
-  console.log("POSTS:", data);
-  setPosts(data || []);
-};
-
-  useEffect(() => {
-    fetchAdminPosts();
-  }, []);
 
   const fetchEventRegistrations = async () => {
     try {
@@ -466,6 +639,11 @@ const fetchPosts = async () => {
     fetchEventRegistrations();
   }, [user?.id]);
 
+  // Fetch admin posts on mount
+  useEffect(() => {
+    fetchAdminPosts();
+  }, [fetchAdminPosts]);
+
   if (!user) return null;
 
   // Profile handlers
@@ -529,6 +707,16 @@ const fetchPosts = async () => {
     navigate('/');
   };
 
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      showGlobalToast('Link copied to clipboard', 'success');
+    } catch (err) {
+      console.error('Failed to copy to clipboard:', err);
+      showGlobalToast('Failed to copy link', 'error');
+    }
+  };
+
   const addSkill = () => {
     if (newSkill.trim() && !skills.includes(newSkill.trim())) {
       setSkills([...skills, newSkill.trim()]);
@@ -579,7 +767,6 @@ const fetchPosts = async () => {
     }
   };
  
- 
 /*
   if (!user) {
     navigate('/login');
@@ -587,9 +774,9 @@ const fetchPosts = async () => {
   }
 */    
 
- // const canPost = !!role && role !== 'student';
- // const followedPosts = posts ||[];
- //const followedPosts = adminPosts;
+// const canPost = !!role && role !== 'student';
+// const followedPosts = posts ||[];
+//const followedPosts = adminPosts;
   const canPost = role === 'faculty' || role === 'alumni';
 
   // Temporary localStorage approval flow for demo
@@ -598,12 +785,16 @@ const fetchPosts = async () => {
     ...(adminPosts || []).map((post) => ({
       ...post,
       source: 'admin',
+      status: 'approved',
+      alumniId: 'admin',
+      timestamp: post.created_at,
+      type: 'general',
     })),
     ...(posts || []).map((post) => ({
       ...post,
       source: 'user',
       description: post.content,
-      created_at: post.timestamp,
+      created_at: post.timestamp || post.created_at,
       file_url: post.image,
     })),
     // Add approved local posts from localStorage
@@ -611,8 +802,12 @@ const fetchPosts = async () => {
       ...post,
       source: 'local',
       description: post.content,
-      created_at: post.timestamp || post.created_at,
+      created_at: post.timestamp || post.created_at || new Date().toISOString(),
       file_url: post.image,
+      status: 'approved',
+      alumniId: post.alumniId || 'unknown',
+      timestamp: post.timestamp || post.created_at,
+      type: post.type || 'general',
     })),
   ].filter((post, index, self) => 
     // Filter out pending/rejected posts and deduplicate
@@ -712,8 +907,8 @@ const fetchPosts = async () => {
                     if (!author) return null;
                     */
                   // const author = {
- // name: "Admin",
- // avatar: "https://ui-avatars.com/api/?name=Admin"
+// name: "Admin",
+// avatar: "https://ui-avatars.com/api/?name=Admin"
 //};
 const author =
   post.source === 'admin'
@@ -748,9 +943,11 @@ const author =
                                 <p className="text-xs text-slate-500">
                                   {(() => {
                                     try {
-                                      const d = new Date(post.created_at);
-                                      return isNaN(d.getTime()) ? post.timestamp : d.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
-                                    } catch { return post.timestamp; }
+                                      const dateValue = post.created_at || post.timestamp;
+                                      if (!dateValue) return 'Recently';
+                                      const d = new Date(dateValue);
+                                      return isNaN(d.getTime()) ? 'Recently' : d.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+                                    } catch { return 'Recently'; }
                                   })()}
                                 </p>
                               </div>
@@ -795,19 +992,167 @@ const author =
                             <span>{post.comments || 0} comments</span>
                           </div>
                           <div className="flex items-center justify-around border-t border-slate-800 pt-2">
-                            <button className="flex items-center space-x-2 px-4 py-2 text-slate-300 hover:text-red-500 hover:bg-slate-800 rounded-lg transition-colors">
-                              <span className="text-lg">♥</span>
-                              <span>Like</span>
+                            <button 
+                              onClick={async () => {
+                                const actions = getPostActions(post);
+                                try {
+                                  await actions.like(post.id);
+                                  // Optimistically update UI
+                                  setLikedPosts(prev => {
+                                    const next = new Set(prev);
+                                    if (next.has(post.id)) {
+                                      next.delete(post.id);
+                                    } else {
+                                      next.add(post.id);
+                                    }
+                                    return next;
+                                  });
+                                } catch (error) {
+                                  console.error('[MainDashboard] Error liking post:', error);
+                                  showGlobalToast('Failed to like post', 'error');
+                                }
+                              }}
+                              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                                likedPosts.has(post.id) 
+                                  ? 'text-red-500 bg-slate-800' 
+                                  : 'text-slate-300 hover:text-red-500 hover:bg-slate-800'
+                              }`}
+                            >
+                              <span className="text-lg">{likedPosts.has(post.id) ? '♥' : '♡'}</span>
+                              <span>{likedPosts.has(post.id) ? 'Liked' : 'Like'}</span>
                             </button>
-                            <button className="flex items-center space-x-2 px-4 py-2 text-slate-300 hover:text-blue-500 hover:bg-slate-800 rounded-lg transition-colors">
+                            <button 
+                              onClick={async () => {
+                                const actions = getPostActions(post);
+                                if (!openCommentPost) {
+                                  const comments = await actions.getComments(post.id);
+                                  setPostComments(prev => ({ ...prev, [post.id]: comments }));
+                                }
+                                setOpenCommentPost(openCommentPost === post.id ? null : post.id);
+                              }}
+                              className="flex items-center space-x-2 px-4 py-2 text-slate-300 hover:text-blue-500 hover:bg-slate-800 rounded-lg transition-colors"
+                            >
                               <span className="text-lg">💬</span>
                               <span>Comment</span>
                             </button>
-                            <button className="flex items-center space-x-2 px-4 py-2 text-slate-300 hover:text-green-500 hover:bg-slate-800 rounded-lg transition-colors">
+                            <button 
+                              onClick={async () => {
+                                const actions = getPostActions(post);
+                                const shareData = {
+                                  title: post.title || 'Alumni Post',
+                                  text: post.content.substring(0, 100),
+                                  url: `${window.location.origin}/dashboard/activity?post=${post.id}`,
+                                };
+
+                                // Try Web Share API first (mobile)
+                                if (navigator.share) {
+                                  try {
+                                    await navigator.share(shareData);
+                                    await actions.share(post.id);
+                                    showGlobalToast('Post shared successfully', 'success');
+                                  } catch (err) {
+                                    // User cancelled or error - fallback to copy
+                                    if (err instanceof Error && err.name !== 'AbortError') {
+                                      copyToClipboard(shareData.url);
+                                    }
+                                  }
+                                } else {
+                                  // Fallback: copy URL to clipboard
+                                  copyToClipboard(shareData.url);
+                                  await actions.share(post.id);
+                                  showGlobalToast('Link copied to clipboard', 'success');
+                                }
+                              }}
+                              className="flex items-center space-x-2 px-4 py-2 text-slate-300 hover:text-green-500 hover:bg-slate-800 rounded-lg transition-colors"
+                            >
                               <span className="text-lg">↗</span>
                               <span>Share</span>
                             </button>
                           </div>
+
+                              {/* Comments Section */}
+                              {openCommentPost === post.id && (
+                                <div className="mt-4 pt-4 border-t border-slate-800 space-y-3">
+                                  {/* Existing Comments */}
+                                  {postComments[post.id] && postComments[post.id].length > 0 && (
+                                    <div className="space-y-2 max-h-96 overflow-y-auto">
+                                      {buildCommentTree(postComments[post.id]).map((comment) => (
+                                        <CommentItem
+                                          key={comment.id}
+                                          comment={comment}
+                                          postId={post.id}
+                                          user={user}
+                                          replyingTo={replyingTo}
+                                          replyText={replyText}
+                                          onReplyClick={(commentId) => {
+                                            setReplyingTo(prev => ({ ...prev, [post.id]: commentId }));
+                                            setReplyText(prev => ({ ...prev, [post.id]: '' }));
+                                          }}
+                                          onReplyTextChange={(text) => {
+                                            setReplyText(prev => ({ ...prev, [post.id]: text }));
+                                          }}
+                                          onReplySubmit={async (parentId) => {
+                                            const actions = getPostActions(post);
+                                            const text = replyText[post.id];
+                                            if (text?.trim()) {
+                                              await actions.comment(post.id, text, parentId);
+                                              setReplyingTo(prev => ({ ...prev, [post.id]: null }));
+                                              setReplyText(prev => ({ ...prev, [post.id]: '' }));
+                                              const comments = await actions.getComments(post.id);
+                                              setPostComments(prev => ({ ...prev, [post.id]: comments }));
+                                            }
+                                          }}
+                                          onDelete={async (commentId) => {
+                                            await deleteComment(commentId, post.id);
+                                            setPostComments(prev => ({
+                                              ...prev,
+                                              [post.id]: prev[post.id].filter(c => c.id !== commentId)
+                                            }));
+                                          }}
+                                          depth={0}
+                                        />
+                                      ))}
+                                    </div>
+                                  )}
+
+                              {/* Add Comment Input */}
+                              <div className="flex gap-2">
+                                <input
+                                  type="text"
+                                  placeholder="Write a comment..."
+                                  value={commentText[post.id] || ''}
+                                  onChange={(e) => setCommentText(prev => ({ ...prev, [post.id]: e.target.value }))}
+                                  onKeyPress={(e) => {
+                                    const actions = getPostActions(post);
+                                    if (e.key === 'Enter' && commentText[post.id]?.trim()) {
+                                      actions.comment(post.id, commentText[post.id] || '');
+                                      setCommentText(prev => ({ ...prev, [post.id]: '' }));
+                                      // Refresh comments
+                                      actions.getComments(post.id).then(comments => {
+                                        setPostComments(prev => ({ ...prev, [post.id]: comments }));
+                                      });
+                                    }
+                                  }}
+                                  className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
+                                />
+                                <button
+                                  onClick={async () => {
+                                    const actions = getPostActions(post);
+                                    if (commentText[post.id]?.trim()) {
+                                      await actions.comment(post.id, commentText[post.id] || '');
+                                      setCommentText(prev => ({ ...prev, [post.id]: '' }));
+                                      // Refresh comments
+                                      const comments = await actions.getComments(post.id);
+                                      setPostComments(prev => ({ ...prev, [post.id]: comments }));
+                                    }
+                                  }}
+                                  className="px-4 py-2 bg-[#FFD700] text-black rounded-lg font-semibold hover:bg-yellow-600 transition-colors"
+                                >
+                                  Post
+                                </button>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </article>
                     );

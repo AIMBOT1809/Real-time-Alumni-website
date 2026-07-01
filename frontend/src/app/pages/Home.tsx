@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 import { motion } from 'motion/react';
 import collegeLogo from '../../assests/college-logo.png';
 import { supabase } from '../../supabaseClient';
+import { AlumniWallOfFame } from '../components/AlumniWallOfFame';
 
 // Banner images configuration - You can replace these URLs with your own images
 // Local video path: put your video at public/clgvideo.mp4
@@ -47,6 +48,11 @@ type AlumniHighlight = {
   published: boolean;
   created_at?: string;
 };
+type SiteStats = {
+  totalRegistrations: number;
+  totalPosts: number;
+  totalAlumni: number;
+};
 
 export function Home() {
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
@@ -55,7 +61,63 @@ export function Home() {
   const [alumniHighlights, setAlumniHighlights] = useState<AlumniHighlight[]>([]);
 const [loadingHighlights, setLoadingHighlights] = useState(true);
 const [selectedHighlight, setSelectedHighlight] = useState<AlumniHighlight | null>(null);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
+
+const [siteStats, setSiteStats] = useState<SiteStats>({
+  totalRegistrations: 0,
+  totalPosts: 0,
+  totalAlumni: 0,
+});
+
+const [loadingSiteStats, setLoadingSiteStats] = useState(true);
+
+const videoRef = useRef<HTMLVideoElement | null>(null);
+const formatCount = (count: number) => {
+  return count.toLocaleString();
+};
+
+const fetchSiteStats = async () => {
+  setLoadingSiteStats(true);
+
+  try {
+    const [alumniResult, studentResult, facultyResult, postsResult] = await Promise.all([
+      supabase.from('alumni_profiles').select('*'),
+      supabase.from('student_profiles').select('*'),
+      supabase.from('faculty_profiles').select('*'),
+      supabase.from('posts').select('*'),
+    ]);
+
+    if (alumniResult.error) {
+      console.error('Alumni count error:', alumniResult.error);
+    }
+
+    if (studentResult.error) {
+      console.error('Student count error:', studentResult.error);
+    }
+
+    if (facultyResult.error) {
+      console.error('Faculty count error:', facultyResult.error);
+    }
+
+    if (postsResult.error) {
+      console.error('Posts count error:', postsResult.error);
+    }
+
+    const alumniCount = alumniResult.data?.length || 0;
+    const studentCount = studentResult.data?.length || 0;
+    const facultyCount = facultyResult.data?.length || 0;
+    const postsCount = postsResult.data?.length || 0;
+
+    setSiteStats({
+      totalRegistrations: alumniCount + studentCount + facultyCount,
+      totalPosts: postsCount,
+      totalAlumni: alumniCount,
+    });
+  } catch (error) {
+    console.error('Error fetching site stats:', error);
+  } finally {
+    setLoadingSiteStats(false);
+  }
+};
   const fetchPublishedHighlights = async () => {
   setLoadingHighlights(true);
 
@@ -132,7 +194,37 @@ useEffect(() => {
     supabase.removeChannel(channel);
   };
 }, []);
+useEffect(() => {
+  fetchSiteStats();
 
+  const channel = supabase
+    .channel('homepage_site_stats')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'alumni_profiles' },
+      () => fetchSiteStats()
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'student_profiles' },
+      () => fetchSiteStats()
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'faculty_profiles' },
+      () => fetchSiteStats()
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'posts' },
+      () => fetchSiteStats()
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}, []);
   const nextBanner = () => {
     setIsAutoPlaying(false);
     setCurrentBannerIndex((prevIndex) => {
@@ -294,90 +386,128 @@ useEffect(() => {
         </div>
       </section>
 
+      <AlumniWallOfFame />
+
       {/* Statistics Circles Section - Small circles below banner */}
-      <section className="relative py-8 px-4 sm:px-6 lg:px-8 bg-slate-50">
-        <div className="max-w-5xl mx-auto">
-          <div className="grid grid-cols-3 gap-4 sm:gap-6 md:gap-8">
+      {/* Statistics Section - Modern Cards */}
+<section className="relative overflow-hidden py-16 px-4 sm:px-6 lg:px-8 bg-slate-950">
+  {/* Background glow */}
+  <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.25),transparent_35%),radial-gradient(circle_at_top_right,rgba(245,158,11,0.22),transparent_35%)]"></div>
 
-            {/* Circle 1: Total Registrations */}
-            <div className="flex justify-center">
-              <div className="group relative">
-                <div className="w-40 h-40 sm:w-44 sm:h-44 md:w-48 md:h-48 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 shadow-xl hover:shadow-blue-500/40 transition-all duration-500 hover:scale-105 flex flex-col items-center justify-center text-white">
-                  {/* Icon (inline) */}
-                  <div className="mb-2 p-2 bg-white/20 rounded-full backdrop-blur-sm group-hover:bg-white/30 transition-all duration-300">
-                    <svg className="h-7 w-7 sm:h-8 sm:w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                  </div>
+  <div className="relative max-w-6xl mx-auto">
+    <div className="text-center mb-12">
+      <p className="text-yellow-400 font-semibold uppercase tracking-[0.25em] text-sm">
+        Live Community Numbers
+      </p>
+      <h2 className="mt-3 text-3xl md:text-4xl font-bold text-white">
+        Our Alumni Network at a Glance
+      </h2>
+      <p className="mt-3 text-slate-400 text-base md:text-lg">
+        Real-time registrations, posts, and alumni strength
+      </p>
+    </div>
 
-                  {/* Count */}
-                  <div className="text-3xl sm:text-4xl font-bold mb-1 group-hover:scale-110 transition-transform duration-300">
-                    2,450+
-                  </div>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Total Registrations */}
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        whileHover={{ y: -8, scale: 1.02 }}
+        transition={{ duration: 0.4 }}
+        className="group relative overflow-hidden rounded-3xl bg-white/10 backdrop-blur-xl border border-white/10 p-7 shadow-2xl"
+      >
+        <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-blue-500/30 blur-2xl group-hover:bg-blue-400/40 transition-all"></div>
 
-                  {/* Label */}
-                  <div className="text-xs sm:text-sm font-semibold uppercase tracking-wide px-2 text-center">
-                    Total Registrations
-                  </div>
-
-                  {/* Decorative pulse ring */}
-                  <div className="absolute inset-0 rounded-full border-2 border-blue-300 opacity-20 animate-pulse"></div>
-                </div>
-              </div>
-            </div>
-
-            {/* Circle 2: Total Posts */}
-            <div className="flex justify-center">
-              <div className="group relative">
-                <div className="w-40 h-40 sm:w-44 sm:h-44 md:w-48 md:h-48 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 shadow-xl hover:shadow-purple-500/40 transition-all duration-500 hover:scale-105 flex flex-col items-center justify-center text-white">
-                  {/* Icon (inline) */}
-                  <div className="mb-2 p-2 bg-white/20 rounded-full backdrop-blur-sm group-hover:bg-white/30 transition-all duration-300">
-                    <svg className="h-7 w-7 sm:h-8 sm:w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/></svg>
-                  </div>
-
-                  {/* Count */}
-                  <div className="text-3xl sm:text-4xl font-bold mb-1 group-hover:scale-110 transition-transform duration-300">
-                    8,750+
-                  </div>
-
-                  {/* Label */}
-                  <div className="text-xs sm:text-sm font-semibold uppercase tracking-wide px-2 text-center">
-                    Total Posts
-                  </div>
-
-                  {/* Decorative pulse ring */}
-                  <div className="absolute inset-0 rounded-full border-2 border-purple-300 opacity-20 animate-pulse"></div>
-                </div>
-              </div>
-            </div>
-
-            {/* Circle 3: Total Alumni */}
-            <div className="flex justify-center">
-              <div className="group relative">
-                <div className="w-40 h-40 sm:w-44 sm:h-44 md:w-48 md:h-48 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 shadow-xl hover:shadow-amber-500/40 transition-all duration-500 hover:scale-105 flex flex-col items-center justify-center text-white">
-                  {/* Icon (inline) */}
-                  <div className="mb-3 p-3 bg-white/20 rounded-full backdrop-blur-sm group-hover:bg-white/30 transition-all duration-300">
-                    <svg className="h-10 w-10 sm:h-12 sm:w-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l2 5h5l-4 3 2 5-5-3-5 3 2-5-4-3h5z"/></svg>
-                  </div>
-
-                  {/* Count */}
-                  <div className="text-3xl sm:text-4xl font-bold mb-1 group-hover:scale-110 transition-transform duration-300">
-                    1,890+
-                  </div>
-
-                  {/* Label */}
-                  <div className="text-xs sm:text-sm font-semibold uppercase tracking-wide px-2 text-center">
-                    Total Alumni
-                  </div>
-
-                  {/* Decorative pulse ring */}
-                  <div className="absolute inset-0 rounded-full border-2 border-amber-300 opacity-20 animate-pulse"></div>
-                </div>
-              </div>
-            </div>
-
+        <div className="relative">
+          <div className="h-14 w-14 rounded-2xl bg-blue-500/20 border border-blue-400/30 flex items-center justify-center mb-6">
+            <svg className="h-7 w-7 text-blue-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
           </div>
-        </div>
-      </section>
 
+          <p className="text-slate-400 text-sm font-semibold uppercase tracking-wider">
+            Total Registrations
+          </p>
+
+          <div className="mt-3 text-5xl font-extrabold text-white tracking-tight">
+            {loadingSiteStats ? '...' : formatCount(siteStats.totalRegistrations)}
+          </div>
+
+          <p className="mt-4 text-sm text-blue-200">
+            Students + Faculty + Alumni
+          </p>
+        </div>
+      </motion.div>
+
+      {/* Total Posts */}
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        whileHover={{ y: -8, scale: 1.02 }}
+        transition={{ duration: 0.4, delay: 0.1 }}
+        className="group relative overflow-hidden rounded-3xl bg-white/10 backdrop-blur-xl border border-white/10 p-7 shadow-2xl"
+      >
+        <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-purple-500/30 blur-2xl group-hover:bg-purple-400/40 transition-all"></div>
+
+        <div className="relative">
+          <div className="h-14 w-14 rounded-2xl bg-purple-500/20 border border-purple-400/30 flex items-center justify-center mb-6">
+            <svg className="h-7 w-7 text-purple-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+            </svg>
+          </div>
+
+          <p className="text-slate-400 text-sm font-semibold uppercase tracking-wider">
+            Total Posts
+          </p>
+
+          <div className="mt-3 text-5xl font-extrabold text-white tracking-tight">
+            {loadingSiteStats ? '...' : formatCount(siteStats.totalPosts)}
+          </div>
+
+          <p className="mt-4 text-sm text-purple-200">
+            Community posts shared
+          </p>
+        </div>
+      </motion.div>
+
+      {/* Total Alumni */}
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        whileHover={{ y: -8, scale: 1.02 }}
+        transition={{ duration: 0.4, delay: 0.2 }}
+        className="group relative overflow-hidden rounded-3xl bg-white/10 backdrop-blur-xl border border-white/10 p-7 shadow-2xl"
+      >
+        <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-orange-500/30 blur-2xl group-hover:bg-orange-400/40 transition-all"></div>
+
+        <div className="relative">
+          <div className="h-14 w-14 rounded-2xl bg-orange-500/20 border border-orange-400/30 flex items-center justify-center mb-6">
+            <svg className="h-7 w-7 text-orange-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2l2 5h5l-4 3 2 5-5-3-5 3 2-5-4-3h5z" />
+            </svg>
+          </div>
+
+          <p className="text-slate-400 text-sm font-semibold uppercase tracking-wider">
+            Total Alumni
+          </p>
+
+          <div className="mt-3 text-5xl font-extrabold text-white tracking-tight">
+            {loadingSiteStats ? '...' : formatCount(siteStats.totalAlumni)}
+          </div>
+
+          <p className="mt-4 text-sm text-orange-200">
+            Registered alumni profiles
+          </p>
+        </div>
+      </motion.div>
+    </div>
+  </div>
+</section>
       {/* About Us Section */}
       <section id="about" className="py-20 bg-white">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -529,7 +659,7 @@ useEffect(() => {
               <p className="text-lg text-slate-600">Recent moments, events, and memories from our alumni community</p>
             </div>
             <Link
-              to="/gallery"
+              to="/register"
               className="hidden md:flex items-center space-x-2 px-6 py-3 bg-yellow-500 text-slate-900 rounded-lg font-semibold hover:bg-yellow-400 transition-all duration-300 shadow-md hover:shadow-lg"
             >
               <span>View More</span>
@@ -593,9 +723,9 @@ useEffect(() => {
           {/* Mobile View More Button */}
           <div className="mt-12 text-center md:hidden">
             <Link
-              to="/gallery"
-              className="inline-flex items-center space-x-2 px-6 py-3 bg-yellow-500 text-slate-900 rounded-lg font-semibold hover:bg-yellow-400 transition-all duration-300 shadow-md hover:shadow-lg"
-            >
+  to="/register"
+  className="inline-flex items-center space-x-2 px-6 py-3 bg-yellow-500 text-slate-900 rounded-lg font-semibold hover:bg-yellow-400 transition-all duration-300 shadow-md hover:shadow-lg"
+>
               <span>View More</span>
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
