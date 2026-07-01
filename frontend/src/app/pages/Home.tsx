@@ -53,6 +53,16 @@ type SiteStats = {
   totalPosts: number;
   totalAlumni: number;
 };
+type HomeEvent = {
+  id: string;
+  title: string;
+  date: string;
+  time: string;
+  location: string;
+  type: string;
+  image: string;
+  description?: string;
+};
 
 export function Home() {
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
@@ -69,6 +79,9 @@ const [siteStats, setSiteStats] = useState<SiteStats>({
 });
 
 const [loadingSiteStats, setLoadingSiteStats] = useState(true);
+
+const [homeEvents, setHomeEvents] = useState<HomeEvent[]>([]);
+const [loadingEvents, setLoadingEvents] = useState(true);
 
 const videoRef = useRef<HTMLVideoElement | null>(null);
 const formatCount = (count: number) => {
@@ -194,6 +207,53 @@ useEffect(() => {
     supabase.removeChannel(channel);
   };
 }, []);
+const fetchHomeEvents = async () => {
+  setLoadingEvents(true);
+  const { data, error } = await supabase
+    .from('events')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching events:', error);
+    setLoadingEvents(false);
+    return;
+  }
+
+  const mapped = (data || []).map((r: any) => ({
+    id: String(r.id),
+    title: r.title ?? 'Untitled Event',
+    date: r.event_date ?? r.date ?? '',
+    time: r.event_time ?? r.time ?? '',
+    location: r.location ?? '',
+    type: r.type ?? 'Event',
+    image: r.image_url ?? r.image ?? '',
+    description: r.description ?? '',
+  }));
+
+  setHomeEvents(mapped);
+  setLoadingEvents(false);
+};
+
+useEffect(() => {
+  fetchHomeEvents();
+
+  const channel = supabase
+    .channel('homepage_events')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'events' },
+      () => {
+        fetchHomeEvents();
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}, []);
+
 useEffect(() => {
   fetchSiteStats();
 
@@ -544,35 +604,31 @@ useEffect(() => {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
-              <div className="h-48 bg-gradient-to-br from-blue-400 to-blue-600"></div>
-              <div className="p-6">
-                <div className="text-sm text-blue-600 font-semibold mb-2">March 15, 2025</div>
-                <h3 className="text-xl font-bold text-slate-900 mb-2">Annual Alumni Meet 2025</h3>
-                <p className="text-slate-600 mb-4">Reconnect with classmates and faculty at our annual gathering.</p>
-                <button className="text-yellow-600 font-semibold hover:text-yellow-700">Learn More →</button>
+            {loadingEvents ? (
+              <div className="col-span-full rounded-2xl border border-slate-200 bg-white p-10 text-center text-slate-500">
+                Loading events...
               </div>
-            </div>
-
-            <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
-              <div className="h-48 bg-gradient-to-br from-purple-400 to-purple-600"></div>
-              <div className="p-6">
-                <div className="text-sm text-purple-600 font-semibold mb-2">April 20, 2025</div>
-                <h3 className="text-xl font-bold text-slate-900 mb-2">Tech Talk: AI & Future</h3>
-                <p className="text-slate-600 mb-4">Industry leaders share insights on emerging technologies.</p>
-                <button className="text-yellow-600 font-semibold hover:text-yellow-700">Learn More →</button>
+            ) : homeEvents.length > 0 ? (
+              homeEvents.slice(0, 3).map((event) => (
+                <div key={event.id} className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
+                  {event.image && !event.image.startsWith('blob:') ? (
+                    <img src={event.image} alt={event.title} className="h-48 w-full object-cover" />
+                  ) : (
+                    <div className="h-48 bg-gradient-to-br from-blue-400 to-blue-600"></div>
+                  )}
+                  <div className="p-6">
+                    <div className="text-sm text-blue-600 font-semibold mb-2">{event.date}{event.time ? ` at ${event.time}` : ''}</div>
+                    <h3 className="text-xl font-bold text-slate-900 mb-2">{event.title}</h3>
+                    <p className="text-slate-600 mb-4">{event.description || event.location || 'Join us for this exciting event.'}</p>
+                    <Link to="/events" className="text-yellow-600 font-semibold hover:text-yellow-700">Learn More →</Link>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="col-span-full rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-slate-500">
+                No upcoming events at the moment. Check back later!
               </div>
-            </div>
-
-            <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
-              <div className="h-48 bg-gradient-to-br from-amber-400 to-orange-600"></div>
-              <div className="p-6">
-                <div className="text-sm text-amber-600 font-semibold mb-2">May 10, 2025</div>
-                <h3 className="text-xl font-bold text-slate-900 mb-2">Career Fair 2025</h3>
-                <p className="text-slate-600 mb-4">Explore job opportunities from top companies hiring alumni.</p>
-                <button className="text-yellow-600 font-semibold hover:text-yellow-700">Learn More →</button>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </section>
