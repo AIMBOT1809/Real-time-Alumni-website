@@ -263,6 +263,88 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  // Fetch events from Supabase
+  useEffect(() => {
+    let mounted = true;
+    let eventsChannel: any = null;
+
+    const fetchEvents = async () => {
+      try {
+        console.log('[AuthContext] Fetching events from Supabase...');
+        const { data, error } = await supabase
+          .from('events')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('[AuthContext] Error fetching events:', error);
+          if (mounted) {
+            setEvents([]);
+          }
+          return;
+        }
+
+        if (!data) {
+          console.log('[AuthContext] No events found');
+          if (mounted) {
+            setEvents([]);
+          }
+          return;
+        }
+
+        console.log('[AuthContext] Events fetched, count =', data.length);
+        if (mounted) {
+          const mappedEvents = data.map((r: any) => ({
+            id: String(r.id),
+            title: r.title ?? 'Untitled Event',
+            date: r.event_date ?? r.date ?? '',
+            time: r.event_time ?? r.time ?? '',
+            location: r.location ?? '',
+            type: r.type ?? 'Event',
+            description: r.description ?? '',
+            image: r.image_url ?? r.image ?? '',
+            organizer: r.organizer ?? 'Admin',
+            alumniId: r.created_by ?? r.alumniId ?? 'admin',
+            source: 'admin' as const,
+          }));
+
+          setEvents(mappedEvents as Event[]);
+          localStorage.setItem('allumini_events', JSON.stringify(mappedEvents));
+          console.log('[AuthContext] Events set, count =', mappedEvents.length);
+        }
+      } catch (err) {
+        console.error('[AuthContext] Unexpected error fetching events:', err);
+      }
+    };
+
+    fetchEvents();
+
+    // Setup realtime subscription for events
+    try {
+      eventsChannel = supabase
+        .channel('public:events')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, (payload) => {
+          console.log('[AuthContext] Realtime update for events:', payload.eventType);
+          fetchEvents();
+        })
+        .subscribe((status, err) => {
+          if (status === 'SUBSCRIBED') console.log('[AuthContext] Events channel subscribed');
+          if (err) console.error('[AuthContext] Events channel error:', err);
+        });
+    } catch (err) {
+      console.error('[AuthContext] Failed to create realtime channel for events:', err);
+    }
+
+    return () => {
+      mounted = false;
+      try {
+        if (eventsChannel) eventsChannel.unsubscribe();
+      } catch (e) {
+        // ignore
+      }
+    };
+  }, []);
+
   useEffect(() => {
     let mounted = true;
     let channel: any = null;

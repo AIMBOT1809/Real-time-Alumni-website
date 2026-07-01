@@ -164,6 +164,12 @@ export interface Event {
 
   attachmentType?: string;
 
+  description?: string;
+
+  organizer?: string;
+
+  source?: 'admin' | 'post';
+
 }
 
 

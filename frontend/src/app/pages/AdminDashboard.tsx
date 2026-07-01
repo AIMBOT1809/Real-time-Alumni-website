@@ -66,10 +66,54 @@ export function AdminDashboard() {
     [posts, user?.id],
   );
 
-  const adminEvents = useMemo(
-    () => events.filter((event) => event.alumniId === user?.id),
-    [events, user?.id],
-  );
+  const [adminEvents, setAdminEvents] = useState<any[]>([]);
+
+  const fetchAdminEvents = async () => {
+    const { data, error } = await supabase
+      .from('events')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching admin events:', error);
+      return;
+    }
+
+    const mapped = (data || []).map((r: any) => ({
+      id: String(r.id),
+      title: r.title ?? 'Untitled Event',
+      date: r.event_date ?? r.date ?? '',
+      time: r.event_time ?? r.time ?? '',
+      location: r.location ?? '',
+      type: r.type ?? 'Event',
+      description: r.description ?? '',
+      image: r.image_url ?? r.image ?? '',
+      alumniId: r.created_by ?? r.alumniId ?? 'admin',
+      attachmentUrl: r.file_url ?? undefined,
+      attachmentName: r.file_name ?? undefined,
+    }));
+
+    setAdminEvents(mapped);
+  };
+
+  useEffect(() => {
+    fetchAdminEvents();
+
+    const channel = supabase
+      .channel('admin_events_realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'events' },
+        () => {
+          fetchAdminEvents();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const [activeTab, setActiveTab] = useState<'home' | 'reports' | 'analytics' | 'admins'>('home');
   const [searchTerm, setSearchTerm] = useState('');
@@ -375,8 +419,54 @@ useEffect(() => {
       return;
     }
 
-    const imageUrl = newEventFile && newEventFile.type.startsWith('image/') ? URL.createObjectURL(newEventFile) : 'https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80';
-    const attachmentUrl = newEventFile ? URL.createObjectURL(newEventFile) : undefined;
+    let imageUrl = 'https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80';
+    let fileUrl: string | undefined = undefined;
+
+    // Upload file to Supabase Storage if provided
+    if (newEventFile) {
+      try {
+        const fileExt = newEventFile.name.split('.').pop();
+        const fileName = `events/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+
+        // Try to upload - if bucket doesn't exist, try to create it
+        let { error: uploadError } = await supabase.storage
+          .from('event_images')
+          .upload(fileName, newEventFile);
+
+        // If bucket not found, try to create it
+        if (uploadError && uploadError.message?.includes('bucket')) {
+          console.log('event_images bucket not found, attempting to create it...');
+          const { error: createError } = await supabase.storage.createBucket('event_images', {
+            public: true,
+          });
+          if (createError) {
+            console.error('Failed to create bucket:', createError);
+          } else {
+            // Retry upload after creating bucket
+            const retryResult = await supabase.storage
+              .from('event_images')
+              .upload(fileName, newEventFile);
+            uploadError = retryResult.error;
+          }
+        }
+
+        if (uploadError) {
+          console.error('Image upload error (using default image):', uploadError);
+          // Don't block event creation - just use default image
+        } else {
+          const { data } = supabase.storage.from('event_images').getPublicUrl(fileName);
+
+          if (newEventFile.type.startsWith('image/')) {
+            imageUrl = data.publicUrl;
+          } else {
+            fileUrl = data.publicUrl;
+          }
+        }
+      } catch (uploadErr) {
+        console.error('Upload exception (using default image):', uploadErr);
+        // Don't block event creation
+      }
+    }
 
     const { error } = await supabase
       .from('events')
@@ -389,7 +479,7 @@ useEffect(() => {
           type: newEventType,
           description: description,
           image_url: imageUrl,
-          file_url: attachmentUrl,
+          file_url: fileUrl,
           created_by: user.id
         }
       ]);
