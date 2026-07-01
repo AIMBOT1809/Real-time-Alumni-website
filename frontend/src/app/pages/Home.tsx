@@ -84,6 +84,7 @@ const [homeEvents, setHomeEvents] = useState<HomeEvent[]>([]);
 const [loadingEvents, setLoadingEvents] = useState(true);
 
 const videoRef = useRef<HTMLVideoElement | null>(null);
+const campusVideoRef = useRef<HTMLVideoElement | null>(null);
 const formatCount = (count: number) => {
   return count.toLocaleString();
 };
@@ -445,6 +446,22 @@ useEffect(() => {
           </div>
         </div>
       </section>
+
+      <div className="mt-[12px] mb-[12px] w-full overflow-hidden" style={{ marginLeft: 'calc(50% - 50vw)', width: '100vw' }}>
+        <div className="mx-auto overflow-hidden rounded-[12px] shadow-[0_6px_18px_rgba(15,23,42,0.10)]" style={{ width: '100%', maxWidth: '100%' }}>
+          <video
+            ref={campusVideoRef}
+            src="/tkr.mp4"
+            className="block w-full"
+            style={{ display: 'block', height: 'auto', objectFit: 'contain', objectPosition: 'center' }}
+            preload="metadata"
+            autoPlay
+            muted
+            loop
+            playsInline
+          />
+        </div>
+      </div>
 
       <AlumniWallOfFame />
 
