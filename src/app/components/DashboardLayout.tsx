@@ -15,6 +15,7 @@ import Plus from 'lucide-react/dist/esm/icons/plus';
 import Rocket from 'lucide-react/dist/esm/icons/rocket';
 import School from 'lucide-react/dist/esm/icons/school';
 import Search from 'lucide-react/dist/esm/icons/search';
+import ShieldCheck from 'lucide-react/dist/esm/icons/shield-check';
 import UserCheck from 'lucide-react/dist/esm/icons/user-check';
 import UserRound from 'lucide-react/dist/esm/icons/user-round';
 import Users from 'lucide-react/dist/esm/icons/users';
@@ -282,7 +283,7 @@ export function DashboardLayout() {
             {/* Desktop toggle button */}
             <button
               onClick={() => setDesktopCollapsed(!desktopCollapsed)}
-              className={`hidden lg:flex absolute top-4 z-50 items-center justify-center rounded-lg bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 h-8 w-8 transition ${desktopCollapsed ? 'right-6' : 'right-4'}`}
+              className={`hidden lg:flex absolute top-2 z-50 items-center justify-center rounded-lg bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 h-8 w-8 transition ${desktopCollapsed ? 'right-2' : 'right-4'}`}
             >
               {desktopCollapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
             </button>
@@ -299,7 +300,7 @@ export function DashboardLayout() {
 
             {/* Profile / Introduction Card */}
             <section
-              className={`mb-5 rounded-2xl border border-slate-700 bg-slate-800/80 p-4 ${desktopCollapsed ? 'hidden lg:block lg:p-2' : ''}`}
+              className={`mb-8 mt-8 rounded-2xl border border-slate-700 bg-slate-800/80 p-4 ${desktopCollapsed ? 'hidden lg:block lg:p-2' : ''}`}
               aria-label="Profile introduction"
             >
               <div className={`flex items-center ${desktopCollapsed ? 'lg:justify-center' : 'gap-3'}`}>
@@ -328,6 +329,21 @@ export function DashboardLayout() {
               Dashboard
             </p>
             <nav className="mt-2 space-y-1" aria-label="Dashboard sidebar navigation">
+              {role === 'admin' && (
+                <NavLink
+                  to="/admin/dashboard"
+                  className={({ isActive }) => `
+                    flex items-center gap-3 px-3 py-2 rounded-lg transition-colors
+                    ${isActive 
+                      ? 'bg-yellow-500 text-slate-900 font-semibold' 
+                      : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                    }
+                  `}
+                >
+                  <ShieldCheck className="h-5 w-5 shrink-0" />
+                  {!desktopCollapsed && <span>Admin Dashboard</span>}
+                </NavLink>
+              )}
               {sidebarLinks.map(({ label, icon: Icon, path }) => (
                 <NavLink
                   key={path}

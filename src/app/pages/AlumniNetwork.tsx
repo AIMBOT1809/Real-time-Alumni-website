@@ -83,7 +83,7 @@ export function AlumniNetwork() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto pb-12">
+    <div className="max-w-7xl mx-auto pb-12 px-6 sm:px-8 pt-8">
       <div className="mb-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4">
           <div>
@@ -158,17 +158,17 @@ export function AlumniNetwork() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
               >
                 {availableYears.map(year => (
                   <button
                     key={year}
                     onClick={() => setSelectedYear(year)}
-                    className="flex flex-col items-center justify-center p-6 bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-yellow-400 transition-all group"
+                    className="flex flex-col items-center justify-center p-8 bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-yellow-400 transition-all group"
                   >
-                    <GraduationCap className="h-8 w-8 text-yellow-500 mb-3 group-hover:scale-110 transition-transform" />
-                    <span className="text-xl font-bold text-slate-900">Class of {year}</span>
-                    <span className="text-sm text-slate-500 mt-1">
+                    <GraduationCap className="h-10 w-10 text-yellow-500 mb-4 group-hover:scale-110 transition-transform" />
+                    <span className="text-2xl font-bold text-slate-900">Class of {year}</span>
+                    <span className="text-base text-slate-500 mt-2">
                       {alumni.filter(a => a.Passed_Out_Year === year).length} Alumni
                     </span>
                   </button>
@@ -182,7 +182,7 @@ export function AlumniNetwork() {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
               >
                 {availableDepartments.map(dept => (
                   <button
