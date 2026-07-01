@@ -25,6 +25,7 @@ type CommunityAlumniRecord = {
   email: string;
   avatar?: string;
   role: 'alumni' | 'career-aspirant' | 'higher-education' |'entrepreneur';
+  department?: string;
   company?: string;
   position?: string;
   experience?: string;
@@ -218,6 +219,7 @@ const fetchAllProfiles = async () => {
         graduationYear: String(item.Passed_Out_Year || item.graduationYear || ''),
         year: String(item.Year_of_Joining || item.year || ''),
         role: normalizeCurrentStatus(currentStatusValue),
+        department: String(item.Department || item.department || '').toUpperCase(),
         currentStatus: currentStatusValue,
         createdAt: item.created_at,
       };
@@ -518,15 +520,20 @@ useEffect(() => {
     );
   };
 
+  const uniqueDepartments = useMemo(() => {
+    const depts = new Set(reportAlumni.map(item => item.department).filter(Boolean));
+    return Array.from(depts).sort();
+  }, [reportAlumni]);
+
   const filteredAlumni = useMemo(() => {
     return reportAlumni.filter((item) => {
-      const searchText = [item.name, item.email, item.phone, item.graduationYear,]
+      const searchText = [item.name, item.email, item.phone, item.department, item.graduationYear]
         .filter(Boolean)
         .join(' ')
         .toLowerCase();
 
       const matchesSearch = searchText.includes(searchTerm.toLowerCase());
-      const matchesStatus = filterStatus === 'all' || item.role === filterStatus;
+      const matchesStatus = filterStatus === 'all' || item.department === filterStatus;
       const joinYearValue = String(item.year || '').trim();
       const passedOutYearValue = String(item.graduationYear || '').trim();
       const matchesJoiningYear = !showJoiningYearFilter || !joiningYear || joinYearValue === joiningYear;
@@ -1262,11 +1269,10 @@ entrepreneurRatio: Math.round((entrepreneurCount / effectiveTotal) * 100),
                       onChange={(e) => setFilterStatus(e.target.value)}
                       className="h-full w-full rounded-2xl border-none bg-transparent px-3 text-sm text-slate-900 outline-none focus:ring-0"
                     >
-                      <option value="all">All Roles</option>
-                      <option value="alumni">Working Professional</option>
-                      <option value="career-aspirant">Career Aspirant</option>
-                      <option value="higher-education">Higher Education</option>
-                      <option value="entrepreneur">Entrepreneur</option>
+                      <option value="all">All Departments</option>
+                      {['CSE', 'CSD', 'CSM', 'ECE', 'EEE', 'MECH', 'IT', 'CIVIL'].map(dept => (
+                        <option key={dept} value={dept}>{dept}</option>
+                      ))}
                     </select>
                   </div>
                 </div>
@@ -1335,7 +1341,7 @@ entrepreneurRatio: Math.round((entrepreneurCount / effectiveTotal) * 100),
                   <thead className="bg-slate-50 border-b border-slate-200">
                     <tr>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">Name</th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">Role</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">Department</th>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">Email Address</th>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">Phone Number</th>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">Year of Joining</th>
@@ -1351,22 +1357,6 @@ entrepreneurRatio: Math.round((entrepreneurCount / effectiveTotal) * 100),
                       </tr>
                     ) : filteredAlumni.length > 0 ? (
                       filteredAlumni.map((alumnus) => {
-                        const roleBadge: Record<string, string> = {
-                          alumni: 'bg-blue-100 text-blue-800',
-                          'higher-education': 'bg-violet-100 text-violet-800',
-                          'career-aspirant': 'bg-amber-100 text-amber-800',
-                        };
-                        const badgeClass = roleBadge[alumnus.role] ?? 'bg-slate-100 text-slate-700';
-                        const roleLabel =
-  alumnus.role === 'alumni'
-    ? 'Working Professional'
-    : alumnus.role === 'higher-education'
-      ? 'Higher Education'
-      : alumnus.role === 'career-aspirant'
-        ? 'Career Aspirant'
-        : alumnus.role === 'entrepreneur'
-          ? 'Entrepreneur'
-          : alumnus.role;
                         return (
                           <tr key={alumnus.id} className="hover:bg-slate-50 transition-colors">
                             <td className="px-6 py-4">
@@ -1382,8 +1372,8 @@ entrepreneurRatio: Math.round((entrepreneurCount / effectiveTotal) * 100),
                               </div>
                             </td>
                             <td className="px-6 py-4">
-                              <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${badgeClass}`}>
-                                {roleLabel}
+                              <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-slate-100 text-slate-700`}>
+                                {alumnus.department || '—'}
                               </span>
                             </td>
                             <td className="px-6 py-4 text-sm text-slate-600">{alumnus.email || '—'}</td>

@@ -282,7 +282,7 @@ export function DashboardLayout() {
             {/* Desktop toggle button */}
             <button
               onClick={() => setDesktopCollapsed(!desktopCollapsed)}
-              className={`hidden lg:flex absolute top-4 z-50 items-center justify-center rounded-lg bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 h-8 w-8 transition ${desktopCollapsed ? 'right-6' : 'right-4'}`}
+              className={`hidden lg:flex absolute top-2 z-50 items-center justify-center rounded-lg bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 h-8 w-8 transition ${desktopCollapsed ? 'right-2' : 'right-4'}`}
             >
               {desktopCollapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
             </button>
@@ -299,7 +299,7 @@ export function DashboardLayout() {
 
             {/* Profile / Introduction Card */}
             <section
-              className={`mb-5 rounded-2xl border border-slate-700 bg-slate-800/80 p-4 ${desktopCollapsed ? 'hidden lg:block lg:p-2' : ''}`}
+              className={`mb-8 mt-8 rounded-2xl border border-slate-700 bg-slate-800/80 p-4 ${desktopCollapsed ? 'hidden lg:block lg:p-2' : ''}`}
               aria-label="Profile introduction"
             >
               <div className={`flex items-center ${desktopCollapsed ? 'lg:justify-center' : 'gap-3'}`}>

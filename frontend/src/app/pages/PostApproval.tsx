@@ -207,6 +207,17 @@ await supabase
   .delete()
   .eq("id", postId);
 
+// Insert notification
+await supabase.from("notifications").insert([
+  {
+    user_id: pendingPost.alumni_id,
+    title: "Post Approved",
+    message: `Your post "${pendingPost.title}" has been approved.`,
+    read: false,
+    created_at: new Date().toISOString()
+  }
+]);
+
       // Update localStorage
       approveLocalPost(postId);
 

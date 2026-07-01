@@ -2208,8 +2208,6 @@ const author =
                         
                         <div className="flex justify-center md:justify-start gap-8 mb-4 text-white text-lg">
                           <div><span className="font-bold">{posts?.filter(p => p.alumniId === user?.id).length || 0}</span> posts</div>
-                          <div><span className="font-bold">{user?.id === 'admin' ? 124 : Math.floor(Math.random() * 50) + 10}</span> followers</div>
-                          <div><span className="font-bold">{following?.length || 0}</span> following</div>
                         </div>
 
                         <div className="text-sm">

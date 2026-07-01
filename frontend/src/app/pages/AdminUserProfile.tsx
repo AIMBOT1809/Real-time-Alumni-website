@@ -97,9 +97,9 @@ export function AdminUserProfile() {
       </div>
 
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-          {/* Profile Details Sidebar */}
-          <div className="space-y-6">
+        <div className="flex flex-col gap-8">
+          {/* Profile Details (Full Width) */}
+          <div className="w-full">
             <div className="rounded-3xl bg-white p-8 shadow-sm border border-slate-200 relative overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-br from-yellow-400 to-amber-500"></div>
               <div className="relative flex flex-col items-center mt-12 text-center">
@@ -114,25 +114,25 @@ export function AdminUserProfile() {
                 </span>
               </div>
 
-              <div className="mt-8 space-y-6">
+              <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
                 <div>
                   <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Email Address</p>
-                  <p className="text-slate-900 font-medium">{profile.Email_Address || '—'}</p>
+                  <p className="text-slate-900 font-medium break-all">{profile.Email_Address || '—'}</p>
                 </div>
                 <div>
                   <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Phone Number</p>
                   <p className="text-slate-900 font-medium">{profile.Phone_Number || '—'}</p>
                 </div>
-                {(profile.Year_of_Joining || profile.Passed_Out_Year) && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Joined</p>
-                      <p className="text-slate-900 font-medium">{profile.Year_of_Joining || '—'}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Graduated</p>
-                      <p className="text-slate-900 font-medium">{profile.Passed_Out_Year || '—'}</p>
-                    </div>
+                {profile.Year_of_Joining && (
+                  <div>
+                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Joined</p>
+                    <p className="text-slate-900 font-medium">{profile.Year_of_Joining}</p>
+                  </div>
+                )}
+                {profile.Passed_Out_Year && (
+                  <div>
+                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Graduated</p>
+                    <p className="text-slate-900 font-medium">{profile.Passed_Out_Year}</p>
                   </div>
                 )}
                 {profile.College_Name && (
@@ -147,10 +147,54 @@ export function AdminUserProfile() {
                     <p className="text-slate-900 font-medium">{profile.Department}</p>
                   </div>
                 )}
+                
+                {/* Dynamically render additional details entered during registration */}
+                {[
+                  { label: 'LinkedIn', value: profile.LinkedIn_Profile_URL },
+                  { label: 'Roll Number', value: profile.Roll_Number },
+                  { label: 'Current Status', value: profile.Current_Status },
+                  { label: 'Organization Name', value: profile.Organization_Name },
+                  { label: 'Role/Position', value: profile.Role_Position },
+                  { label: 'Package CTC', value: profile.Package_CTC },
+                  { label: 'University Applied', value: profile.University_Applied },
+                  { label: 'Country', value: profile.Country },
+                  { label: 'City', value: profile.City },
+                  { label: 'Course', value: profile.Course },
+                  { label: 'Branch Specialization', value: profile.Branch_Specialization },
+                  { label: 'Skills', value: profile.Skills },
+                  { label: 'Startup Name', value: profile.Startup_Name },
+                  { label: 'Founder Role', value: profile.Founder_Role },
+                  { label: 'Industry', value: profile.Industry },
+                  { label: 'Year Founded', value: profile.Year_Founded },
+                  { label: 'Website', value: profile.Website },
+                  { label: 'Location', value: profile.Location },
+                  { label: 'Employee Count', value: profile.Employee_Count },
+                  { label: 'Startup Stage', value: profile.Startup_Stage },
+                  { label: 'Looking For', value: profile.Looking_For },
+                ].map((detail, index) => detail.value ? (
+                  <div key={index}>
+                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">{detail.label}</p>
+                    {detail.label === 'LinkedIn' || detail.label === 'Website' ? (
+                      <a href={detail.value} target="_blank" rel="noopener noreferrer" className="text-blue-600 font-medium hover:underline break-all">
+                        {detail.value}
+                      </a>
+                    ) : (
+                      <p className="text-slate-900 font-medium whitespace-pre-wrap">{detail.value}</p>
+                    )}
+                  </div>
+                ) : null)}
+
                 {profile.about && (
-                  <div>
+                  <div className="sm:col-span-2 md:col-span-3 lg:col-span-4">
                     <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">About</p>
                     <p className="text-slate-700 whitespace-pre-wrap leading-relaxed text-sm">{profile.about}</p>
+                  </div>
+                )}
+                
+                {profile.Startup_Description && (
+                  <div className="sm:col-span-2 md:col-span-3 lg:col-span-4">
+                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Startup Description</p>
+                    <p className="text-slate-700 whitespace-pre-wrap leading-relaxed text-sm">{profile.Startup_Description}</p>
                   </div>
                 )}
               </div>
@@ -158,7 +202,7 @@ export function AdminUserProfile() {
           </div>
 
           {/* Activity Main Area */}
-          <div className="lg:col-span-2 space-y-8">
+          <div className="w-full space-y-8">
             <section className="rounded-3xl bg-white shadow-sm border border-slate-200 overflow-hidden">
               <div className="bg-slate-50/50 border-b border-slate-100 p-6 flex items-center gap-3">
                 <div className="p-2.5 bg-blue-100 text-blue-600 rounded-xl">
