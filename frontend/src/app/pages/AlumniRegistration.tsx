@@ -47,7 +47,7 @@ export function AlumniRegistration({ onBack }: AlumniRegistrationProps) {
     // Backend will call memoValidator.js for alumni
     formData.append("role", "alumni");
 
-    const response = await fetch("/verify-id", {
+    const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/verify-id`, {
       method: "POST",
       body: formData,
     });
@@ -123,11 +123,25 @@ export function AlumniRegistration({ onBack }: AlumniRegistrationProps) {
         return false;
       }
 
-      const allowedIdTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
-      if (!allowedIdTypes.includes(memo.type)) {
-        alert('Memo must be in JPG, PNG, or PDF format');
-        return false;
-      }
+      const allowedIdTypes = [
+  'image/jpeg',
+  'image/png',
+  'image/jpg',
+  'application/pdf',
+];
+
+const allowedExtensions = ['.jpg', '.jpeg', '.png', '.pdf'];
+const fileExtension = memo.name
+  .substring(memo.name.lastIndexOf('.'))
+  .toLowerCase();
+
+if (
+  !allowedIdTypes.includes(memo.type) &&
+  !allowedExtensions.includes(fileExtension)
+) {
+  alert('Memo must be in JPG, JPEG, PNG, or PDF format');
+  return false;
+}
     }
 
     if (!password || password.length < 8) {
@@ -784,19 +798,19 @@ navigate("/dashboard", { replace: true });
 
                   <div className="mb-4">
                     <label htmlFor="memo" className="block text-sm font-medium text-slate-700 mb-1">
-                      College ID/College Memo*
+                      College ID / College Memo  *
                     </label>
                     <input
                       id="memo"
                       name="memo"
                       type="file"
-                      accept=".pdf"
+                      accept=".jpg,.jpeg,.png,.pdf,application/pdf"
                       required
                       onChange={handleDocumentValidation}
                       className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 file:mr-3 file:py-2 file:border-0 file:text-sm file:font-medium file:bg-yellow-50 file:text-yellow-700 hover:file:bg-yellow-100"   
                     />
                     <p className="mt-1 text-xs text-slate-500">
-                      Accepted format: PDF (Max 5MB)
+                      Accepted formats: JPG, JPEG, PNG, PDF (Max size: 5MB)
                     </p>
                   </div>
 
@@ -808,11 +822,11 @@ navigate("/dashboard", { replace: true });
                       id="photo"
                       name="photo"
                       type="file"
-                      accept="image/jpeg,image/jpg,image/png"
+                      accept="image/jpeg,image/jpg,image/png,.pdf,application/pdf"
                       className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 file:mr-3 file:py-2 file:border-0 file:text-sm file:font-medium file:bg-yellow-50 file:text-yellow-700 hover:file:bg-yellow-100"
                     />
                     <p className="mt-1 text-xs text-slate-500">
-                      Accepted formats: JPG, JPEG, PNG (Max size: 5MB)
+                      Accepted formats: JPG, JPEG, PNG, PDF (Max size: 5MB)
                     </p>
                   </div>
 
