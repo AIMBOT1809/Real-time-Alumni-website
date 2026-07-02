@@ -1334,10 +1334,46 @@ entrepreneurRatio: Math.round((entrepreneurCount / effectiveTotal) * 100),
 
                       
                     <div className="space-y-4">
-                      <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center text-slate-500">
-                        No highlights created yet. Click "Create Alumni Highlight" to get started.
-                      </div>
-                      </div>
+  {adminHighlights.length === 0 ? (
+    <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center">
+      No highlights created yet. Click "Create Alumni Highlight" to get started.
+    </div>
+  ) : (
+    adminHighlights.map((highlight) => (
+      <div
+        key={highlight.id}
+        className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+      >
+        <h2 className="text-xl font-bold">{highlight.title}</h2>
+
+        <p className="mt-2">{highlight.description}</p>
+
+        <p className="mt-2 text-sm text-gray-500">
+          {highlight.category}
+        </p>
+
+        <p className="text-sm text-gray-500">
+          {highlight.location}
+        </p>
+
+        <p className="text-sm text-gray-500">
+          {highlight.date}
+        </p>
+
+        <div className="mt-4 flex flex-wrap gap-3">
+          {highlight.images.map((image, index) => (
+            <img
+              key={index}
+              src={image}
+              alt={highlight.title}
+              className="h-32 w-32 rounded-lg object-cover"
+            />
+          ))}
+        </div>
+      </div>
+    ))
+  )}
+</div>
                 </div>
               </div>
             )}
