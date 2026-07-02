@@ -49,6 +49,7 @@ interface CommentItemProps {
   onReplyTextChange: (text: string) => void;
   onReplySubmit: (parentId: string) => Promise<void>;
   onDelete: (commentId: string) => Promise<void>;
+  highlightedCommentId?: string | null;
 }
 
 function CommentItem({
@@ -61,19 +62,20 @@ function CommentItem({
   onReplyTextChange,
   onReplySubmit,
   onDelete,
+  highlightedCommentId,
   depth = 0,
 }: CommentItemProps & { depth?: number }) {
   const isReplying = replyingTo[postId] === comment.id;
   const isReply = depth > 0;
 
   return (
-    <div className={`${isReply ? 'ml-6 relative' : ''}`}>
+    <div id={`comment-${comment.id}`} className={`${isReply ? 'ml-6 relative' : ''}`}>
       {/* Connecting line for replies */}
       {isReply && (
         <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-slate-600 -ml-3" />
       )}
       
-      <div className={`${isReply ? 'bg-slate-700/50' : 'bg-slate-800'} rounded-lg p-3 ${isReply ? 'border-l-2 border-slate-600' : ''}`}>
+      <div className={`${isReply ? 'bg-slate-700/50' : 'bg-slate-800'} rounded-lg p-3 ${isReply ? 'border-l-2 border-slate-600' : ''} ${comment.id === highlightedCommentId ? 'ring-2 ring-yellow-400 bg-yellow-100' : ''}`}>
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
@@ -186,6 +188,8 @@ export function MainDashboard() {
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
   const [postComments, setPostComments] = useState<Record<string, (PostComment | AdminPostComment)[]>>({});
   const [openCommentPost, setOpenCommentPost] = useState<string | null>(null);
+  const [focusedPostId, setFocusedPostId] = useState<string | null>(null);
+  const [highlightedCommentId, setHighlightedCommentId] = useState<string | null>(null);
   const [commentText, setCommentText] = useState<Record<string, string>>({});
   const [replyingTo, setReplyingTo] = useState<Record<string, string | null>>({});
   const [replyText, setReplyText] = useState<Record<string, string>>({});
@@ -271,6 +275,48 @@ export function MainDashboard() {
   useEffect(() => {
     setActiveMenu(getMenuFromPath());
   }, [location.pathname]);
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const openCommentPostId = searchParams.get('openComment');
+    const commentId = searchParams.get('comment');
+
+    if (openCommentPostId) {
+      setOpenCommentPost(openCommentPostId);
+      setFocusedPostId(openCommentPostId);
+      if (commentId) {
+        setHighlightedCommentId(commentId);
+      }
+
+      const actions = getPostActions(posts.find((post) => post.id === openCommentPostId) || { comment: commentPost, getComments: getPostComments, share: sharePost });
+      actions.getComments(openCommentPostId).then((comments) => {
+        setPostComments((prev) => ({ ...prev, [openCommentPostId]: comments }));
+      });
+    } else {
+      setFocusedPostId(null);
+    }
+  }, [location.search, posts, getPostActions, commentPost, getPostComments, sharePost]);
+
+  useEffect(() => {
+    if (!openCommentPost || !highlightedCommentId) return;
+
+    const elementId = `comment-${highlightedCommentId}`;
+    const scrollAndHighlight = () => {
+      const element = document.getElementById(elementId);
+      if (!element) return;
+
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      element.classList.add('ring-2', 'ring-yellow-400', 'bg-yellow-100');
+
+      window.setTimeout(() => {
+        element.classList.remove('ring-2', 'ring-yellow-400', 'bg-yellow-100');
+        setHighlightedCommentId(null);
+      }, 2200);
+    };
+
+    const timeout = window.setTimeout(scrollAndHighlight, 250);
+    return () => window.clearTimeout(timeout);
+  }, [openCommentPost, highlightedCommentId, postComments]);
   
   // Profile editing state
   const [isEditing, setIsEditing] = useState(false);
@@ -832,6 +878,17 @@ export function MainDashboard() {
 
   // Temporary localStorage approval flow for demo
   // Get user's own posts from both Supabase and localStorage
+  const visiblePosts = focusedPostId
+    ? followedPosts.filter((post) => post.id === focusedPostId)
+    : followedPosts;
+
+  const handleBackToFeed = () => {
+    setFocusedPostId(null);
+    setOpenCommentPost(null);
+    setHighlightedCommentId(null);
+    navigate('/dashboard');
+  };
+
   const userPosts = [
     ...(posts?.filter(p => p.alumniId === user?.id) || []),
     ...getApprovedPosts().filter(p => p.alumniId === user?.id),
@@ -901,7 +958,34 @@ export function MainDashboard() {
 
                 {/* Posts Feed */}
                 <div className="space-y-4">
-                  {followedPosts.map((post) => {
+                  {focusedPostId && (
+                    <div className="flex flex-col gap-3 rounded-3xl border border-yellow-300/40 bg-yellow-50 p-4 text-slate-900 sm:flex-row sm:items-center sm:justify-between">
+                      <p className="text-sm leading-6">
+                        Showing only the post from your notification. Comments are expanded automatically.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={handleBackToFeed}
+                        className="inline-flex items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+                      >
+                        Back to full feed
+                      </button>
+                    </div>
+                  )}
+
+                  {visiblePosts.length === 0 && focusedPostId ? (
+                    <div className="rounded-3xl border border-slate-700 bg-slate-900 p-8 text-center text-slate-300">
+                      <p className="text-base">The requested post could not be found.</p>
+                      <button
+                        type="button"
+                        onClick={handleBackToFeed}
+                        className="mt-4 rounded-full bg-[#FFD700] px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-yellow-500"
+                      >
+                        Return to feed
+                      </button>
+                    </div>
+                  ) : (
+                    visiblePosts.map((post) => {
                     
                     /*const author = getAlumniById(post.alumniId);
                     if (!author) return null;
@@ -1109,6 +1193,7 @@ const author =
                                               [post.id]: prev[post.id].filter(c => c.id !== commentId)
                                             }));
                                           }}
+                                          highlightedCommentId={highlightedCommentId}
                                           depth={0}
                                         />
                                       ))}
@@ -1156,9 +1241,9 @@ const author =
                         </div>
                       </article>
                     );
-                  })}
+                  }))}
                   
-                  {followedPosts.length === 0 && (
+                  {!focusedPostId && followedPosts.length === 0 && (
                     <div className="text-center py-12 bg-slate-800 rounded-lg border border-slate-700">
                       <Bell className="h-12 w-12 text-slate-400 mx-auto mb-4" />
                       <h3 className="text-lg font-medium text-white">No posts yet</h3>
@@ -2208,8 +2293,6 @@ const author =
                         
                         <div className="flex justify-center md:justify-start gap-8 mb-4 text-white text-lg">
                           <div><span className="font-bold">{posts?.filter(p => p.alumniId === user?.id).length || 0}</span> posts</div>
-                          <div><span className="font-bold">{user?.id === 'admin' ? 124 : Math.floor(Math.random() * 50) + 10}</span> followers</div>
-                          <div><span className="font-bold">{following?.length || 0}</span> following</div>
                         </div>
 
                         <div className="text-sm">

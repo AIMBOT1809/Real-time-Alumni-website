@@ -84,6 +84,7 @@ const [homeEvents, setHomeEvents] = useState<HomeEvent[]>([]);
 const [loadingEvents, setLoadingEvents] = useState(true);
 
 const videoRef = useRef<HTMLVideoElement | null>(null);
+const campusVideoRef = useRef<HTMLVideoElement | null>(null);
 const formatCount = (count: number) => {
   return count.toLocaleString();
 };
@@ -446,6 +447,22 @@ useEffect(() => {
         </div>
       </section>
 
+      <div className="mt-[12px] mb-[12px] w-full overflow-hidden" style={{ marginLeft: 'calc(50% - 50vw)', width: '100vw' }}>
+        <div className="mx-auto overflow-hidden rounded-[12px] shadow-[0_6px_18px_rgba(15,23,42,0.10)]" style={{ width: '100%', maxWidth: '100%' }}>
+          <video
+            ref={campusVideoRef}
+            src="/tkr.mp4"
+            className="block w-full"
+            style={{ display: 'block', height: 'auto', objectFit: 'contain', objectPosition: 'center' }}
+            preload="metadata"
+            autoPlay
+            muted
+            loop
+            playsInline
+          />
+        </div>
+      </div>
+
       <AlumniWallOfFame />
 
       {/* Statistics Circles Section - Small circles below banner */}
@@ -609,30 +626,25 @@ useEffect(() => {
                 Loading events...
               </div>
             ) : homeEvents.length > 0 ? (
-              homeEvents.slice(0, 3).map((event) => {
-                const fallbackImage = 'https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80';
-                return (
-                  <div key={event.id} className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
-                    <img
-                      src={event.image && !event.image.startsWith('blob:') ? event.image : fallbackImage}
-                      alt={event.title}
-                      className="h-48 w-full object-cover"
-                      onError={(e) => {
-                        const target = e.currentTarget;
-                        if (target.src !== fallbackImage) {
-                          target.src = fallbackImage;
-                        }
-                      }}
-                    />
-                    <div className="p-6">
-                      <div className="text-sm text-blue-600 font-semibold mb-2">{event.date}{event.time ? ` at ${event.time}` : ''}</div>
-                      <h3 className="text-xl font-bold text-slate-900 mb-2">{event.title}</h3>
-                      <p className="text-slate-600 mb-4">{event.description || event.location || 'Join us for this exciting event.'}</p>
-                      <Link to="/events" className="text-yellow-600 font-semibold hover:text-yellow-700">Learn More →</Link>
+              homeEvents.slice(0, 3).map((event) => (
+                <div key={event.id} className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
+                  {event.image && (
+                    <div className="relative h-48 w-full overflow-hidden bg-slate-100">
+                      <img
+                        src={event.image}
+                        alt={event.title}
+                        className="h-full w-full object-cover"
+                      />
                     </div>
+                  )}
+                  <div className="p-6">
+                    <div className="text-sm text-blue-600 font-semibold mb-2">{event.date}{event.time ? ` at ${event.time}` : ''}</div>
+                    <h3 className="text-xl font-bold text-slate-900 mb-2">{event.title}</h3>
+                    <p className="text-slate-600 mb-4">{event.description || event.location || 'Join us for this exciting event.'}</p>
+                    <Link to="/events" className="text-yellow-600 font-semibold hover:text-yellow-700">Learn More →</Link>
                   </div>
-                );
-              })
+                </div>
+              ))
             ) : (
               <div className="col-span-full rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-slate-500">
                 No upcoming events at the moment. Check back later!

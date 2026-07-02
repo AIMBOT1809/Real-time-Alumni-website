@@ -48,7 +48,7 @@ export function DashboardLayout() {
   const [open, setOpen] = useState(false);
   const [desktopCollapsed, setDesktopCollapsed] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const { user, role, logout } = useAuth();
+  const { user, role, logout, unreadNotificationCount } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -148,7 +148,11 @@ export function DashboardLayout() {
               }
             >
               <Bell className="h-5 w-5" />
-              <span className="absolute right-1 top-1 h-2 w-2 rounded-full border-2 border-slate-900 bg-red-500" />
+              {unreadNotificationCount > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-semibold leading-none text-white">
+                  {unreadNotificationCount > 9 ? '9+' : unreadNotificationCount}
+                </span>
+              )}
             </NavLink>
 
             {/* User Avatar */}
@@ -282,7 +286,7 @@ export function DashboardLayout() {
             {/* Desktop toggle button */}
             <button
               onClick={() => setDesktopCollapsed(!desktopCollapsed)}
-              className={`hidden lg:flex absolute top-4 z-50 items-center justify-center rounded-lg bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 h-8 w-8 transition ${desktopCollapsed ? 'right-6' : 'right-4'}`}
+              className={`hidden lg:flex absolute top-2 z-50 items-center justify-center rounded-lg bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 h-8 w-8 transition ${desktopCollapsed ? 'right-2' : 'right-4'}`}
             >
               {desktopCollapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
             </button>
@@ -299,7 +303,7 @@ export function DashboardLayout() {
 
             {/* Profile / Introduction Card */}
             <section
-              className={`mb-5 rounded-2xl border border-slate-700 bg-slate-800/80 p-4 ${desktopCollapsed ? 'hidden lg:block lg:p-2' : ''}`}
+              className={`mb-8 mt-8 rounded-2xl border border-slate-700 bg-slate-800/80 p-4 ${desktopCollapsed ? 'hidden lg:block lg:p-2' : ''}`}
               aria-label="Profile introduction"
             >
               <div className={`flex items-center ${desktopCollapsed ? 'lg:justify-center' : 'gap-3'}`}>

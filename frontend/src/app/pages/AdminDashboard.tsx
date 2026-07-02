@@ -25,6 +25,7 @@ type CommunityAlumniRecord = {
   email: string;
   avatar?: string;
   role: 'alumni' | 'career-aspirant' | 'higher-education' |'entrepreneur';
+  department?: string;
   company?: string;
   position?: string;
   experience?: string;
@@ -78,19 +79,35 @@ export function AdminDashboard() {
       return;
     }
 
-    const mapped = (data || []).map((r: any) => ({
-      id: String(r.id),
-      title: r.title ?? 'Untitled Event',
-      date: r.event_date ?? r.date ?? '',
-      time: r.event_time ?? r.time ?? '',
-      location: r.location ?? '',
-      type: r.type ?? 'Event',
-      description: r.description ?? '',
-      image: r.image_url ?? r.image ?? '',
-      alumniId: r.created_by ?? r.alumniId ?? 'admin',
-      attachmentUrl: r.file_url ?? undefined,
-      attachmentName: r.file_name ?? undefined,
-    }));
+    // Fetch all alumni profiles to map user IDs to names
+    const { data: alumniData } = await supabase
+      .from('alumni_profiles')
+      .select('id, First_Name, name');
+
+    const alumniMap = new Map();
+    (alumniData || []).forEach((alumnus: any) => {
+      const name = alumnus.First_Name || alumnus.name || 'Unknown';
+      alumniMap.set(alumnus.id, name);
+    });
+
+    const mapped = (data || []).map((r: any) => {
+      const userId = r.created_by ?? r.alumniId ?? 'admin';
+      const userName = 'Admin';
+      
+      return {
+        id: String(r.id),
+        title: r.title ?? 'Untitled Event',
+        date: r.event_date ?? r.date ?? '',
+        time: r.event_time ?? r.time ?? '',
+        location: r.location ?? '',
+        type: r.type ?? 'Event',
+        description: r.description ?? '',
+        image: r.image_url ?? r.image ?? '',
+        alumniId: userName,
+        attachmentUrl: r.file_url ?? undefined,
+        attachmentName: r.file_name ?? undefined,
+      };
+    });
 
     setAdminEvents(mapped);
   };
@@ -262,6 +279,7 @@ const fetchAllProfiles = async () => {
         graduationYear: String(item.Passed_Out_Year || item.graduationYear || ''),
         year: String(item.Year_of_Joining || item.year || ''),
         role: normalizeCurrentStatus(currentStatusValue),
+        department: String(item.Department || item.department || '').toUpperCase(),
         currentStatus: currentStatusValue,
         createdAt: item.created_at,
       };
@@ -408,17 +426,30 @@ useEffect(() => {
   };
 
   const handleSubmitCreateEvent = async () => {
-    if (!user || role !== 'admin') return;
+    console.log('🔵 Publish button clicked!');
+    
+    if (!user || role !== 'admin') {
+      console.error('❌ User not authenticated or not admin');
+      alert('You must be logged in as an admin to create events.');
+      return;
+    }
+    
     const title = newEventTitle.trim();
     const description = newEventDescription.trim();
 
+    console.log('Form values:', { title, description, date: newEventDate, time: newEventTime, location: newEventLocation });
+
     if (!title || !description || !newEventDate || !newEventTime || !newEventLocation.trim()) {
+      console.error('❌ Validation failed');
       alert('Please complete the event title, description, date, time, and location.');
       return;
     }
 
-    let imageUrl = 'https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80';
+    let imageUrl: string | undefined = undefined;
     let fileUrl: string | undefined = undefined;
+
+    console.log('📸 Starting event creation...');
+    console.log('File selected:', newEventFile ? { name: newEventFile.name, type: newEventFile.type, size: newEventFile.size } : 'No file');
 
     // Upload file to Supabase Storage if provided
     if (newEventFile) {
@@ -426,38 +457,12 @@ useEffect(() => {
         const fileExt = newEventFile.name.split('.').pop();
         const fileName = `events/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
 
-        console.log('Attempting to upload file:', fileName);
+        console.log('📤 Attempting to upload file:', fileName);
         console.log('File type:', newEventFile.type);
         console.log('File size:', (newEventFile.size / 1024).toFixed(2), 'KB');
 
-        // First, check if bucket exists
-        const { data: buckets, error: listError } = await supabase.storage.listBuckets();
-        
-        if (listError) {
-          console.error('Error listing buckets:', listError);
-        } else {
-          const bucketExists = buckets?.some(bucket => bucket.name === 'event_images');
-          console.log('event_images bucket exists:', bucketExists);
-          
-          if (!bucketExists) {
-            console.log('Creating event_images bucket...');
-            const { error: createError } = await supabase.storage.createBucket('event_images', {
-              public: true,
-              fileSizeLimit: 52428800, // 50MB
-            });
-            
-            if (createError) {
-              console.error('Failed to create bucket:', createError);
-            } else {
-              console.log('Bucket created successfully');
-              // Wait for bucket to be ready
-              await new Promise(resolve => setTimeout(resolve, 2000));
-            }
-          }
-        }
-
-        // Try to upload
-        let { error: uploadError } = await supabase.storage
+        // Try to upload directly - bucket should be created in Supabase Dashboard
+        const { data: uploadData, error: uploadError } = await supabase.storage
           .from('event_images')
           .upload(fileName, newEventFile, {
             cacheControl: '3600',
@@ -465,29 +470,38 @@ useEffect(() => {
           });
 
         if (uploadError) {
-          console.error('Upload error:', uploadError);
+          console.error('❌ Upload error:', uploadError);
           console.error('Error message:', uploadError.message);
           console.error('Error details:', uploadError);
         } else {
-          // Get the public URL
-          const { data } = supabase.storage.from('event_images').getPublicUrl(fileName);
-          
           console.log('✅ Upload successful!');
-          console.log('Public URL:', data.publicUrl);
+          console.log('Upload data:', uploadData);
+          
+          // Get the public URL
+          const { data: urlData } = supabase.storage.from('event_images').getPublicUrl(fileName);
+          
+          console.log('Public URL:', urlData.publicUrl);
 
           if (newEventFile.type.startsWith('image/')) {
-            imageUrl = data.publicUrl;
+            imageUrl = urlData.publicUrl;
+            console.log('✅ Set as image_url:', imageUrl);
           } else {
-            fileUrl = data.publicUrl;
+            fileUrl = urlData.publicUrl;
+            console.log('✅ Set as file_url:', fileUrl);
           }
         }
       } catch (uploadErr) {
-        console.error('Upload exception:', uploadErr);
+        console.error('❌ Upload exception:', uploadErr);
         // Don't block event creation
       }
     }
 
-    const { error } = await supabase
+    console.log('💾 Inserting event into database...');
+    console.log('  - title:', title);
+    console.log('  - image_url:', imageUrl || '(null)');
+    console.log('  - file_url:', fileUrl || '(null)');
+
+    const { data: insertData, error } = await supabase
       .from('events')
       .insert([
         {
@@ -497,18 +511,22 @@ useEffect(() => {
           location: newEventLocation.trim(),
           type: newEventType,
           description: description,
-          image_url: imageUrl,
-          file_url: fileUrl,
+          image_url: imageUrl || null,
+          file_url: fileUrl || null,
           created_by: user.id
         }
-      ]);
+      ])
+      .select();
 
     if (error) {
-      console.error(error);
-      alert(error.message);
+      console.error('❌ Error inserting event:', error);
+      console.error('Error details:', JSON.stringify(error, null, 2));
+      alert(`Error: ${error.message}`);
       return;
     }
 
+    console.log('✅ Event published successfully!');
+    console.log('Inserted data:', insertData);
     alert('Event published successfully');
     setNewEventTitle('');
     setNewEventDescription('');
@@ -629,15 +647,20 @@ useEffect(() => {
     );
   };
 
+  const uniqueDepartments = useMemo(() => {
+    const depts = new Set(reportAlumni.map(item => item.department).filter(Boolean));
+    return Array.from(depts).sort();
+  }, [reportAlumni]);
+
   const filteredAlumni = useMemo(() => {
     return reportAlumni.filter((item) => {
-      const searchText = [item.name, item.email, item.phone, item.graduationYear,]
+      const searchText = [item.name, item.email, item.phone, item.department, item.graduationYear]
         .filter(Boolean)
         .join(' ')
         .toLowerCase();
 
       const matchesSearch = searchText.includes(searchTerm.toLowerCase());
-      const matchesStatus = filterStatus === 'all' || item.role === filterStatus;
+      const matchesStatus = filterStatus === 'all' || item.department === filterStatus;
       const joinYearValue = String(item.year || '').trim();
       const passedOutYearValue = String(item.graduationYear || '').trim();
       const matchesJoiningYear = !showJoiningYearFilter || !joiningYear || joinYearValue === joiningYear;
@@ -1158,38 +1181,41 @@ entrepreneurRatio: Math.round((entrepreneurCount / effectiveTotal) * 100),
                         [...adminEvents]
                           .sort((a, b) => Number(new Date(b.date)) - Number(new Date(a.date)))
                           .map((event) => (
-                            <div key={event.id} className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm">
-                              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                                <div>
-                                  <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">{event.type}</p>
-                                  <h3 className="mt-2 text-xl font-semibold text-slate-900">{event.title}</h3>
-                                  <p className="mt-2 text-sm text-slate-500">{formatTimestamp(event.date)} · {event.time} · {event.location}</p>
-                                </div>
-                                <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-2 text-sm text-slate-600">Organized by {event.alumniId}</span>
-                              </div>
-
-                              <p className="mt-4 text-slate-600">{(event as any).description ?? 'Review the event details and attachments below.'}</p>
-
+                            <div key={event.id} className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
                               {event.image && (
-                                <img
-                                  src={event.image}
-                                  alt={event.title}
-                                  className="mt-4 h-56 w-full rounded-3xl object-cover"
-                                />
-                              )}
-
-                              {(event as any).attachmentUrl && !event.image && (
-                                <div className="mt-4 flex items-center gap-2 text-slate-600">
-                                  <a
-                                    href={(event as any).attachmentUrl}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="font-medium text-slate-900 hover:text-yellow-600"
-                                  >
-                                    {(event as any).attachmentName ?? 'View file'}
-                                  </a>
+                                <div className="relative h-56 w-full overflow-hidden bg-slate-100">
+                                  <img
+                                    src={event.image}
+                                    alt={event.title}
+                                    className="h-full w-full object-cover"
+                                  />
                                 </div>
                               )}
+                              <div className="p-6">
+                                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                                  <div>
+                                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">{event.type}</p>
+                                    <h3 className="mt-2 text-xl font-semibold text-slate-900">{event.title}</h3>
+                                    <p className="mt-2 text-sm text-slate-500">{formatTimestamp(event.date)} · {event.time} · {event.location}</p>
+                                  </div>
+                                  <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-2 text-sm text-slate-600">Organized by {event.alumniId}</span>
+                                </div>
+
+                                <p className="mt-4 text-slate-600">{(event as any).description ?? 'Review the event details and attachments below.'}</p>
+
+                                {(event as any).attachmentUrl && (
+                                  <div className="mt-4 flex items-center gap-2 text-slate-600">
+                                    <a
+                                      href={(event as any).attachmentUrl}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="font-medium text-slate-900 hover:text-yellow-600"
+                                    >
+                                      {(event as any).attachmentName ?? 'View file'}
+                                    </a>
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           ))
                       ) : (
@@ -1373,11 +1399,10 @@ entrepreneurRatio: Math.round((entrepreneurCount / effectiveTotal) * 100),
                       onChange={(e) => setFilterStatus(e.target.value)}
                       className="h-full w-full rounded-2xl border-none bg-transparent px-3 text-sm text-slate-900 outline-none focus:ring-0"
                     >
-                      <option value="all">All Roles</option>
-                      <option value="alumni">Working Professional</option>
-                      <option value="career-aspirant">Career Aspirant</option>
-                      <option value="higher-education">Higher Education</option>
-                      <option value="entrepreneur">Entrepreneur</option>
+                      <option value="all">All Departments</option>
+                      {['CSE', 'CSD', 'CSM', 'ECE', 'EEE', 'MECH', 'IT', 'CIVIL'].map(dept => (
+                        <option key={dept} value={dept}>{dept}</option>
+                      ))}
                     </select>
                   </div>
                 </div>
@@ -1446,7 +1471,7 @@ entrepreneurRatio: Math.round((entrepreneurCount / effectiveTotal) * 100),
                   <thead className="bg-slate-50 border-b border-slate-200">
                     <tr>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">Name</th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">Role</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">Department</th>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">Email Address</th>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">Phone Number</th>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">Year of Joining</th>
@@ -1462,22 +1487,6 @@ entrepreneurRatio: Math.round((entrepreneurCount / effectiveTotal) * 100),
                       </tr>
                     ) : filteredAlumni.length > 0 ? (
                       filteredAlumni.map((alumnus) => {
-                        const roleBadge: Record<string, string> = {
-                          alumni: 'bg-blue-100 text-blue-800',
-                          'higher-education': 'bg-violet-100 text-violet-800',
-                          'career-aspirant': 'bg-amber-100 text-amber-800',
-                        };
-                        const badgeClass = roleBadge[alumnus.role] ?? 'bg-slate-100 text-slate-700';
-                        const roleLabel =
-  alumnus.role === 'alumni'
-    ? 'Working Professional'
-    : alumnus.role === 'higher-education'
-      ? 'Higher Education'
-      : alumnus.role === 'career-aspirant'
-        ? 'Career Aspirant'
-        : alumnus.role === 'entrepreneur'
-          ? 'Entrepreneur'
-          : alumnus.role;
                         return (
                           <tr key={alumnus.id} className="hover:bg-slate-50 transition-colors">
                             <td className="px-6 py-4">
@@ -1493,8 +1502,8 @@ entrepreneurRatio: Math.round((entrepreneurCount / effectiveTotal) * 100),
                               </div>
                             </td>
                             <td className="px-6 py-4">
-                              <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${badgeClass}`}>
-                                {roleLabel}
+                              <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-slate-100 text-slate-700`}>
+                                {alumnus.department || '—'}
                               </span>
                             </td>
                             <td className="px-6 py-4 text-sm text-slate-600">{alumnus.email || '—'}</td>
