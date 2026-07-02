@@ -197,6 +197,7 @@ export function MainDashboard() {
   const [deleteConfirmPost, setDeleteConfirmPost] = useState<string | null>(null);
   const [isDeletingPost, setIsDeletingPost] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [alumniEvents, setAlumniEvents] = useState<any[]>([]);
 
   // Helper to route post interactions based on post source
   const getPostActions = (post: any) => {
@@ -328,9 +329,32 @@ export function MainDashboard() {
   const [postTitle, setPostTitle] = useState<string>('');
   const [postDetails, setPostDetails] = useState<Record<string, any>>({});
 
+  // Event-specific state
+  const [eventTitle, setEventTitle] = useState('');
+  const [eventDate, setEventDate] = useState('');
+  const [eventTime, setEventTime] = useState('');
+  const [eventLocation, setEventLocation] = useState('');
+  const [eventType, setEventType] = useState<'Networking' | 'Workshop' | 'Webinar'>('Webinar');
+  const [eventDescription, setEventDescription] = useState('');
+  const [eventFile, setEventFile] = useState<File | null>(null);
+  const [eventImageUrl, setEventImageUrl] = useState<string | null>(null);
+  const [eventFileUrl, setEventFileUrl] = useState<string | null>(null);
+
   // Reset dynamic fields when post type changes
   useEffect(() => {
     setPostDetails({});
+    // Reset event fields when switching away from event type
+    if (postType !== 'event') {
+      setEventTitle('');
+      setEventDate('');
+      setEventTime('');
+      setEventLocation('');
+      setEventType('Webinar');
+      setEventDescription('');
+      setEventFile(null);
+      setEventImageUrl(null);
+      setEventFileUrl(null);
+    }
   }, [postType]);
 
   const [formData, setFormData] = useState({
@@ -370,6 +394,7 @@ export function MainDashboard() {
       resume: user?.resume || '',
       avatar: user?.avatar || '',
     });
+    setSkills(Array.isArray(user?.skills) ? user.skills : []);
     setSkills(Array.isArray(user?.skills) ? user.skills : []);
     setLinks(user?.links || []);
   };
@@ -697,6 +722,71 @@ export function MainDashboard() {
     fetchAdminPosts();
   }, [fetchAdminPosts]);
 
+  // Fetch alumni event posts from the posts table
+  const fetchAlumniEventPosts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("posts")
+        .select("*")
+        .eq("status", "approved")
+        .eq("type", "event");
+
+      if (error) {
+        console.error('[MainDashboard] Error fetching alumni event posts:', error);
+        return;
+      }
+
+      const alumniEventList = (data || [])
+        .filter((item: any) => item.post_details)
+        .map((item: any) => {
+          let details = item.post_details;
+          try {
+            if (typeof details === "string") {
+              details = JSON.parse(details);
+            }
+          } catch {
+            return null;
+          }
+          if (!details) return null;
+          return {
+            id: item.id,
+            source: "alumni-post",
+            title: details.eventTitle,
+            date: details.eventDate,
+            time: details.eventTime,
+            location: details.eventLocation,
+            image: item.image || item.file_url,
+            type: details.eventType || "Event",
+            created_at: item.created_at,
+          };
+        })
+        .filter(Boolean);
+
+      setAlumniEvents(alumniEventList);
+    } catch (err) {
+      console.error('[MainDashboard] Unexpected error fetching alumni events:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchAlumniEventPosts();
+
+    const alumniChannel = supabase
+      .channel('dashboard_alumni_events')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'posts' },
+        () => {
+          fetchAlumniEventPosts();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(alumniChannel);
+    };
+  }, []);
+
   if (!user) return null;
 
   // Profile handlers
@@ -750,6 +840,7 @@ export function MainDashboard() {
       resume: user?.resume || '',
       avatar: user?.avatar || '',
     });
+    setSkills(Array.isArray(user?.skills) ? user.skills : []);
     setSkills(Array.isArray(user?.skills) ? user.skills : []);
     setLinks(user?.links || []);
     setNewSkill('');
@@ -892,11 +983,27 @@ export function MainDashboard() {
     // Filter out pending/rejected posts and deduplicate
     (!post.status || post.status === 'approved') && 
     index === self.findIndex((p) => p.id === post.id)
-  );
+  )
+  // Sort by created_at/timestamp descending (latest first)
+  .sort((a: any, b: any) => {
+    const dateA = a.created_at || a.timestamp;
+    const dateB = b.created_at || b.timestamp;
+    return new Date(dateB).getTime() - new Date(dateA).getTime();
+  });
+  // Merge admin events (from AuthContext) with alumni event posts, sorted by created_at descending (latest first)
+  const allEvents = [
+    ...(events || []).map(event => ({ ...event, source: 'admin' })),
+    ...(alumniEvents || []),
+  ].sort((a: any, b: any) => {
+    const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+    const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+    return dateB - dateA;
+  });
+
   // Filter events
   const now = new Date();
-  const upcomingEvents = events?.filter(event => new Date(event.date) > now) || [];
-  const currentEvents = events?.filter(event => {
+  const upcomingEvents = allEvents?.filter(event => new Date(event.date) > now) || [];
+  const currentEvents = allEvents?.filter(event => {
     const eventDate = new Date(event.date);
     const eventEnd = new Date(eventDate);
     eventEnd.setHours(23, 59, 59, 999); // End of event day
@@ -1316,24 +1423,27 @@ const author =
                         </select>
                       </div>
 
-                      <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1">Title</label>
-                        <input
-                          type="text"
-                          value={postTitle}
-                          onChange={(e) => setPostTitle(e.target.value)}
-                          placeholder="Post title (optional)"
-                          className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-400"
-                        />
-                        <label className="block text-sm font-medium text-slate-300 mb-1 mt-3">Content</label>
-                        <textarea
-                          value={postContent}
-                          onChange={(e) => setPostContent(e.target.value)}
-                          rows={6}
-                          className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-400"
-                          placeholder="Write your post here..."
-                        />
-                      </div>
+                      {/* Title and Content fields - hidden for Event posts */}
+                      {postType !== 'event' && (
+                        <div>
+                          <label className="block text-sm font-medium text-slate-300 mb-1">Title</label>
+                          <input
+                            type="text"
+                            value={postTitle}
+                            onChange={(e) => setPostTitle(e.target.value)}
+                            placeholder="Post title (optional)"
+                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-400"
+                          />
+                          <label className="block text-sm font-medium text-slate-300 mb-1 mt-3">Content</label>
+                          <textarea
+                            value={postContent}
+                            onChange={(e) => setPostContent(e.target.value)}
+                            rows={6}
+                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-400"
+                            placeholder="Write your post here..."
+                          />
+                        </div>
+                      )}
 
                       {/* Dynamic fields based on post type */}
                       {postType === 'job' && (
@@ -1592,47 +1702,185 @@ const author =
                         </div>
                       )}
 
-                      <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1">Attach file / image (optional)</label>
-                        <label className="mt-2 flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-4 cursor-pointer transition-colors bg-slate-800 border-slate-700 hover:border-yellow-500">
-                          <input
-                            type="file"
-                            accept="image/*,.pdf,.doc,.docx"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (!file) return;
-                              setPostFileName(file.name);
-                              const reader = new FileReader();
-                              reader.onload = (ev) => setPostImage((ev.target?.result as string) || null);
-                              reader.readAsDataURL(file);
-                            }}
-                            className="hidden"
-                          />
-                          <div className="text-slate-400 text-sm">Click to choose a file, or drop it here</div>
-                          {postFileName && <div className="text-slate-200 text-sm mt-2">{postFileName}</div>}
-                        </label>
-                        {postImage && (
-                          <div className="mt-3">
-                            <img src={postImage} alt="preview" className="max-h-48 rounded-md object-contain" />
+                      {postType === 'event' && (
+                        <div className="space-y-4 p-4 bg-slate-800 rounded-lg">
+                          <h3 className="text-lg font-semibold text-white">Event Details</h3>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Event title *</label>
+                              <input 
+                                type="text" 
+                                required 
+                                value={eventTitle} 
+                                onChange={(e) => setEventTitle(e.target.value)}
+                                className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" 
+                                placeholder="Enter event title"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Date *</label>
+                              <input 
+                                type="date" 
+                                required 
+                                value={eventDate} 
+                                onChange={(e) => setEventDate(e.target.value)}
+                                className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" 
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Time *</label>
+                              <input 
+                                type="time" 
+                                required 
+                                value={eventTime} 
+                                onChange={(e) => setEventTime(e.target.value)}
+                                className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" 
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Location *</label>
+                              <input 
+                                type="text" 
+                                required 
+                                value={eventLocation} 
+                                onChange={(e) => setEventLocation(e.target.value)}
+                                className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" 
+                                placeholder="Online or on-site location"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Type *</label>
+                              <select 
+                                required 
+                                value={eventType} 
+                                onChange={(e) => setEventType(e.target.value as any)}
+                                className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white"
+                              >
+                                <option value="Networking">Networking</option>
+                                <option value="Workshop">Workshop</option>
+                                <option value="Webinar">Webinar</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Upload image or file</label>
+                              <input 
+                                type="file" 
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    setEventFile(file);
+                                    const reader = new FileReader();
+                                    reader.onload = (ev) => setEventImageUrl((ev.target?.result as string) || null);
+                                    reader.readAsDataURL(file);
+                                  }
+                                }}
+                                className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white text-sm" 
+                                accept="image/*,.pdf"
+                              />
+                            </div>
+                            <div className="md:col-span-2">
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Description *</label>
+                              <textarea 
+                                required 
+                                value={eventDescription} 
+                                onChange={(e) => setEventDescription(e.target.value)}
+                                rows={4}
+                                className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" 
+                                placeholder="Add event details, speaker notes, or agenda items"
+                              />
+                            </div>
                           </div>
-                        )}
-                      </div>
+                        </div>
+                      )}
+
+                      {/* Attach file / image - at the end, hidden for Event posts (event has its own upload) */}
+                      {postType !== 'event' && (
+                        <div>
+                          <label className="block text-sm font-medium text-slate-300 mb-1">Attach file / image (optional)</label>
+                          <label className="mt-2 flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-4 cursor-pointer transition-colors bg-slate-800 border-slate-700 hover:border-yellow-500">
+                            <input
+                              type="file"
+                              accept="image/*,.pdf,.doc,.docx"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+                                setPostFileName(file.name);
+                                const reader = new FileReader();
+                                reader.onload = (ev) => setPostImage((ev.target?.result as string) || null);
+                                reader.readAsDataURL(file);
+                              }}
+                              className="hidden"
+                            />
+                            <div className="text-slate-400 text-sm">Click to choose a file, or drop it here</div>
+                            {postFileName && <div className="text-slate-200 text-sm mt-2">{postFileName}</div>}
+                          </label>
+                          {postImage && (
+                            <div className="mt-3">
+                              <img src={postImage} alt="preview" className="max-h-48 rounded-md object-contain" />
+                            </div>
+                          )}
+                        </div>
+                      )}
 
                       <div className="flex items-center space-x-3">
                         <button
                           onClick={() => {
-                            if (!postContent.trim()) return;
-                            addPost({
-                              title: postTitle || undefined,
-                              alumniId: user?.id || 'unknown',
-                              authorRole: role,
-                              content: postContent.trim(),
-                              type: postType,
-                              likes: 0,
-                              comments: 0,
-                              image: postImage || undefined,
-                              post_details: Object.keys(postDetails).length > 0 ? postDetails : undefined,
-                            });
+                            if (postType === 'event') {
+                              // Validate event fields
+                              if (!eventTitle.trim() || !eventDate || !eventTime || !eventLocation || !eventDescription.trim()) {
+                                showGlobalToast('Please fill all required event fields', 'error');
+                                return;
+                              }
+                              
+                              // For event posts, use event-specific data
+                              const eventPostDetails = {
+                                eventTitle,
+                                eventDate,
+                                eventTime,
+                                eventLocation,
+                                eventType,
+                                eventDescription,
+                              };
+                              
+                              addPost({
+                                title: eventTitle,
+                                alumniId: user?.id || 'unknown',
+                                authorRole: role,
+                                content: `Event Date: ${eventDate}\nEvent Time: ${eventTime}\nLocation: ${eventLocation}\nEvent Type: ${eventType}\n\n${eventDescription}`,
+                                type: postType,
+                                likes: 0,
+                                comments: 0,
+                                image: eventImageUrl || postImage || undefined,
+                                post_details: eventPostDetails,
+                              });
+                              
+                              // Reset event fields
+                              setEventTitle('');
+                              setEventDate('');
+                              setEventTime('');
+                              setEventLocation('');
+                              setEventType('Webinar');
+                              setEventDescription('');
+                              setEventFile(null);
+                              setEventImageUrl(null);
+                              setEventFileUrl(null);
+                            } else {
+                              // For non-event posts, use existing logic
+                              if (!postContent.trim()) return;
+                              addPost({
+                                title: postTitle || undefined,
+                                alumniId: user?.id || 'unknown',
+                                authorRole: role,
+                                content: postContent.trim(),
+                                type: postType,
+                                likes: 0,
+                                comments: 0,
+                                image: postImage || undefined,
+                                post_details: Object.keys(postDetails).length > 0 ? postDetails : undefined,
+                              });
+                            }
+                            
+                            // Reset common fields
                             setPostTitle('');
                             setPostContent('');
                             setPostType('general');
@@ -1645,7 +1893,21 @@ const author =
                           Publish
                         </button>
                         <button
-                          onClick={() => { setPostContent(''); setPostType('general'); setPostImage(null); setPostDetails({}); }}
+                          onClick={() => { 
+                            setPostContent(''); 
+                            setPostType('general'); 
+                            setPostImage(null); 
+                            setPostDetails({});
+                            setEventTitle('');
+                            setEventDate('');
+                            setEventTime('');
+                            setEventLocation('');
+                            setEventType('Webinar');
+                            setEventDescription('');
+                            setEventFile(null);
+                            setEventImageUrl(null);
+                            setEventFileUrl(null);
+                          }}
                           className="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600"
                         >
                           Cancel

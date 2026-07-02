@@ -7,7 +7,7 @@ import { useEffect } from "react";
 import { supabase } from "../../supabaseClient";
 
 export function Events() {
-  const { getAlumniById, role, user, addEvent, isAdminId } = useAuth();
+  const { getAlumniById, role, user, addEvent } = useAuth();
 
 const [events, setEvents] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -71,10 +71,11 @@ const [events, setEvents] = useState<any[]>([]);
       title: details.eventTitle,
       date: details.eventDate,
       time: details.eventTime,
-      location: details.location,
-      image: details.imageUrl,
+      location: details.eventLocation,
+      image: item.image || item.file_url,
       organizer: item.author_name || "Alumni",
       type: details.eventType || "Event",
+      created_at: item.created_at,
     };
   })
   .filter(Boolean);
@@ -89,17 +90,53 @@ const [events, setEvents] = useState<any[]>([]);
     image: item.image_url || item.file_url,
     organizer: "Admin",
     type: item.type || "Event",
+    created_at: item.created_at,
   }));
   console.log("Admin Events:", adminEvents);
 console.log("Alumni Events Count:", postEvents?.length);
 console.log(JSON.stringify(postEvents, null, 2));
 console.log("Merged Events:", [...admin, ...alumni]);
 
-  setEvents([...admin, ...alumni]);
+  // Sort by created_at descending (latest first)
+  const sortedEvents = [...admin, ...alumni].sort((a: any, b: any) => {
+    const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+    const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+    return dateB - dateA;
+  });
+  setEvents(sortedEvents);
 };
 
 useEffect(() => {
   fetchEvents();
+
+  // Subscribe to admin events changes
+  const adminChannel = supabase
+    .channel('student_events_admin')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'events' },
+      () => {
+        fetchEvents();
+      }
+    )
+    .subscribe();
+
+  // Subscribe to alumni posts changes
+  const alumniChannel = supabase
+    .channel('student_events_alumni')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'posts' },
+      () => {
+        fetchEvents();
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(adminChannel);
+    supabase.removeChannel(alumniChannel);
+  };
 }, []);
 
   return (
