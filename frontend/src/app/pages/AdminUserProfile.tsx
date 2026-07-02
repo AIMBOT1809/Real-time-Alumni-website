@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router';
 import { supabase } from '../../supabaseClient';
+import { PostImageViewer } from '../components/PostImageViewer';
 import ArrowLeft from 'lucide-react/dist/esm/icons/arrow-left';
 import FileText from 'lucide-react/dist/esm/icons/file-text';
 import CalendarCheck from 'lucide-react/dist/esm/icons/calendar-check';
@@ -222,7 +223,7 @@ export function AdminUserProfile() {
                       {post.title && <h4 className="text-lg font-bold text-slate-900 mb-2">{post.title}</h4>}
                       <p className="text-slate-700 whitespace-pre-wrap leading-relaxed">{post.content}</p>
                       {post.image && (
-                        <img src={post.image} alt="Post attachment" className="mt-4 w-full max-h-80 rounded-xl object-cover" />
+                        <PostImageViewer src={post.image} alt="Post attachment" className="max-h-80" />
                       )}
                       <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4">
                         <p className="text-sm font-medium text-slate-500">

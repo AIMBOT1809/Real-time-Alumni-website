@@ -3,6 +3,7 @@ import { PieChart, Pie, Cell, Tooltip as RechartsTooltip, ResponsiveContainer, B
 import { Link } from 'react-router';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../../supabaseClient';
+import { PostImageViewer } from '../components/PostImageViewer';
 import {
   ShieldCheck,
   Users,
@@ -1020,10 +1021,10 @@ entrepreneurRatio: Math.round((entrepreneurCount / effectiveTotal) * 100),
                             <p className="mt-4 text-slate-600 whitespace-pre-line">{getPostDescription(post)}</p>
 
                             {post.image && (
-                              <img
+                              <PostImageViewer
                                 src={post.image}
                                 alt="Post attachment"
-                                className="mt-4 h-56 w-full rounded-3xl object-cover"
+                                className="max-h-96"
                               />
                             )}
 

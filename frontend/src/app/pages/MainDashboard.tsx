@@ -5,6 +5,7 @@ import { createChat } from '@n8n/chat';
 import '@n8n/chat/style.css';
 import { AlumniStatisticsWidget } from '../components/AlumniStatisticsWidget';
 import { RecentAlumniHighlights } from '../components/RecentAlumniHighlights';
+import { PostImageViewer } from '../components/PostImageViewer';
 import { 
   Bell, 
   User, 
@@ -1094,10 +1095,10 @@ const author =
 
                         {/* Post Image */}
                         {post.image && (
-                          <img 
-                            src={post.image} 
+                          <PostImageViewer
+                            src={post.image}
                             alt="Post content"
-                            className="w-full h-64 object-cover"
+                            className="max-h-96"
                           />
                         )}
 
