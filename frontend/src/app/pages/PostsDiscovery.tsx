@@ -4,6 +4,7 @@ import { Link } from 'react-router';
 import { useAuth } from '../context/AuthContext';
 import { addActivityItem, getActivity, removeActivityItem } from '../data/activityStore';
 import { getApprovedPosts } from '../data/localStoragePosts';
+import { PostImageViewer } from '../components/PostImageViewer';
 
 const categories = [
   { id: 'all', label: 'All Posts' },
@@ -154,7 +155,7 @@ export function PostsDiscovery() {
                 </button>
               </div>
               <p className="mt-3 line-clamp-4 text-sm leading-6 text-slate-600">{post.content}</p>
-              {post.image && <img src={post.image} alt="" className="mt-4 h-44 w-full rounded-xl object-cover" />}
+              {post.image && <PostImageViewer src={post.image} alt="" className="max-h-80" />}
               <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4 text-xs text-slate-500">
                 <div>
                   <p className="font-semibold text-slate-700">{author?.name || 'Alumni member'}</p>

@@ -3,6 +3,7 @@ import { PieChart, Pie, Cell, Tooltip as RechartsTooltip, ResponsiveContainer, B
 import { Link } from 'react-router';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../../supabaseClient';
+import { PostImageViewer } from '../components/PostImageViewer';
 import {
   ShieldCheck,
   Users,
@@ -302,18 +303,29 @@ const fetchAllProfiles = async () => {
   setAdminHighlights(data || []);
 };
 const fetchDashboardCounts = async () => {
-  const { count: pendingPostsCount } = await supabase
-    .from('posts')
-    .select('*', { count: 'exact', head: true })
-    .eq('status', 'pending');
+  const { count: pendingPostsCount, error: pendingPostsError } = await supabase
+    .from('pending_posts')
+    .select('*', { count: 'exact', head: true });
 
-  const { count: adminPostsCount } = await supabase
+  const { count: adminPostsCount, error: adminPostsError } = await supabase
     .from('admin_posts')
     .select('*', { count: 'exact', head: true });
 
-  const { count: eventsCount } = await supabase
+  const { count: eventsCount, error: eventsError } = await supabase
     .from('events')
     .select('*', { count: 'exact', head: true });
+
+  if (pendingPostsError) {
+    console.error('Pending posts count error:', pendingPostsError);
+  }
+
+  if (adminPostsError) {
+    console.error('Admin posts count error:', adminPostsError);
+  }
+
+  if (eventsError) {
+    console.error('Events count error:', eventsError);
+  }
 
   setDashboardCounts({
     pendingPosts: pendingPostsCount || 0,
@@ -328,7 +340,7 @@ useEffect(() => {
     .channel('admin_dashboard_counts')
     .on(
       'postgres_changes',
-      { event: '*', schema: 'public', table: 'posts' },
+      { event: '*', schema: 'public', table: 'pending_posts' },
       () => fetchDashboardCounts()
     )
     .on(
@@ -1046,10 +1058,10 @@ entrepreneurRatio: Math.round((entrepreneurCount / effectiveTotal) * 100),
                             <p className="mt-4 text-slate-600 whitespace-pre-line">{getPostDescription(post)}</p>
 
                             {post.image && (
-                              <img
+                              <PostImageViewer
                                 src={post.image}
                                 alt="Post attachment"
-                                className="mt-4 h-56 w-full rounded-3xl object-cover"
+                                className="max-h-96"
                               />
                             )}
 

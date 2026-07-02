@@ -5,6 +5,7 @@ import { createChat } from '@n8n/chat';
 import '@n8n/chat/style.css';
 import { AlumniStatisticsWidget } from '../components/AlumniStatisticsWidget';
 import { RecentAlumniHighlights } from '../components/RecentAlumniHighlights';
+import { PostImageViewer } from '../components/PostImageViewer';
 import { 
   Bell, 
   User, 
@@ -344,7 +345,13 @@ export function MainDashboard() {
     resume: user?.resume || '',
     avatar: user?.avatar || '',
   });
-  const [skills, setSkills] = useState(user?.skills || []);
+  const [skills, setSkills] = useState(
+  Array.isArray(user?.skills)
+    ? user.skills
+    : user?.skills
+      ? user.skills.split(",")
+      : []
+);
   const [newSkill, setNewSkill] = useState('');
   const [links, setLinks] = useState(user?.links || []);
   const [newLink, setNewLink] = useState({ title: '', url: '' });
@@ -363,7 +370,7 @@ export function MainDashboard() {
       resume: user?.resume || '',
       avatar: user?.avatar || '',
     });
-    setSkills(user?.skills || []);
+    setSkills(Array.isArray(user?.skills) ? user.skills : []);
     setLinks(user?.links || []);
   };
 
@@ -694,15 +701,41 @@ export function MainDashboard() {
 
   // Profile handlers
   const handleSave = async () => {
-    const updatedUser = {
-      ...user,
-      ...formData,
-      skills,
+  if (!user) return;
+
+  const { error } = await supabase
+    .from("alumni_profiles")
+    .update({
+      College_Name: formData.collegeName,
+      Roll_Number: formData.rollNumber,
+      Department: formData.department,
+      Year_of_Joining: formData.yearOfJoining,
+      Passed_Out_Year: formData.passedOutYear,
+      study_year: formData.studyYear,
+      about: formData.about,
+      Skills:skills.join(","),
       links,
-    };
-    await login(updatedUser);
-    setIsEditing(false);
+    })
+    .eq("user_id", user.id);
+
+  if (error) {
+  console.error("Supabase Error:", error);
+  alert(error.message);
+  return;
+}
+
+  const updatedUser = {
+    ...user,
+    ...formData,
+    skills,
+    links,
   };
+
+  await login(updatedUser);
+  setIsEditing(false);
+
+  alert("Profile updated successfully!");
+};
 
   const handleCancel = () => {
     setFormData({
@@ -717,7 +750,7 @@ export function MainDashboard() {
       resume: user?.resume || '',
       avatar: user?.avatar || '',
     });
-    setSkills(user?.skills || []);
+    setSkills(Array.isArray(user?.skills) ? user.skills : []);
     setLinks(user?.links || []);
     setNewSkill('');
     setNewLink({ title: '', url: '' });
@@ -1062,10 +1095,10 @@ const author =
 
                         {/* Post Image */}
                         {post.image && (
-                          <img 
-                            src={post.image} 
+                          <PostImageViewer
+                            src={post.image}
                             alt="Post content"
-                            className="w-full h-64 object-cover"
+                            className="max-h-96"
                           />
                         )}
 
