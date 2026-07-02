@@ -955,7 +955,7 @@ export function MainDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-white text-slate-900">
+    <div className="glass-page min-h-screen text-slate-900 dark:text-slate-100">
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -970,7 +970,7 @@ export function MainDashboard() {
 
                 {/* Create Post (for Faculty and Alumni) */}
                 {canPost && (
-                  <div className="bg-slate-900 rounded-lg border border-slate-800 p-4">
+                  <div className="glass-card shiny-border p-4">
                     <div className="flex items-start space-x-3">
                       <img 
                         src={user?.avatar || 'https://ui-avatars.com/api/?name=User&background=FDE68A&color=111827&size=256'} 
@@ -981,7 +981,7 @@ export function MainDashboard() {
                         <input
                           type="text"
                           placeholder="Share something with the community..."
-                          className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
+                          className="w-full bg-white/70 dark:bg-slate-900/70 border border-slate-300 dark:border-yellow-400/20 rounded-lg px-4 py-2 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-yellow-400/20 focus:border-yellow-400"
                         />
                       </div>
                     </div>
@@ -1041,7 +1041,7 @@ const author =
         company: 'TKR College',
       };
                     return (
-                      <article key={post.id} className="bg-slate-900 rounded-lg border border-slate-800 overflow-hidden">
+                      <article key={post.id} className="glass-card shiny-border overflow-hidden">
                         {/* Post Header */}
                         <div className="p-4 flex items-start space-x-3">
                           <img 
@@ -1052,8 +1052,8 @@ const author =
                           <div className="flex-1">
                             <div className="flex items-center justify-between">
                               <div>
-                                <h4 className="font-semibold text-white">{author.name || 'Unknown User'}</h4>
-                                <p className="text-sm text-slate-400">
+                                <h4 className="font-semibold text-slate-900 dark:text-slate-100">{author.name || 'Unknown User'}</h4>
+                                <p className="text-sm text-slate-600 dark:text-slate-300">
                                   {author.position || 'Alumni'} at {author.company || 'Company'}
                                 </p>
                                 <p className="text-xs text-slate-500">
@@ -1088,8 +1088,8 @@ const author =
 
                         {/* Post Content */}
                         <div className="px-4 pb-3">
-                          {post.title && <h3 className="text-lg font-semibold text-slate-100">{post.title}</h3>}
-                          <p className="text-slate-200">{post.content}</p>
+                          {post.title && <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">{post.title}</h3>}
+                          <p className="text-slate-700 dark:text-slate-300">{post.content}</p>
                         </div>
 
                         {/* Post Image */}
@@ -1102,12 +1102,12 @@ const author =
                         )}
 
                         {/* Post Actions */}
-                        <div className="px-4 py-3 border-t border-slate-800">
-                          <div className="flex items-center justify-between text-sm text-slate-400 mb-3">
+                        <div className="px-4 py-3 border-t border-slate-200 dark:border-slate-700">
+                          <div className="flex items-center justify-between text-sm text-slate-600 dark:text-slate-400 mb-3">
                             <span>{post.likes || 0} likes</span>
                             <span>{post.comments || 0} comments</span>
                           </div>
-                          <div className="flex items-center justify-around border-t border-slate-800 pt-2">
+                          <div className="flex items-center justify-around border-t border-slate-200 dark:border-slate-700 pt-2">
                             <button 
                               onClick={async () => {
                                 const actions = getPostActions(post);
@@ -1128,10 +1128,10 @@ const author =
                                   showGlobalToast('Failed to like post', 'error');
                                 }
                               }}
-                              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-300 ${
                                 likedPosts.has(post.id) 
-                                  ? 'text-red-500 bg-slate-800' 
-                                  : 'text-slate-300 hover:text-red-500 hover:bg-slate-800'
+                                  ? 'text-red-500 bg-white/70 dark:bg-slate-900/70' 
+                                  : 'text-slate-700 dark:text-slate-300 hover:text-yellow-600 dark:hover:text-yellow-300 hover:bg-white/70 dark:hover:bg-slate-900/70'
                               }`}
                             >
                               <span className="text-lg">{likedPosts.has(post.id) ? '♥' : '♡'}</span>
@@ -1146,7 +1146,7 @@ const author =
                                 }
                                 setOpenCommentPost(openCommentPost === post.id ? null : post.id);
                               }}
-                              className="flex items-center space-x-2 px-4 py-2 text-slate-300 hover:text-blue-500 hover:bg-slate-800 rounded-lg transition-colors"
+                              className="flex items-center space-x-2 px-4 py-2 text-slate-700 dark:text-slate-300 hover:text-yellow-600 dark:hover:text-yellow-300 hover:bg-white/70 dark:hover:bg-slate-900/70 rounded-lg transition-all duration-300"
                             >
                               <span className="text-lg">💬</span>
                               <span>Comment</span>
@@ -1179,7 +1179,7 @@ const author =
                                   showGlobalToast('Link copied to clipboard', 'success');
                                 }
                               }}
-                              className="flex items-center space-x-2 px-4 py-2 text-slate-300 hover:text-green-500 hover:bg-slate-800 rounded-lg transition-colors"
+                              className="flex items-center space-x-2 px-4 py-2 text-slate-700 dark:text-slate-300 hover:text-yellow-600 dark:hover:text-yellow-300 hover:bg-white/70 dark:hover:bg-slate-900/70 rounded-lg transition-all duration-300"
                             >
                               <span className="text-lg">↗</span>
                               <span>Share</span>
@@ -1188,7 +1188,7 @@ const author =
 
                               {/* Comments Section */}
                               {openCommentPost === post.id && (
-                                <div className="mt-4 pt-4 border-t border-slate-800 space-y-3">
+                                <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 space-y-3">
                                   {/* Existing Comments */}
                                   {postComments[post.id] && postComments[post.id].length > 0 && (
                                     <div className="space-y-2 max-h-96 overflow-y-auto">
@@ -1250,7 +1250,7 @@ const author =
                                       });
                                     }
                                   }}
-                                  className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
+                                  className="flex-1 bg-white/70 dark:bg-slate-900/70 border border-slate-300 dark:border-yellow-400/20 rounded-lg px-3 py-2 text-slate-900 dark:text-slate-100 text-sm placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-yellow-400/20 focus:border-yellow-400"
                                 />
                                 <button
                                   onClick={async () => {
@@ -1263,7 +1263,7 @@ const author =
                                       setPostComments(prev => ({ ...prev, [post.id]: comments }));
                                     }
                                   }}
-                                  className="px-4 py-2 bg-[#FFD700] text-black rounded-lg font-semibold hover:bg-yellow-600 transition-colors"
+                                  className="px-4 py-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-slate-950 font-semibold hover:shadow-lg hover:shadow-yellow-400/30 transition-all duration-300 rounded-lg"
                                 >
                                   Post
                                 </button>
@@ -1276,10 +1276,10 @@ const author =
                   }))}
                   
                   {!focusedPostId && followedPosts.length === 0 && (
-                    <div className="text-center py-12 bg-slate-800 rounded-lg border border-slate-700">
+                    <div className="text-center py-12 glass-card shiny-border">
                       <Bell className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-medium text-white">No posts yet</h3>
-                      <p className="text-slate-400">Follow some alumni to see their posts here.</p>
+                      <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">No posts yet</h3>
+                      <p className="text-slate-500 dark:text-slate-400">Follow some alumni to see their posts here.</p>
                     </div>
                   )}
                 </div>
@@ -1288,21 +1288,21 @@ const author =
 
             {activeMenu === 'post' && (
               <div className="space-y-6">
-                <h2 className="text-2xl font-bold text-white">Create Post</h2>
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Create Post</h2>
 
                 {!canPost ? (
-                  <div className="text-center py-12 bg-slate-800 rounded-lg border border-slate-700">
-                    <p className="text-slate-400">You do not have permission to create posts.</p>
+                  <div className="text-center py-12 glass-card shiny-border">
+                    <p className="text-slate-500 dark:text-slate-400">You do not have permission to create posts.</p>
                   </div>
                 ) : (
-                  <div className="bg-slate-900 rounded-lg border border-slate-800 p-6">
+                  <div className="glass-card shiny-border p-6">
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1">Type</label>
+                        <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Type</label>
                         <select
                           value={postType}
                           onChange={(e) => setPostType(e.target.value as any)}
-                          className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white"
+                          className="w-full rounded-xl bg-white/70 dark:bg-slate-900/70 border border-slate-300 dark:border-yellow-400/20 text-slate-900 dark:text-slate-100 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20 outline-none px-4 py-3"
                         >
                           {role === 'alumni' && <option value="job">Job</option>}
                           {role === 'alumni' && <option value="internship">Internship</option>}
@@ -1316,20 +1316,20 @@ const author =
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1">Title</label>
+                        <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Title</label>
                         <input
                           type="text"
                           value={postTitle}
                           onChange={(e) => setPostTitle(e.target.value)}
                           placeholder="Post title (optional)"
-                          className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-400"
+                          className="w-full rounded-xl bg-white/70 dark:bg-slate-900/70 border border-slate-300 dark:border-yellow-400/20 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20 outline-none px-4 py-3"
                         />
-                        <label className="block text-sm font-medium text-slate-300 mb-1 mt-3">Content</label>
+                        <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Content</label>
                         <textarea
                           value={postContent}
                           onChange={(e) => setPostContent(e.target.value)}
                           rows={6}
-                          className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-400"
+                          className="w-full rounded-xl bg-white/70 dark:bg-slate-900/70 border border-slate-300 dark:border-yellow-400/20 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20 outline-none px-4 py-3"
                           placeholder="Write your post here..."
                         />
                       </div>
@@ -1592,8 +1592,8 @@ const author =
                       )}
 
                       <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1">Attach file / image (optional)</label>
-                        <label className="mt-2 flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-4 cursor-pointer transition-colors bg-slate-800 border-slate-700 hover:border-yellow-500">
+                        <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Attach file / image (optional)</label>
+                        <label className="mt-2 flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 dark:border-yellow-400/30 bg-white/60 dark:bg-slate-900/70 text-slate-700 dark:text-slate-300 hover:border-yellow-400 hover:bg-yellow-50/50 dark:hover:bg-yellow-400/10 transition-all duration-300 cursor-pointer p-4">
                           <input
                             type="file"
                             accept="image/*,.pdf,.doc,.docx"
@@ -1607,8 +1607,8 @@ const author =
                             }}
                             className="hidden"
                           />
-                          <div className="text-slate-400 text-sm">Click to choose a file, or drop it here</div>
-                          {postFileName && <div className="text-slate-200 text-sm mt-2">{postFileName}</div>}
+                          <div className="text-slate-700 dark:text-slate-300 text-sm">Click to choose a file, or drop it here</div>
+                          {postFileName && <div className="text-slate-700 dark:text-slate-300 text-sm mt-2">{postFileName}</div>}
                         </label>
                         {postImage && (
                           <div className="mt-3">
@@ -1639,13 +1639,13 @@ const author =
                             setPostDetails({});
                             navigate('/dashboard/contributions');
                           }}
-                          className="px-4 py-2 bg-[#FFD700] text-black rounded-lg font-semibold hover:bg-yellow-600"
+                          className="px-4 py-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-slate-950 font-semibold rounded-lg hover:from-yellow-500 hover:to-yellow-600 transition-all"
                         >
                           Publish
                         </button>
                         <button
                           onClick={() => { setPostContent(''); setPostType('general'); setPostImage(null); setPostDetails({}); }}
-                          className="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600"
+                          className="px-4 py-2 bg-slate-700 dark:bg-slate-800 text-white rounded-lg hover:bg-slate-600 transition-all"
                         >
                           Cancel
                         </button>
@@ -1686,7 +1686,7 @@ const author =
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {(eventView === 'upcoming' ? upcomingEvents : currentEvents).map((event) => (
-                    <div key={event.id} className="bg-slate-900 rounded-lg border border-slate-800 overflow-hidden hover:border-[#FFD700] transition-colors">
+                    <div key={event.id} className="glass-card shiny-border overflow-hidden hover:border-yellow-400 transition-colors">
                       <img 
                         src={event.image} 
                         alt={event.title}
@@ -1704,10 +1704,10 @@ const author =
                   ))}
                   
                   {(eventView === 'upcoming' ? upcomingEvents : currentEvents).length === 0 && (
-                    <div className="col-span-full text-center py-12 bg-slate-800 rounded-lg border border-slate-700">
+                    <div className="col-span-full text-center py-12 glass-card shiny-border">
                       <Briefcase className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-medium text-white">No events available</h3>
-                      <p className="text-slate-400">
+                      <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">No events available</h3>
+                      <p className="text-slate-500 dark:text-slate-400">
                         {eventView === 'upcoming' 
                           ? 'Check back later for upcoming events.' 
                           : 'No events are available'
@@ -1723,9 +1723,9 @@ const author =
               <div className="space-y-6">
                 <h2 className="text-2xl font-bold text-white">Community Discussion</h2>
                 
-                <div className="bg-slate-900 rounded-lg border border-slate-800 p-6">
-                  <h3 className="text-xl font-bold text-white mb-4">Joined Communities</h3>
-                  <p className="text-slate-400 mb-4">You haven't joined any communities yet.</p>
+                <div className="glass-card shiny-border p-6">
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">Joined Communities</h3>
+                  <p className="text-slate-500 dark:text-slate-400 mb-4">You haven't joined any communities yet.</p>
                   <button className="px-4 py-2 bg-[#FFD700] text-black rounded-lg font-semibold hover:bg-yellow-600 transition-colors">
                     Browse Communities
                   </button>
@@ -1733,10 +1733,10 @@ const author =
 
                 <div className="space-y-4">
                   <h3 className="text-xl font-bold text-white">Recent Discussions</h3>
-                  <div className="text-center py-12 bg-slate-800 rounded-lg border border-slate-700">
+                  <div className="text-center py-12 glass-card shiny-border">
                     <MessageSquare className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-white">No discussions yet</h3>
-                    <p className="text-slate-400">Join a community to see discussions here.</p>
+                    <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">No discussions yet</h3>
+                    <p className="text-slate-500 dark:text-slate-400">Join a community to see discussions here.</p>
                   </div>
                 </div>
               </div>
@@ -1748,7 +1748,7 @@ const author =
                 
                 <div className="space-y-4">
                   {followedJobs.map((job) => (
-                    <div key={job.id} className="bg-slate-900 rounded-lg border border-slate-800 p-6 hover:border-[#FFD700] transition-colors">
+                    <div key={job.id} className="glass-card shiny-border p-6 hover:border-yellow-400 transition-colors">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <h3 className="text-xl font-bold text-white mb-2">{job.title}</h3>
@@ -1773,10 +1773,10 @@ const author =
                   ))}
                   
                   {followedJobs.length === 0 && (
-                    <div className="text-center py-12 bg-slate-800 rounded-lg border border-slate-700">
+                    <div className="text-center py-12 glass-card shiny-border">
                       <Briefcase className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-medium text-white">No opportunities available</h3>
-                      <p className="text-slate-400">Check back later for new opportunities.</p>
+                      <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">No opportunities available</h3>
+                      <p className="text-slate-500 dark:text-slate-400">Check back later for new opportunities.</p>
                     </div>
                   )}
                 </div>
@@ -1795,15 +1795,15 @@ const author =
                       className={`cursor-pointer transition rounded-lg border p-6 ${
                         selectedActivityCard === "postsCreated"
                           ? "border-yellow-400 bg-yellow-400/10"
-                          : "border-slate-800 bg-slate-900 hover:border-slate-700"
+                          : "glass-card shiny-border"
                       }`}
                     >
                       <div className="flex items-center justify-between">
                         <div>
-                          <h4 className="font-semibold text-white">Posts Created</h4>
-                          <p className="text-sm text-slate-400">Your contributions</p>
+                          <h4 className="font-semibold text-slate-900 dark:text-slate-100">Posts Created</h4>
+                          <p className="text-sm text-slate-500 dark:text-slate-400">Your contributions</p>
                         </div>
-                        <span className="text-2xl font-bold text-[#FFD700]">
+                        <span className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
                           {posts?.filter(p => p.alumniId === user?.id).length || 0}
                         </span>
                       </div>
@@ -1815,15 +1815,15 @@ const author =
                     className={`cursor-pointer transition rounded-lg border p-6 ${
                       selectedActivityCard === "following"
                         ? "border-yellow-400 bg-yellow-400/10"
-                        : "border-slate-800 bg-slate-900 hover:border-slate-700"
+                        : "glass-card shiny-border"
                     }`}
                   >
                     <div className="flex items-center justify-between">
                       <div>
-                        <h4 className="font-semibold text-white">Following</h4>
-                        <p className="text-sm text-slate-400">Alumni you follow</p>
+                        <h4 className="font-semibold text-slate-900 dark:text-slate-100">Following</h4>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">Alumni you follow</p>
                       </div>
-                      <span className="text-2xl font-bold text-[#FFD700]">
+                      <span className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
                         {following?.length || 0}
                       </span>
                     </div>
@@ -1836,15 +1836,15 @@ const author =
                         className={`cursor-pointer transition rounded-lg border p-6 ${
                           selectedActivityCard === "registeredEvents"
                             ? "border-yellow-400 bg-yellow-400/10"
-                            : "border-slate-800 bg-slate-900 hover:border-slate-700"
+                            : "glass-card shiny-border"
                         }`}
                       >
                         <div className="flex items-center justify-between">
                           <div>
-                            <h4 className="font-semibold text-white">Registered Events</h4>
-                            <p className="text-sm text-slate-400">Events joined</p>
+                            <h4 className="font-semibold text-slate-900 dark:text-slate-100">Registered Events</h4>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">Events joined</p>
                           </div>
-                          <span className="text-2xl font-bold text-[#FFD700]">
+                          <span className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
                             {registeredEvents?.length || 0}
                           </span>
                         </div>
@@ -1855,15 +1855,15 @@ const author =
                         className={`cursor-pointer transition rounded-lg border p-6 ${
                           selectedActivityCard === "attendedEvents"
                             ? "border-yellow-400 bg-yellow-400/10"
-                            : "border-slate-800 bg-slate-900 hover:border-slate-700"
+                            : "glass-card shiny-border"
                         }`}
                       >
                         <div className="flex items-center justify-between">
                           <div>
-                            <h4 className="font-semibold text-white">Attended Events</h4>
-                            <p className="text-sm text-slate-400">Events attended</p>
+                            <h4 className="font-semibold text-slate-900 dark:text-slate-100">Attended Events</h4>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">Events attended</p>
                           </div>
-                          <span className="text-2xl font-bold text-[#FFD700]">
+                          <span className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
                             {attendedEvents?.length || 0}
                           </span>
                         </div>
@@ -1874,24 +1874,24 @@ const author =
 
                 {/* Activity Details Section */}
                 {!selectedActivityCard ? (
-                  <div className="text-center py-12 bg-slate-800 rounded-lg border border-slate-700">
-                    <p className="text-slate-400 text-lg">Select an activity card to view details</p>
+                  <div className="text-center py-12 glass-card shiny-border">
+                    <p className="text-slate-500 dark:text-slate-400 text-lg">Select an activity card to view details</p>
                   </div>
                 ) : (
                   <>
                     {/* Posts Created Details */}
                     {selectedActivityCard === "postsCreated" && (role === "alumni") && (
-                      <div className="bg-slate-900 rounded-lg border border-slate-800 p-6">
+                      <div className="glass-card shiny-border p-6">
                         <div className="flex items-center justify-between mb-6">
-                          <h3 className="text-xl font-bold text-white">Your Posts</h3>
-                          <span className="px-3 py-1 rounded-full text-sm font-semibold bg-slate-800 text-slate-300">
+                          <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">Your Posts</h3>
+                          <span className="px-3 py-1 rounded-full text-sm font-semibold bg-yellow-100 text-yellow-700 dark:bg-yellow-400/20 dark:text-yellow-300">
                             {userPosts.length} total
                           </span>
                         </div>
                         <div className="space-y-4">
                           {userPosts.length > 0 ? (
                             userPosts.map((post) => (
-                              <div key={post.id} className="bg-slate-800 rounded-lg p-4 border border-slate-700 hover:border-[#FFD700] transition-colors group">
+                              <div key={post.id} className="glass-card shiny-border p-4 hover:border-yellow-400 transition-colors group">
                                 <div className="flex items-start justify-between mb-3">
                                   <div className="flex-1">
                                     <h4 className="font-semibold text-white">{post.title || 'Untitled Post'}</h4>
@@ -1968,15 +1968,15 @@ const author =
 
                     {/* Following Details */}
                     {selectedActivityCard === "following" && (
-                      <div className="bg-slate-900 rounded-lg border border-slate-800 p-6">
-                        <h3 className="text-xl font-bold text-white mb-4">Following</h3>
+                      <div className="glass-card shiny-border p-6">
+                        <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">Following</h3>
                         <div className="space-y-4">
                           {following && following.length > 0 ? (
                             following.map((alumnusId) => {
                               const alumnusData = getAlumniById(alumnusId);
                               if (!alumnusData) return null;
                               return (
-                                <div key={alumnusId} className="bg-slate-800 rounded-lg p-4 border border-slate-700 hover:border-[#FFD700] transition-colors">
+                                <div key={alumnusId} className="glass-card shiny-border p-4 hover:border-yellow-400 transition-colors">
                                   <div className="flex items-center justify-between">
                                     <div>
                                       <h4 className="font-semibold text-white">{alumnusData.name}</h4>
@@ -2001,12 +2001,12 @@ const author =
 
                     {/* Registered Events Details */}
                     {selectedActivityCard === "registeredEvents" && (role === "alumni" || role === "student") && (
-                      <div className="bg-slate-900 rounded-lg border border-slate-800 p-6">
-                        <h3 className="text-xl font-bold text-white mb-4">Registered Events</h3>
+                      <div className="glass-card shiny-border p-6">
+                        <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">Registered Events</h3>
                         <div className="space-y-4">
                           {registeredEvents && registeredEvents.length > 0 ? (
                             registeredEvents.map((event) => (
-                              <div key={event.registrationId || event.id} className="bg-slate-800 rounded-lg p-4 border border-slate-700 hover:border-[#FFD700] transition-colors">
+                              <div key={event.registrationId || event.id} className="glass-card shiny-border p-4 hover:border-yellow-400 transition-colors">
                                 <div className="flex items-start justify-between mb-2">
                                   <div className="flex-1">
                                     <h4 className="font-semibold text-white">{event.title}</h4>
@@ -2038,12 +2038,12 @@ const author =
 
                     {/* Attended Events Details */}
                     {selectedActivityCard === "attendedEvents" && (role === "alumni" || role === "student") && (
-                      <div className="bg-slate-900 rounded-lg border border-slate-800 p-6">
-                        <h3 className="text-xl font-bold text-white mb-4">Attended Events</h3>
+                      <div className="glass-card shiny-border p-6">
+                        <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">Attended Events</h3>
                         <div className="space-y-4">
                           {attendedEvents && attendedEvents.length > 0 ? (
                             attendedEvents.map((event) => (
-                              <div key={event.registrationId || event.id} className="bg-slate-800 rounded-lg p-4 border border-slate-700 hover:border-[#FFD700] transition-colors">
+                              <div key={event.registrationId || event.id} className="glass-card shiny-border p-4 hover:border-yellow-400 transition-colors">
                                 <div className="flex items-start justify-between mb-2">
                                   <div className="flex-1">
                                     <h4 className="font-semibold text-white">{event.title}</h4>
@@ -2082,7 +2082,7 @@ const author =
                 {/* Profile Header */}
                 <div className="flex items-end justify-between">
                   <div>
-                    <h2 className="text-2xl font-bold text-white">{user?.name}</h2>
+                    <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{user?.name}</h2>
                   </div>
                   <div className="flex gap-2">
                     <button 
@@ -2312,7 +2312,7 @@ const author =
                   </div>
                 ) : (
                   /* Profile View */
-                  <div className="bg-slate-900 rounded-lg border border-slate-800 p-6 space-y-6">
+                  <div className="glass-card shiny-border rounded-2xl p-6 space-y-6">
                     {/* Profile Avatar and Basic Info */}
                     <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
                       <img 
@@ -2321,17 +2321,17 @@ const author =
                         className="h-32 w-32 rounded-full object-cover border-4 border-[#FFD700]"
                       />
                       <div className="flex-1 w-full text-center md:text-left">
-                        <h3 className="text-2xl font-bold text-white mb-4">{user?.name}</h3>
+                        <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-4">{user?.name}</h3>
                         
-                        <div className="flex justify-center md:justify-start gap-8 mb-4 text-white text-lg">
-                          <div><span className="font-bold">{posts?.filter(p => p.alumniId === user?.id).length || 0}</span> posts</div>
+                        <div className="flex justify-center md:justify-start gap-8 mb-4 text-slate-900 dark:text-slate-100 text-lg">
+                          <div><span className="font-bold">{posts?.filter(p => p.alumniId === user?.id).length || 0}</span> <span className="text-slate-700 dark:text-slate-300">posts</span></div>
                         </div>
 
                         <div className="text-sm">
-                          {user?.department && <p className="text-white font-medium text-base">{user.department} {user?.year ? `- ${user.year}` : ''}</p>}
-                          {user?.collegeName && <p className="text-slate-300">{user.collegeName}</p>}
-                          {user?.about && <p className="text-slate-200 mt-2 whitespace-pre-wrap">{user.about}</p>}
-                          {user?.email && <p className="text-slate-400 mt-1">{user.email}</p>}
+                          {user?.department && <p className="text-slate-900 dark:text-slate-100 font-semibold text-base">{user.department} {user?.year ? `- ${user.year}` : ''}</p>}
+                          {user?.collegeName && <p className="text-slate-600 dark:text-slate-300">{user.collegeName}</p>}
+                          {user?.about && <p className="text-slate-700 dark:text-slate-200 mt-2 whitespace-pre-wrap">{user.about}</p>}
+                          {user?.email && <p className="text-slate-600 dark:text-slate-300 mt-1">{user.email}</p>}
                           {user?.linkedin && (
                             <a href={user.linkedin.startsWith('http') ? user.linkedin : `https://${user.linkedin}`} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 hover:underline mt-1 block">
                               {user.linkedin.replace(/^https?:\/\/(www\.)?/, '')}
@@ -2341,45 +2341,45 @@ const author =
                       </div>
                     </div>
 
-                    <hr className="border-slate-700" />
+                    <hr className="border-slate-200 dark:border-yellow-400/20" />
 
                     {/* Profile Grid */}
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       {user?.rollNumber && (
-                        <div className="rounded-lg bg-slate-800 p-4">
-                          <p className="text-sm text-slate-400">Roll Number</p>
-                          <p className="text-white">{user.rollNumber}</p>
+                        <div className="glass-card p-4 rounded-xl">
+                          <p className="text-sm text-slate-500 dark:text-slate-400">Roll Number</p>
+                          <p className="text-slate-900 dark:text-slate-100 font-semibold">{user.rollNumber}</p>
                         </div>
                       )}
                       {user?.year && (
-                        <div className="rounded-lg bg-slate-800 p-4">
-                          <p className="text-sm text-slate-400">Study Year</p>
-                          <p className="text-white">{user.year}</p>
+                        <div className="glass-card p-4 rounded-xl">
+                          <p className="text-sm text-slate-500 dark:text-slate-400">Study Year</p>
+                          <p className="text-slate-900 dark:text-slate-100 font-semibold">{user.year}</p>
                         </div>
                       )}
                       {user?.yearOfJoining && (
-                        <div className="rounded-lg bg-slate-800 p-4">
-                          <p className="text-sm text-slate-400">Year of Joining</p>
-                          <p className="text-white">{user.yearOfJoining}</p>
+                        <div className="glass-card p-4 rounded-xl">
+                          <p className="text-sm text-slate-500 dark:text-slate-400">Year of Joining</p>
+                          <p className="text-slate-900 dark:text-slate-100 font-semibold">{user.yearOfJoining}</p>
                         </div>
                       )}
                       {user?.passedOutYear && (
-                        <div className="rounded-lg bg-slate-800 p-4">
-                          <p className="text-sm text-slate-400">Year of Passing Out</p>
-                          <p className="text-white">{user.passedOutYear}</p>
+                        <div className="glass-card p-4 rounded-xl">
+                          <p className="text-sm text-slate-500 dark:text-slate-400">Year of Passing Out</p>
+                          <p className="text-slate-900 dark:text-slate-100 font-semibold">{user.passedOutYear}</p>
                         </div>
                       )}
                       {user?.linkedin && (
-                        <div className="rounded-lg bg-slate-800 p-4">
-                          <p className="text-sm text-slate-400">LinkedIn</p>
+                        <div className="glass-card p-4 rounded-xl">
+                          <p className="text-sm text-slate-500 dark:text-slate-400">LinkedIn</p>
                           <a href={user.linkedin.startsWith('http') ? user.linkedin : `https://${user.linkedin}`} target="_blank" rel="noopener noreferrer" className="text-[#FFD700] hover:underline block truncate">
                             View Profile
                           </a>
                         </div>
                       )}
                       {user?.resume && (
-                        <div className="rounded-lg bg-slate-800 p-4">
-                          <p className="text-sm text-slate-400">Resume</p>
+                        <div className="glass-card p-4 rounded-xl">
+                          <p className="text-sm text-slate-500 dark:text-slate-400">Resume</p>
                           <a href={user.resume} target="_blank" rel="noopener noreferrer" className="text-[#FFD700] hover:underline block truncate">
                             View Resume
                           </a>
@@ -2390,10 +2390,10 @@ const author =
                     {/* About Section */}
                     {user?.about && (
                       <>
-                        <hr className="border-slate-700" />
+                        <hr className="border-slate-200 dark:border-yellow-400/20" />
                         <div>
-                          <p className="text-sm text-slate-400 mb-2">About</p>
-                          <p className="text-white">{user.about}</p>
+                          <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">About</p>
+                          <p className="text-slate-900 dark:text-slate-100">{user.about}</p>
                         </div>
                       </>
                     )}
@@ -2413,9 +2413,9 @@ const author =
 
   return skillsList.length > 0 ? (
     <>
-      <hr className="border-slate-700" />
+      <hr className="border-slate-200 dark:border-yellow-400/20" />
       <div>
-        <p className="text-sm text-slate-400 mb-3">Skills</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">Skills</p>
 
         <div className="flex flex-wrap gap-2">
           {skillsList.map((skill: string, idx: number) => (
@@ -2435,40 +2435,40 @@ const author =
                     {/* Career Interest Section - Students Only */}
                     {role === 'student' && user?.careerInterest && (
                       <>
-                        <hr className="border-slate-700" />
+                        <hr className="border-slate-200 dark:border-yellow-400/20" />
                         <div>
-                          <p className="text-sm text-slate-400 mb-3">Career Interest</p>
+                          <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">Career Interest</p>
                           <div className="space-y-3">
                             <div>
-                              <p className="text-slate-300 text-sm">Interest</p>
-                              <p className="text-white font-medium">
+                              <p className="text-slate-500 dark:text-slate-400 text-sm">Interest</p>
+                              <p className="text-slate-900 dark:text-slate-100 font-medium">
                                 {user.careerInterest === 'HigherEducation' ? 'Higher Education' : user.careerInterest}
                               </p>
                             </div>
                             {user.careerInterest === 'Job' && user?.jobInterest && (
                               <div>
-                                <p className="text-slate-300 text-sm">Interested Job</p>
-                                <p className="text-white font-medium">{user.jobInterest}</p>
+                                <p className="text-slate-500 dark:text-slate-400 text-sm">Interested Job</p>
+                                <p className="text-slate-900 dark:text-slate-100 font-medium">{user.jobInterest}</p>
                               </div>
                             )}
                             {user.careerInterest === 'Business' && user?.businessInterest && (
                               <div>
-                                <p className="text-slate-300 text-sm">Business Type</p>
-                                <p className="text-white font-medium">{user.businessInterest}</p>
+                                <p className="text-slate-500 dark:text-slate-400 text-sm">Business Type</p>
+                                <p className="text-slate-900 dark:text-slate-100 font-medium">{user.businessInterest}</p>
                               </div>
                             )}
                             {user.careerInterest === 'HigherEducation' && (
                               <>
                                 {user?.higherCourse && (
                                   <div>
-                                    <p className="text-slate-300 text-sm">Course</p>
-                                    <p className="text-white font-medium">{user.higherCourse}</p>
+                                    <p className="text-slate-500 dark:text-slate-400 text-sm">Course</p>
+                                    <p className="text-slate-900 dark:text-slate-100 font-medium">{user.higherCourse}</p>
                                   </div>
                                 )}
                                 {user?.higherCountry && (
                                   <div>
-                                    <p className="text-slate-300 text-sm">Country</p>
-                                    <p className="text-white font-medium">{user.higherCountry}</p>
+                                    <p className="text-slate-500 dark:text-slate-400 text-sm">Country</p>
+                                    <p className="text-slate-900 dark:text-slate-100 font-medium">{user.higherCountry}</p>
                                   </div>
                                 )}
                               </>
@@ -2481,9 +2481,9 @@ const author =
                     {/* Other Links */}
                     {(user?.links?.length! > 0) && (
                       <>
-                        <hr className="border-slate-700" />
+                        <hr className="border-slate-200 dark:border-yellow-400/20" />
                         <div>
-                          <p className="text-sm text-slate-400 mb-3">Links</p>
+                          <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">Links</p>
                           <div className="space-y-2">
                             {user.links?.map((link: any, idx: number) => (
                               <a 
@@ -2491,7 +2491,7 @@ const author =
                                 href={link.url} 
                                 target="_blank" 
                                 rel="noopener noreferrer"
-                                className="block bg-slate-800 px-4 py-2 rounded-lg text-[#FFD700] hover:bg-slate-700 hover:underline"
+                                className="block glass-card p-4 rounded-xl text-[#FFD700] hover:bg-white/70 dark:hover:bg-slate-900/70 hover:underline"
                               >
                                 {link.title}
                               </a>
@@ -2504,11 +2504,11 @@ const author =
                     {/* Logout */}
                     {role && (
                       <>
-                        <hr className="border-slate-700" />
+                        <hr className="border-slate-200 dark:border-yellow-400/20" />
                         <div className="flex justify-center">
                           <span 
                             onClick={logout} 
-                            className="text-red-600 hover:text-red-700 py-3 px-4 text-center cursor-pointer font-semibold"
+                            className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 py-3 px-4 text-center cursor-pointer font-semibold"
                           >
                             Logout
                           </span>
@@ -2524,10 +2524,10 @@ const author =
               <div className="space-y-6">
                 <h2 className="text-2xl font-bold text-white">Chat</h2>
                 
-                <div className="text-center py-12 bg-slate-800 rounded-lg border border-slate-700">
+                <div className="text-center py-12 glass-card shiny-border">
                   <MessageCircle className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-white">Chat functionality</h3>
-                  <p className="text-slate-400">Coming soon...</p>
+                  <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">Chat functionality</h3>
+                  <p className="text-slate-500 dark:text-slate-400">Coming soon...</p>
                 </div>
               </div>
             )}
@@ -2536,10 +2536,10 @@ const author =
               <div className="space-y-6">
                 <h2 className="text-2xl font-bold text-white">Notifications</h2>
                 
-                <div className="text-center py-12 bg-slate-800 rounded-lg border border-slate-700">
+                <div className="text-center py-12 glass-card shiny-border">
                   <Bell className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-white">Notifications</h3>
-                  <p className="text-slate-400">Coming soon...</p>
+                  <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">Notifications</h3>
+                  <p className="text-slate-500 dark:text-slate-400">Coming soon...</p>
                 </div>
               </div>
             )}
@@ -2548,7 +2548,7 @@ const author =
           {/* Alumni Insights Widget - Right Side on Desktop, Below on Mobile */}
           {role?.toLowerCase() !== 'admin' && activeMenu === 'home' && (
             <aside className="w-full lg:w-[360px] shrink-0 animate-in fade-in slide-in-from-bottom-4 duration-700">
-              <div className="sticky top-[156px]">
+              <div className="sticky top-[180px]">
                 <AlumniStatisticsWidget />
               </div>
             </aside>

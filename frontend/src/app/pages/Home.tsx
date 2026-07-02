@@ -80,14 +80,16 @@ const [siteStats, setSiteStats] = useState<SiteStats>({
 
 const [loadingSiteStats, setLoadingSiteStats] = useState(true);
 
-const [homeEvents, setHomeEvents] = useState<HomeEvent[]>([]);
-const [loadingEvents, setLoadingEvents] = useState(true);
+  const [homeEvents, setHomeEvents] = useState<HomeEvent[]>([]);
+  const [loadingEvents, setLoadingEvents] = useState(true);
+  const [highlightsCurrentIndex, setHighlightsCurrentIndex] = useState(0);
+  const [isHighlightsPaused, setIsHighlightsPaused] = useState(false);
 
-const videoRef = useRef<HTMLVideoElement | null>(null);
-const campusVideoRef = useRef<HTMLVideoElement | null>(null);
-const formatCount = (count: number) => {
-  return count.toLocaleString();
-};
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const campusVideoRef = useRef<HTMLVideoElement | null>(null);
+  const formatCount = (count: number) => {
+    return count.toLocaleString();
+  };
 
 const fetchSiteStats = async () => {
   setLoadingSiteStats(true);
@@ -322,11 +324,38 @@ useEffect(() => {
     }
   };
 
+  // Auto carousel for alumni highlights
+  useEffect(() => {
+    if (isHighlightsPaused || alumniHighlights.length <= 3) return;
+
+    const interval = setInterval(() => {
+      setHighlightsCurrentIndex((prev) => {
+        if (prev >= alumniHighlights.length - 3) {
+          return 0;
+        }
+        return prev + 1;
+      });
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [isHighlightsPaused, alumniHighlights.length]);
+
+  const goToHighlightsPrevious = () => {
+    setHighlightsCurrentIndex((prev) => (prev === 0 ? Math.max(0, alumniHighlights.length - 3) : prev - 1));
+  };
+
+  const goToHighlightsNext = () => {
+    setHighlightsCurrentIndex((prev) => (prev >= alumniHighlights.length - 3 ? 0 : prev + 1));
+  };
+
+  const goToHighlightsSlide = (index: number) => {
+    setHighlightsCurrentIndex(index);
+  };
+
   const isCurrentVideoBanner = bannerImages[currentBannerIndex]?.type === 'video';
 
   return (
     <div className="flex flex-col min-h-screen">
-      <div className="h-4 bg-white" aria-hidden="true" />
       {/* Hero Banner Carousel Section - Full Width */}
       <section 
         id="home" 
@@ -742,55 +771,103 @@ useEffect(() => {
             </Link>
           </div>
           {/* Gallery Grid - Published Alumni Highlights */}
-{loadingHighlights ? (
-  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-10 text-center text-slate-500">
-    Loading alumni highlights...
-  </div>
-) : alumniHighlights.length > 0 ? (
-  <div className="grid md:grid-cols-3 gap-8">
-    {alumniHighlights.map((highlight, index) => (
-      <motion.div
-  key={highlight.id}
-  initial={{ opacity: 0, y: 20 }}
-  whileInView={{ opacity: 1, y: 0 }}
-  viewport={{ once: true }}
-  transition={{ duration: 0.5, delay: index * 0.1 }}
-  onClick={() => setSelectedHighlight(highlight)}
-  className="group relative aspect-[4/3] rounded-2xl overflow-hidden cursor-pointer shadow-lg hover:shadow-2xl transition-all duration-300"
->
-  {highlight.images && highlight.images.length > 0 ? (
-    <img
-      src={highlight.images[0]}
-      alt={highlight.title}
-      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-    />
-  ) : (
-    <div className="w-full h-full bg-slate-200 flex items-center justify-center">
-      <p className="text-slate-500 font-semibold">No Image</p>
-    </div>
-  )}
+          {loadingHighlights ? (
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-10 text-center text-slate-500">
+              Loading alumni highlights...
+            </div>
+          ) : alumniHighlights.length > 0 ? (
+            <div 
+              className="relative"
+              onMouseEnter={() => setIsHighlightsPaused(true)}
+              onMouseLeave={() => setIsHighlightsPaused(false)}
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {alumniHighlights.slice(highlightsCurrentIndex, highlightsCurrentIndex + 3).map((highlight, index) => (
+                  <motion.div
+                    key={highlight.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                    onClick={() => setSelectedHighlight(highlight)}
+                    className="glass-card shiny-border overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:scale-[1.02] hover:shadow-xl hover:shadow-yellow-400/20 group cursor-pointer"
+                  >
+                    {highlight.images && highlight.images.length > 0 ? (
+                      <div className="aspect-video relative overflow-hidden bg-slate-700">
+                        <img
+                          src={highlight.images[0]}
+                          alt={highlight.title}
+                          className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-110"
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-full aspect-video bg-slate-200 flex items-center justify-center">
+                        <p className="text-slate-500 font-semibold">No Image</p>
+                      </div>
+                    )}
 
-  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent opacity-100 transition-opacity duration-300">
-    <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-      <h3 className="font-bold text-xl mb-1">
-        {highlight.title}
-      </h3>
+                    <div className="p-5">
+                      <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-2 group-hover:text-yellow-600 dark:group-hover:text-yellow-400 transition-colors">
+                        {highlight.title}
+                      </h3>
 
-      {highlight.images && highlight.images.length > 1 && (
-        <p className="text-sm text-slate-200">
-          Click to view all {highlight.images.length} photos
-        </p>
-      )}
-    </div>
-  </div>
-</motion.div>
-    ))}
-  </div>
-) : (
-  <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center text-slate-500">
-    No alumni highlights available yet.
-  </div>
-)}
+                      {highlight.images && highlight.images.length > 1 && (
+                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                          Click to view all {highlight.images.length} photos
+                        </p>
+                      )}
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+
+              {/* Navigation Arrows */}
+              {alumniHighlights.length > 3 && (
+                <>
+                  <button
+                    onClick={goToHighlightsPrevious}
+                    className="icon-hover absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 bg-white/70 dark:bg-slate-900/70 border border-slate-900/10 dark:border-yellow-400/20 text-slate-700 dark:text-slate-200 hover:text-yellow-600 dark:hover:text-yellow-300 p-2 rounded-full transition-all duration-200 hover:scale-110"
+                    aria-label="Previous highlights"
+                  >
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={goToHighlightsNext}
+                    className="icon-hover absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 bg-white/70 dark:bg-slate-900/70 border border-slate-900/10 dark:border-yellow-400/20 text-slate-700 dark:text-slate-200 hover:text-yellow-600 dark:hover:text-yellow-300 p-2 rounded-full transition-all duration-200 hover:scale-110"
+                    aria-label="Next highlights"
+                  >
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </>
+              )}
+
+              {/* Dots Indicator */}
+              {alumniHighlights.length > 3 && (
+                <div className="flex justify-center gap-2 mt-6">
+                  {Array.from({ length: Math.ceil(alumniHighlights.length / 3) }).map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => goToHighlightsSlide(index * 3)}
+                      className={`h-2 rounded-full transition-all duration-300 ${
+                        highlightsCurrentIndex === index * 3
+                          ? 'w-8 bg-yellow-400'
+                          : 'w-2 bg-slate-300 dark:bg-slate-600 hover:bg-slate-400 dark:hover:bg-slate-500'
+                      }`}
+                      aria-label={`Go to page ${index + 1}`}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center text-slate-500">
+              No alumni highlights available yet.
+            </div>
+          )}
 
           
           {/* Mobile View More Button */}

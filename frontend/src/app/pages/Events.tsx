@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Calendar, MapPin, Users, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -107,18 +106,18 @@ useEffect(() => {
       <div className="mb-8">
         <div className="flex flex-col md:flex-row justify-between gap-4 mb-4">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900 mb-1">Upcoming Events</h1>
-            <p className="text-slate-600">Join webinars, workshops, and networking events to connect with fellow alumni.</p>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-1">Upcoming Events</h1>
+            <p className="text-slate-600 dark:text-slate-300">Join webinars, workshops, and networking events to connect with fellow alumni.</p>
           </div>
         </div>
         
-        <div className="flex flex-col md:flex-row gap-4 bg-white p-4 rounded-lg shadow-sm border border-slate-200">
+        <div className="flex flex-col md:flex-row gap-4 bg-white dark:bg-slate-900/70 p-4 rounded-lg shadow-sm border border-slate-200 dark:border-yellow-400/20">
           <div className="relative flex-grow">
             <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
             <input
               type="text"
               placeholder="Search by title, location, or organizer..."
-              className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 border border-slate-300 dark:border-yellow-400/20 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent bg-white/70 dark:bg-slate-900/70 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -126,7 +125,7 @@ useEffect(() => {
           
           <div className="flex items-center gap-2 md:w-48">
             <select
-              className="w-full p-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+              className="w-full p-2 border border-slate-300 dark:border-yellow-400/20 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent bg-white/70 dark:bg-slate-900/70 text-slate-900 dark:text-slate-100"
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value)}
             >
@@ -146,7 +145,7 @@ useEffect(() => {
   initial={{ opacity: 0, y: 20 }}
   animate={{ opacity: 1, y: 0 }}
   transition={{ delay: index * 0.1 }}
-  className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow group"
+  className="bg-white dark:bg-slate-900/70 rounded-xl shadow-sm border border-slate-200 dark:border-yellow-400/20 overflow-hidden hover:shadow-md transition-shadow group"
 >
   <div className="relative h-48 overflow-hidden">
     <img
@@ -155,38 +154,38 @@ useEffect(() => {
       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
     />
 
-    <div className="absolute top-4 right-4 bg-white/90 px-3 py-1 rounded-full text-xs font-semibold text-slate-900 shadow-sm backdrop-blur-sm">
+    <div className="absolute top-4 right-4 bg-white/90 dark:bg-slate-900/90 px-3 py-1 rounded-full text-xs font-semibold text-slate-900 dark:text-slate-100 shadow-sm backdrop-blur-sm">
       {event.type}
     </div>
   </div>
 
   <div className="p-6">
-    <h3 className="text-xl font-bold text-slate-900 mb-3 group-hover:text-yellow-600 transition-colors">
+    <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-3 group-hover:text-yellow-600 dark:group-hover:text-yellow-400 transition-colors">
       {event.title}
     </h3>
 
-    <div className="space-y-2 text-sm text-slate-600 mb-6">
+    <div className="space-y-2 text-sm text-slate-600 dark:text-slate-300 mb-6">
       <div className="flex items-center">
-        <Calendar className="h-4 w-4 text-slate-400 mr-2" />
+        <Calendar className="h-4 w-4 text-slate-400 dark:text-slate-500 mr-2" />
         <span>
           {event.date} at {event.time}
         </span>
       </div>
 
       <div className="flex items-center">
-        <MapPin className="h-4 w-4 text-slate-400 mr-2" />
+        <MapPin className="h-4 w-4 text-slate-400 dark:text-slate-500 mr-2" />
         <span>{event.location}</span>
       </div>
 
       <div className="flex items-center">
-        <Users className="h-4 w-4 text-slate-400 mr-2" />
+        <Users className="h-4 w-4 text-slate-400 dark:text-slate-500 mr-2" />
         <span>
           Organized by {event.organizer}
         </span>
       </div>
     </div>
 
-    <button className="w-full py-2 bg-slate-900 text-white font-medium rounded-md hover:bg-slate-800 transition-colors flex items-center justify-center">
+    <button className="w-full py-2 bg-slate-900 text-white font-medium rounded-md hover:bg-slate-800 dark:hover:bg-yellow-400 dark:hover:text-slate-950 transition-colors flex items-center justify-center">
       Register Now
       <ArrowRight className="ml-2 h-4 w-4" />
     </button>
@@ -196,7 +195,7 @@ useEffect(() => {
         
         {filteredEvents.length === 0 && (
           <div className="col-span-full text-center py-12">
-            <p className="text-slate-500 text-lg">No events found matching your search.</p>
+            <p className="text-slate-500 dark:text-slate-400 text-lg">No events found matching your search.</p>
           </div>
         )}
       </div>

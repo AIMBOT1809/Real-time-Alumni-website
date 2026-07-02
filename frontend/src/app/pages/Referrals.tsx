@@ -10,20 +10,12 @@ type ReferralStatus = 'Pending' | 'Accepted' | 'Rejected';
 type ReferralOpportunity = { id: number; company: string; role: string; alumnus: string; eligibility: string; skills: string[]; initials: string; accent: string };
 type ReferralRequest = { id: number; company: string; role: string; alumnus: string; status: ReferralStatus; updated: string };
 
-/*const initialOpportunities: ReferralOpportunity[] = [
-  { id: 1, company: 'Microsoft', role: 'Software Engineer', alumnus: 'Ananya Rao', eligibility: '2025�26 graduates � CGPA 7.5+', skills: ['TypeScript', 'React', 'DSA'], initials: 'MS', accent: 'bg-blue-100 text-blue-700' },
-  { id: 2, company: 'Deloitte', role: 'Business Technology Analyst', alumnus: 'Vivek Mehta', eligibility: 'All engineering branches � No backlogs', skills: ['SQL', 'Analytics', 'Communication'], initials: 'DT', accent: 'bg-emerald-100 text-emerald-700' },
-  { id: 3, company: 'Adobe', role: 'Product Designer', alumnus: 'Priya Nair', eligibility: 'Design portfolio required � 0�2 years', skills: ['Figma', 'UX Research', 'Prototyping'], initials: 'AD', accent: 'bg-rose-100 text-rose-700' },
-  { id: 4, company: 'Amazon', role: 'Cloud Support Associate', alumnus: 'Arjun Kapoor', eligibility: 'B.Tech / MCA � Strong fundamentals', skills: ['AWS', 'Linux', 'Networking'], initials: 'AZ', accent: 'bg-amber-100 text-amber-700' },
-];   */
-
 const initialRequests: ReferralRequest[] = [];
 
-
 const statusStyles: Record<ReferralStatus, { icon: typeof Clock3; card: string; iconBox: string }> = {
-  Pending: { icon: Clock3, card: 'border-amber-200 bg-amber-50/70', iconBox: 'bg-amber-100 text-amber-700' },
-  Accepted: { icon: CheckCircle2, card: 'border-emerald-200 bg-emerald-50/70', iconBox: 'bg-emerald-100 text-emerald-700' },
-  Rejected: { icon: XCircle, card: 'border-rose-200 bg-rose-50/70', iconBox: 'bg-rose-100 text-rose-700' },
+  Pending: { icon: Clock3, card: 'border-amber-200 dark:border-amber-400/20 bg-amber-50/70 dark:bg-amber-900/20', iconBox: 'bg-amber-100 dark:bg-amber-400/20 text-amber-700 dark:text-amber-300' },
+  Accepted: { icon: CheckCircle2, card: 'border-emerald-200 dark:border-emerald-400/20 bg-emerald-50/70 dark:bg-emerald-900/20', iconBox: 'bg-emerald-100 dark:bg-emerald-400/20 text-emerald-700 dark:text-emerald-300' },
+  Rejected: { icon: XCircle, card: 'border-rose-200 dark:border-rose-400/20 bg-rose-50/70 dark:bg-rose-900/20', iconBox: 'bg-rose-100 dark:bg-rose-400/20 text-rose-700 dark:text-rose-300' },
 };
 
 export function Referrals() {
@@ -114,71 +106,71 @@ useEffect(() => {
 }, []);
 
   return (
-    <div className="-mx-4 -my-8 min-h-[calc(100vh-4rem)] bg-slate-50">
+    <div className="-mx-4 -my-8 min-h-[calc(100vh-4rem)] bg-slate-50 dark:bg-slate-950">
       <div className="mx-auto flex max-w-[1440px]">
 
         <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-10 lg:py-10">
           <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="flex items-start gap-3"><div><p className="mb-2 text-sm font-semibold text-yellow-600">CAREERS THROUGH COMMUNITY</p><h1 className="text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">Referrals</h1><p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">Discover alumni-shared openings and track every referral request in one place.</p></div></div>
+            <div className="flex items-start gap-3"><div><p className="mb-2 text-sm font-semibold text-yellow-600 dark:text-yellow-400">CAREERS THROUGH COMMUNITY</p><h1 className="text-3xl font-bold tracking-tight text-slate-950 dark:text-slate-100 sm:text-4xl">Referrals</h1><p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300 sm:text-base">Discover alumni-shared openings and track every referral request in one place.</p></div></div>
             {canPost && <button onClick={() => setShowPostForm((current) => !current)} className="flex shrink-0 items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-yellow-400 hover:text-slate-950"><Plus className="h-4 w-4" />Post opportunity</button>}
           </div>
 
           {showPostForm && canPost && (
-            <form onSubmit={postOpportunity} className="mb-6 rounded-2xl border border-yellow-200 bg-white p-5 shadow-sm">
-              <div className="mb-4"><h2 className="font-semibold text-slate-950">Post a referral opportunity</h2><p className="text-sm text-slate-500">Share an opening at your company with students in the network.</p></div>
-              <div className="grid gap-3 sm:grid-cols-2"><input required value={form.company} onChange={(event) => setForm({ ...form, company: event.target.value })} placeholder="Company name" className="rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-yellow-500 focus:ring-2 focus:ring-yellow-500/20" /><input required value={form.role} onChange={(event) => setForm({ ...form, role: event.target.value })} placeholder="Role" className="rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-yellow-500 focus:ring-2 focus:ring-yellow-500/20" /><input required value={form.eligibility} onChange={(event) => setForm({ ...form, eligibility: event.target.value })} placeholder="Eligibility" className="rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-yellow-500 focus:ring-2 focus:ring-yellow-500/20" /><input value={form.skills} onChange={(event) => setForm({ ...form, skills: event.target.value })} placeholder="Skills, comma separated" className="rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-yellow-500 focus:ring-2 focus:ring-yellow-500/20" /></div>
-              <div className="mt-4 flex justify-end gap-2"><button type="button" onClick={() => setShowPostForm(false)} className="rounded-xl px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100">Cancel</button><button type="submit" className="rounded-xl bg-yellow-400 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-yellow-300">Publish opportunity</button></div>
+            <form onSubmit={postOpportunity} className="mb-6 rounded-2xl border border-yellow-200 dark:border-yellow-400/20 bg-white dark:bg-slate-900/70 p-5 shadow-sm">
+              <div className="mb-4"><h2 className="font-semibold text-slate-950 dark:text-slate-100">Post a referral opportunity</h2><p className="text-sm text-slate-500 dark:text-slate-400">Share an opening at your company with students in the network.</p></div>
+              <div className="grid gap-3 sm:grid-cols-2"><input required value={form.company} onChange={(event) => setForm({ ...form, company: event.target.value })} placeholder="Company name" className="rounded-xl border border-slate-300 dark:border-yellow-400/20 bg-white/70 dark:bg-slate-900/70 px-3 py-2.5 text-sm outline-none text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-yellow-500 focus:ring-2 focus:ring-yellow-500/20" /><input required value={form.role} onChange={(event) => setForm({ ...form, role: event.target.value })} placeholder="Role" className="rounded-xl border border-slate-300 dark:border-yellow-400/20 bg-white/70 dark:bg-slate-900/70 px-3 py-2.5 text-sm outline-none text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-yellow-500 focus:ring-2 focus:ring-yellow-500/20" /><input required value={form.eligibility} onChange={(event) => setForm({ ...form, eligibility: event.target.value })} placeholder="Eligibility" className="rounded-xl border border-slate-300 dark:border-yellow-400/20 bg-white/70 dark:bg-slate-900/70 px-3 py-2.5 text-sm outline-none text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-yellow-500 focus:ring-2 focus:ring-yellow-500/20" /><input value={form.skills} onChange={(event) => setForm({ ...form, skills: event.target.value })} placeholder="Skills, comma separated" className="rounded-xl border border-slate-300 dark:border-yellow-400/20 bg-white/70 dark:bg-slate-900/70 px-3 py-2.5 text-sm outline-none text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-yellow-500 focus:ring-2 focus:ring-yellow-500/20" /></div>
+              <div className="mt-4 flex justify-end gap-2"><button type="button" onClick={() => setShowPostForm(false)} className="rounded-xl px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">Cancel</button><button type="submit" className="rounded-xl bg-yellow-400 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-yellow-300">Publish opportunity</button></div>
             </form>
           )}
 
           <section aria-labelledby="status-heading">
-            <div className="mb-4"><h2 id="status-heading" className="text-xl font-bold text-slate-950">Referral status</h2><p className="text-sm text-slate-500">Select a status to review those requests.</p></div>
+            <div className="mb-4"><h2 id="status-heading" className="text-xl font-bold text-slate-950 dark:text-slate-100">Referral status</h2><p className="text-sm text-slate-500 dark:text-slate-400">Select a status to review those requests.</p></div>
             <div className="grid gap-3 sm:grid-cols-3">
               {(Object.keys(statusStyles) as ReferralStatus[]).map((status) => {
                 const { icon: Icon, card, iconBox } = statusStyles[status];
                 const count = requests.filter((request) => request.status === status).length;
-                return <button key={status} onClick={() => setActiveStatus(status)} className={`rounded-2xl border p-4 text-left transition ${card} ${activeStatus === status ? 'ring-2 ring-yellow-400 ring-offset-2' : 'hover:shadow-sm'}`}><div className="flex items-center justify-between"><span className={`rounded-xl p-2 ${iconBox}`}><Icon className="h-5 w-5" /></span><span className="text-2xl font-bold text-slate-950">{count}</span></div><p className="mt-3 font-semibold text-slate-900">{status}</p><p className="text-xs text-slate-500">referral {count === 1 ? 'request' : 'requests'}</p></button>;
+                return <button key={status} onClick={() => setActiveStatus(status)} className={`rounded-2xl border p-4 text-left transition ${card} ${activeStatus === status ? 'ring-2 ring-yellow-400 ring-offset-2' : 'hover:shadow-sm'}`}><div className="flex items-center justify-between"><span className={`rounded-xl p-2 ${iconBox}`}><Icon className="h-5 w-5" /></span><span className="text-2xl font-bold text-slate-950 dark:text-slate-100">{count}</span></div><p className="mt-3 font-semibold text-slate-900 dark:text-slate-100">{status}</p><p className="text-xs text-slate-500 dark:text-slate-400">referral {count === 1 ? 'request' : 'requests'}</p></button>;
               })}
             </div>
             <div className="mt-4 space-y-3">
-              {filteredRequests.map((request) => <article key={request.id} className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between"><div><div className="flex items-center gap-2"><h3 className="font-bold text-slate-950">{request.role}</h3><span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${statusStyles[request.status].iconBox}`}>{request.status}</span></div><p className="mt-1 text-sm text-slate-600">{request.company} � Referred by {request.alumnus}</p></div><p className="text-xs font-medium text-slate-500">{request.updated}</p></article>)}
+              {filteredRequests.map((request) => <article key={request.id} className="flex flex-col gap-3 rounded-2xl border border-slate-200 dark:border-yellow-400/20 bg-white dark:bg-slate-900/70 p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between"><div><div className="flex items-center gap-2"><h3 className="font-bold text-slate-950 dark:text-slate-100">{request.role}</h3><span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${statusStyles[request.status].iconBox}`}>{request.status}</span></div><p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{request.company} ? Referred by {request.alumnus}</p></div><p className="text-xs font-medium text-slate-500 dark:text-slate-400">{request.updated}</p></article>)}
             </div>
           </section>
 
           <section className="mt-10" aria-labelledby="opportunities-heading">
-            <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"><div><h2 id="opportunities-heading" className="text-xl font-bold text-slate-950">Referral opportunities</h2><p className="text-sm text-slate-500">Open roles shared directly by alumni.</p></div><label className="relative block w-full sm:w-72"><span className="sr-only">Search opportunities</span><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search company, role, or skill" className="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-9 pr-3 text-sm outline-none focus:border-yellow-500 focus:ring-2 focus:ring-yellow-500/20" /></label></div>
+            <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"><div><h2 id="opportunities-heading" className="text-xl font-bold text-slate-950 dark:text-slate-100">Referral opportunities</h2><p className="text-sm text-slate-500 dark:text-slate-400">Open roles shared directly by alumni.</p></div><label className="relative block w-full sm:w-72"><span className="sr-only">Search opportunities</span><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search company, role, or skill" className="w-full rounded-xl border border-slate-300 dark:border-yellow-400/20 bg-white/70 dark:bg-slate-900/70 py-2.5 pl-9 pr-3 text-sm outline-none text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-yellow-500 focus:ring-2 focus:ring-yellow-500/20" /></label></div>
             <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
               {filteredOpportunities.map((opportunity) => {
                 const requested = requests.some((request) => request.company === opportunity.company && request.role === opportunity.role);
                 return <article
   key={opportunity.id}
-  className="flex min-h-80 flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-yellow-300 hover:shadow-md"
+  className="flex min-h-80 flex-col rounded-2xl border border-slate-200 dark:border-yellow-400/20 bg-white dark:bg-slate-900/70 p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-yellow-300 hover:shadow-md"
 >
   <div className="flex items-start justify-between">
-    <div className="flex h-14 w-14 items-center justify-center rounded-2xl font-bold bg-yellow-100 text-yellow-700">
+    <div className="flex h-14 w-14 items-center justify-center rounded-2xl font-bold bg-yellow-100 dark:bg-yellow-400/20 text-yellow-700 dark:text-yellow-300">
       {opportunity.post_details?.companyName?.substring(0, 2).toUpperCase()}
     </div>
 
-    <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
+    <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-xs font-semibold text-slate-600 dark:text-slate-300">
       Referral Open
     </span>
   </div>
 
   <div className="mt-4">
-    <p className="text-sm font-semibold text-yellow-700">
+    <p className="text-sm font-semibold text-yellow-700 dark:text-yellow-400">
       {opportunity.post_details?.companyName}
     </p>
 
-    <h3 className="mt-1 text-xl font-bold text-slate-950">
+    <h3 className="mt-1 text-xl font-bold text-slate-950 dark:text-slate-100">
       {opportunity.post_details?.jobRole}
     </h3>
 
-    <p className="mt-2 text-sm text-slate-500">
+    <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
       Posted by {opportunity.author_name || "Alumni"}
     </p>
   </div>
 
-  <p className="mt-4 text-sm leading-6 text-slate-600">
+  <p className="mt-4 text-sm leading-6 text-slate-600 dark:text-slate-300">
     {opportunity.post_details?.experience}
   </p>
 
@@ -187,7 +179,7 @@ useEffect(() => {
       (skill: string) => (
         <span
           key={skill}
-          className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700"
+          className="rounded-lg bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-xs font-medium text-slate-700 dark:text-slate-300"
         >
           {skill}
         </span>
@@ -200,10 +192,10 @@ useEffect(() => {
     onClick={() => requestReferral(opportunity)}
     className={`mt-auto flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
       requested
-        ? "bg-amber-50 text-amber-800"
+        ? "bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300"
         : canRequest
         ? "bg-slate-900 text-white hover:bg-yellow-400 hover:text-slate-950"
-        : "cursor-not-allowed bg-slate-100 text-slate-400"
+        : "cursor-not-allowed bg-slate-100 dark:bg-slate-800 text-slate-400"
     }`}
   >
     {requested ? (

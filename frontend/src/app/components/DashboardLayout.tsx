@@ -22,6 +22,7 @@ import X from 'lucide-react/dist/esm/icons/x';
 import ChevronLeft from 'lucide-react/dist/esm/icons/chevron-left';
 import ChevronRight from 'lucide-react/dist/esm/icons/chevron-right';
 import { useAuth } from '../context/AuthContext';
+import ThemeToggle from './ThemeToggle';
 
 // Temporary localStorage approval flow for demo
 // Filter top nav links for faculty (hide Activity)
@@ -87,22 +88,22 @@ export function DashboardLayout() {
     : topNavLinks;
 
   return (
-    <div className="dashboard-shell min-h-screen bg-slate-100 text-slate-900">
+    <div className="dashboard-shell glass-page min-h-screen text-slate-900 dark:text-slate-100">
 
       {/* ─────────────────────────────────────────────────────────
-          TOP HEADER  –  full-width dark navy
+          TOP HEADER  –  theme-aware glass panel
       ───────────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-50 w-full bg-slate-900 text-white shadow-lg">
+      <header className="glass-panel sticky top-0 z-50 flex items-center justify-between px-6 py-4 min-h-[88px] bg-white/90 dark:bg-slate-950/90 border border-slate-900/10 dark:border-yellow-400/20 shadow-lg">
 
         {/* Row 1 : Logo  +  Action icons */}
-        <div className="flex items-center justify-between px-4 pt-3 pb-2 sm:px-6">
+        <div className="flex items-center justify-between w-full">
 
           {/* Logo / Brand */}
           <Link to="/dashboard" className="flex items-center gap-2 font-bold tracking-tight shrink-0">
             <span className="rounded-lg bg-yellow-400 p-1.5 text-slate-950">
               <GraduationCap className="h-5 w-5" />
             </span>
-            <span className="text-lg text-white">Alumni Connect</span>
+            <span className="text-lg text-slate-900 dark:text-slate-100">Alumni Connect</span>
           </Link>
 
           {/* Action Icons */}
@@ -112,11 +113,14 @@ export function DashboardLayout() {
               <button
                 aria-label="Open navigation"
                 onClick={() => setOpen(true)}
-                className="rounded-lg p-2 text-slate-300 hover:bg-slate-800 lg:hidden"
+                className="icon-hover rounded-lg p-2 text-slate-700 dark:text-slate-300 hover:text-yellow-600 dark:hover:text-yellow-300 lg:hidden"
               >
                 <Menu className="h-5 w-5" />
               </button>
             )}
+
+            {/* Theme Toggle */}
+            <ThemeToggle />
 
             {/* Chat */}
             <NavLink
@@ -124,10 +128,10 @@ export function DashboardLayout() {
               aria-label="Chat"
               title="Chat"
               className={({ isActive }: { isActive: boolean }) =>
-                `rounded-lg p-2 transition ${
+                `icon-hover w-10 h-10 rounded-xl flex items-center justify-center bg-white/70 dark:bg-slate-900/70 border border-slate-900/10 dark:border-yellow-400/20 text-slate-700 dark:text-slate-200 hover:text-yellow-600 dark:hover:text-yellow-300 transition-all duration-300 ${
                   isActive
                     ? 'bg-yellow-400 text-slate-950'
-                    : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                    : ''
                 }`
               }
             >
@@ -140,10 +144,10 @@ export function DashboardLayout() {
               aria-label="Notifications"
               title="Notifications"
               className={({ isActive }: { isActive: boolean }) =>
-                `relative rounded-lg p-2 transition ${
+                `icon-hover w-10 h-10 rounded-xl flex items-center justify-center bg-white/70 dark:bg-slate-900/70 border border-slate-900/10 dark:border-yellow-400/20 text-slate-700 dark:text-slate-200 hover:text-yellow-600 dark:hover:text-yellow-300 transition-all duration-300 ${
                   isActive
                     ? 'bg-yellow-400 text-slate-950'
-                    : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                    : ''
                 }`
               }
             >
@@ -162,11 +166,13 @@ export function DashboardLayout() {
               title={user?.name || 'Profile'}
               className="ml-1 shrink-0"
             >
-              <img
-                src={avatar}
-                alt={user?.name || 'User'}
-                className="h-8 w-8 rounded-full border-2 border-yellow-400 object-cover"
-              />
+              <div className="icon-hover w-10 h-10 rounded-xl flex items-center justify-center bg-white/70 dark:bg-slate-900/70 border border-slate-900/10 dark:border-yellow-400/20 overflow-hidden transition-all duration-300">
+                <img
+                  src={avatar}
+                  alt={user?.name || 'User'}
+                  className="h-8 w-8 rounded-full border-2 border-yellow-400 object-cover"
+                />
+              </div>
             </NavLink>
 
             {/* Logout */}
@@ -174,7 +180,7 @@ export function DashboardLayout() {
               onClick={handleLogout}
               aria-label="Log out"
               title="Log out"
-              className="rounded-lg p-2 text-slate-300 hover:bg-slate-800 hover:text-yellow-400 transition"
+              className="icon-hover w-10 h-10 rounded-xl flex items-center justify-center bg-white/70 dark:bg-slate-900/70 border border-slate-900/10 dark:border-yellow-400/20 text-slate-700 dark:text-slate-200 hover:text-yellow-600 dark:hover:text-yellow-300 transition-all duration-300"
             >
               <LogOut className="h-5 w-5" />
             </button>
@@ -182,29 +188,28 @@ export function DashboardLayout() {
         </div>
 
         {/* Row 2 : Search Bar */}
-        <div className="px-4 pb-3 sm:px-6">
+        <div className="px-6 pb-3">
           <div className="relative mx-auto max-w-xl">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none" />
             <input
               type="search"
               placeholder="Search alumni, posts, jobs…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-xl bg-slate-800 py-2 pl-9 pr-4 text-sm text-white placeholder-slate-400
-                         border border-slate-700 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+              className="w-full rounded-xl bg-white/70 dark:bg-slate-900/70 border border-slate-300 dark:border-yellow-400/20 py-2 pl-9 pr-4 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20 focus:outline-none"
             />
           </div>
         </div>
       </header>
 
       {/* ─────────────────────────────────────────────────────────
-          WHITE ROUNDED NAV PILL  –  sits just below the dark header
+          GLASS TOP NAV PILL  –  sits just below the dark header
       ───────────────────────────────────────────────────────── */}
-      <div className="sticky top-[100px] z-40 bg-slate-100 px-4 py-2 sm:px-6">
+      <div className="sticky top-[88px] z-40 px-4 py-2 sm:px-6">
         <nav
           aria-label="Top dashboard navigation"
-          className="mx-auto flex max-w-3xl items-center justify-center gap-1
-                     rounded-2xl bg-white px-3 py-2 shadow-md border border-slate-200
+          className="bg-white/95 dark:bg-slate-950/95 backdrop-blur-2xl border border-slate-900/10 dark:border-yellow-400/20 shadow-lg w-full mx-auto flex max-w-3xl items-center justify-center gap-1
+                     px-3 py-2 rounded-2xl
                      overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {filteredTopNavLinks.map(({ label, icon: Icon, path, end }) => (
@@ -213,10 +218,10 @@ export function DashboardLayout() {
               to={path}
               end={end}
               className={({ isActive }: { isActive: boolean }) =>
-                `flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-semibold transition
+                `flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-semibold transition-all duration-300
                  ${isActive
-                   ? 'bg-yellow-400 text-slate-950 shadow-sm'
-                   : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'}`
+                   ? 'bg-gradient-to-r from-yellow-400 to-yellow-500 text-slate-950 shadow-md shadow-yellow-400/30'
+                   : 'text-slate-700 dark:text-slate-300 hover:bg-yellow-50/80 dark:hover:bg-yellow-400/10 hover:text-slate-950 dark:hover:text-yellow-300 hover:-translate-y-1'}`
               }
             >
               <Icon className="h-4 w-4" />
@@ -228,10 +233,10 @@ export function DashboardLayout() {
             <NavLink
               to="/dashboard/contributions"
               className={({ isActive }: { isActive: boolean }) =>
-                `flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-semibold transition
+                `flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-semibold transition-all duration-300 whitespace-nowrap
                  ${isActive
-                   ? 'bg-yellow-400 text-slate-950 shadow-sm'
-                   : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'}`
+                   ? 'bg-gradient-to-r from-yellow-400 to-yellow-500 text-slate-950 shadow-md shadow-yellow-400/30'
+                   : 'text-slate-700 dark:text-slate-300 hover:bg-yellow-50/80 dark:hover:bg-yellow-400/10 hover:text-slate-950 dark:hover:text-yellow-300 hover:-translate-y-1'}`
               }
             >
               <FileText className="h-4 w-4" />
@@ -243,10 +248,10 @@ export function DashboardLayout() {
             <NavLink
               to="/dashboard/post"
               className={({ isActive }: { isActive: boolean }) =>
-                `flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-semibold transition
+                `flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-semibold transition-all duration-300
                  ${isActive
-                   ? 'bg-yellow-400 text-slate-950 shadow-sm'
-                   : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'}`
+                   ? 'bg-gradient-to-r from-yellow-400 to-yellow-500 text-slate-950 shadow-md shadow-yellow-400/30'
+                   : 'text-slate-700 dark:text-slate-300 hover:bg-yellow-50/80 dark:hover:bg-yellow-400/10 hover:text-slate-950 dark:hover:text-yellow-300 hover:-translate-y-1'}`
               }
             >
               <Plus className="h-4 w-4" />
@@ -275,9 +280,9 @@ export function DashboardLayout() {
           <aside
             className={`
               relative fixed bottom-0 left-0 top-0 z-40 overflow-y-auto
-              border-r border-slate-800 bg-slate-900 p-4 text-white
+              glass-panel p-4
               transition-all duration-300
-              lg:sticky lg:top-[156px] lg:h-[calc(100vh-156px)]
+              lg:sticky lg:top-[180px] lg:h-[calc(100vh-200px)] lg:z-30
               lg:shrink-0 lg:translate-x-0
               ${desktopCollapsed ? 'lg:w-20' : 'lg:w-64'}
               ${open ? 'w-72 translate-x-0' : 'w-72 -translate-x-full'}
@@ -303,7 +308,7 @@ export function DashboardLayout() {
 
             {/* Profile / Introduction Card */}
             <section
-              className={`mb-8 mt-8 rounded-2xl border border-slate-700 bg-slate-800/80 p-4 ${desktopCollapsed ? 'hidden lg:block lg:p-2' : ''}`}
+              className={`glass-card p-4 ${desktopCollapsed ? 'hidden lg:block lg:p-2' : ''}`}
               aria-label="Profile introduction"
             >
               <div className={`flex items-center ${desktopCollapsed ? 'lg:justify-center' : 'gap-3'}`}>
@@ -313,16 +318,16 @@ export function DashboardLayout() {
                   className={`rounded-full border-2 border-yellow-400 object-cover ${desktopCollapsed ? 'lg:h-10 lg:w-10' : 'h-14 w-14'}`}
                 />
                 <div className={`min-w-0 ${desktopCollapsed ? 'lg:hidden' : ''}`}>
-                  <h2 className="truncate font-semibold text-white">{user?.name || 'User'}</h2>
-                  <p className="text-sm capitalize text-yellow-400">{role || (user as any)?.role || 'Member'}</p>
+                  <h2 className="truncate font-semibold text-slate-900 dark:text-slate-100">{user?.name || 'User'}</h2>
+                  <p className="text-sm capitalize text-yellow-600 dark:text-yellow-400">{role || (user as any)?.role || 'Member'}</p>
                 </div>
               </div>
-              <div className={`mt-3 space-y-1 border-t border-slate-700 pt-3 text-sm text-slate-300 ${desktopCollapsed ? 'lg:hidden' : ''}`}>
+              <div className={`mt-3 space-y-1 border-t border-slate-900/10 dark:border-yellow-400/20 pt-3 text-sm text-slate-500 dark:text-slate-400 ${desktopCollapsed ? 'lg:hidden' : ''}`}>
                 {profileDetails.filter(Boolean).map((detail) => (
                   <p key={detail} className="truncate">{detail}</p>
                 ))}
                 {!profileDetails.some(Boolean) && (
-                  <p className="text-slate-500">Profile details not added</p>
+                  <p className="text-slate-500 dark:text-slate-400">Profile details not added</p>
                 )}
               </div>
             </section>
@@ -338,15 +343,15 @@ export function DashboardLayout() {
                   to={path}
                   onClick={() => setOpen(false)}
                   title={desktopCollapsed ? label : undefined}
-                  className={({ isActive }: { isActive: boolean }) =>
-                    `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition
+                   className={({ isActive }: { isActive: boolean }) =>
+                    `sidebar-hover flex items-center gap-3 px-4 py-3 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-yellow-50/80 dark:hover:bg-yellow-400/10 hover:text-yellow-600 dark:hover:text-yellow-300 transition-all duration-300
                      ${desktopCollapsed ? 'lg:justify-center' : ''}
                      ${isActive
-                       ? 'bg-yellow-400 text-slate-950 shadow-sm'
-                       : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`
+                       ? 'gold-active rounded-xl font-semibold'
+                       : ''}`
                   }
                 >
-                  <Icon className="h-5 w-5 shrink-0" />
+                  <Icon className="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-yellow-600 dark:group-hover:text-yellow-300 transition-all duration-300" />
                   <span className={desktopCollapsed ? 'lg:hidden' : ''}>{label}</span>
                 </NavLink>
               ))}
@@ -357,10 +362,10 @@ export function DashboardLayout() {
         {/* ── FACULTY LEFT PROFILE CARD (no nav links) ── */}
         {role?.toLowerCase() === 'faculty' && (
           <aside
-            className="sticky top-[156px] h-[calc(100vh-156px)] w-64 shrink-0 border-r border-slate-800 bg-slate-900 p-4 overflow-y-auto max-lg:hidden"
+            className="glass-panel p-4 border-r border-slate-900/10 dark:border-yellow-400/20 sticky top-[180px] h-[calc(100vh-200px)] z-30 w-64 shrink-0 overflow-y-auto max-lg:hidden"
           >
             <section
-              className="rounded-2xl border border-slate-700 bg-slate-800/80 p-4"
+              className="glass-card p-4"
               aria-label="Faculty introduction"
             >
               <div className="flex items-center gap-3">
@@ -370,16 +375,16 @@ export function DashboardLayout() {
                   className="h-14 w-14 rounded-full border-2 border-yellow-400 object-cover"
                 />
                 <div className="min-w-0">
-                  <h2 className="truncate font-semibold text-white">{user?.name || 'User'}</h2>
-                  <p className="text-sm capitalize text-yellow-400">{role || (user as any)?.role || 'Faculty'}</p>
+                  <h2 className="truncate font-semibold text-slate-900 dark:text-slate-100">{user?.name || 'User'}</h2>
+                  <p className="text-sm capitalize text-yellow-600 dark:text-yellow-400">{role || (user as any)?.role || 'Faculty'}</p>
                 </div>
               </div>
-              <div className="mt-3 space-y-1 border-t border-slate-700 pt-3 text-sm text-slate-300">
+              <div className="mt-3 space-y-1 border-t border-slate-900/10 dark:border-yellow-400/20 pt-3 text-sm text-slate-500 dark:text-slate-400">
                 {profileDetails.filter(Boolean).map((detail) => (
                   <p key={detail} className="truncate">{detail}</p>
                 ))}
                 {!profileDetails.some(Boolean) && (
-                  <p className="text-slate-500">Profile details not added</p>
+                  <p className="text-slate-500 dark:text-slate-400">Profile details not added</p>
                 )}
               </div>
             </section>
@@ -387,12 +392,12 @@ export function DashboardLayout() {
         )}
 
         {/* ── MAIN CONTENT ── */}
-        <div className={`dashboard-content min-w-0 ${role?.toLowerCase() === 'faculty' ? 'flex-1' : 'flex-1'}`}>
+        <div className={`dashboard-content min-w-0 pt-6 ${role?.toLowerCase() === 'faculty' ? 'flex-1' : 'flex-1'}`}>
           {/* Mobile Faculty Introduction Card - shown only for Faculty on mobile */}
           {role?.toLowerCase() === 'faculty' && (
             <div className="lg:hidden mx-auto max-w-4xl px-4 py-6 sm:px-6">
               <section
-                className="rounded-2xl border border-slate-700 bg-slate-800/80 p-4"
+                className="glass-card p-4"
                 aria-label="Faculty introduction"
               >
                 <div className="flex items-center gap-3">
@@ -402,16 +407,16 @@ export function DashboardLayout() {
                     className="h-14 w-14 rounded-full border-2 border-yellow-400 object-cover"
                   />
                   <div className="min-w-0">
-                    <h2 className="truncate font-semibold text-white">{user?.name || 'User'}</h2>
-                    <p className="text-sm capitalize text-yellow-400">{role || (user as any)?.role || 'Faculty'}</p>
+                    <h2 className="truncate font-semibold text-slate-900 dark:text-slate-100">{user?.name || 'User'}</h2>
+                    <p className="text-sm capitalize text-yellow-600 dark:text-yellow-400">{role || (user as any)?.role || 'Faculty'}</p>
                   </div>
                 </div>
-                <div className="mt-3 space-y-1 border-t border-slate-700 pt-3 text-sm text-slate-300">
+                <div className="mt-3 space-y-1 border-t border-slate-900/10 dark:border-yellow-400/20 pt-3 text-sm text-slate-500 dark:text-slate-400">
                   {profileDetails.filter(Boolean).map((detail) => (
                     <p key={detail} className="truncate">{detail}</p>
                   ))}
                   {!profileDetails.some(Boolean) && (
-                    <p className="text-slate-500">Profile details not added</p>
+                    <p className="text-slate-500 dark:text-slate-400">Profile details not added</p>
                   )}
                 </div>
               </section>
