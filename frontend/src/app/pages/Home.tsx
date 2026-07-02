@@ -657,10 +657,14 @@ useEffect(() => {
             ) : homeEvents.length > 0 ? (
               homeEvents.slice(0, 3).map((event) => (
                 <div key={event.id} className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
-                  {event.image && !event.image.startsWith('blob:') ? (
-                    <img src={event.image} alt={event.title} className="h-48 w-full object-cover" />
-                  ) : (
-                    <div className="h-48 bg-gradient-to-br from-blue-400 to-blue-600"></div>
+                  {event.image && (
+                    <div className="relative h-48 w-full overflow-hidden bg-slate-100">
+                      <img
+                        src={event.image}
+                        alt={event.title}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
                   )}
                   <div className="p-6">
                     <div className="text-sm text-blue-600 font-semibold mb-2">{event.date}{event.time ? ` at ${event.time}` : ''}</div>

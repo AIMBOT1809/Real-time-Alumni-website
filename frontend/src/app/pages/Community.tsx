@@ -2,6 +2,7 @@ import React from 'react';
 import { MessageSquare, ThumbsUp } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'motion/react';
+import { PostImageViewer } from '../components/PostImageViewer';
 
 export function Community() {
   const { posts, following, getAlumniById, role, user } = useAuth();
@@ -96,10 +97,10 @@ export function Community() {
                 <p className="text-slate-600 dark:text-slate-300 mb-4">{post.content}</p>
                 
                 {post.image && (
-                  <img
+                  <PostImageViewer
                     src={post.image}
                     alt="Post content"
-                    className="w-full rounded-lg mb-4"
+                    className="max-h-[28rem]"
                   />
                 )}
                 
