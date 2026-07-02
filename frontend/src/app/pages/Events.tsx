@@ -5,6 +5,23 @@ import { motion } from 'motion/react';
 import { useEffect } from "react";
 import { supabase } from "../../supabaseClient";
 
+const normalizeUrl = (url?: string) => {
+  if (!url || !url.trim()) return "";
+  const trimmed = url.trim();
+  return trimmed.startsWith("http://") || trimmed.startsWith("https://")
+    ? trimmed
+    : `https://${trimmed}`;
+};
+
+const openPostLink = (url?: string) => {
+  const finalUrl = normalizeUrl(url);
+  if (!finalUrl) {
+    alert("Link not available for this post.");
+    return;
+  }
+  window.open(finalUrl, "_blank", "noopener,noreferrer");
+};
+
 export function Events() {
   const { getAlumniById, role, user, addEvent } = useAuth();
 
@@ -75,6 +92,7 @@ const [events, setEvents] = useState<any[]>([]);
       organizer: item.author_name || "Alumni",
       type: details.eventType || "Event",
       created_at: item.created_at,
+      registrationLink: details.registrationLink,
     };
   })
   .filter(Boolean);
@@ -222,10 +240,10 @@ useEffect(() => {
       </div>
     </div>
 
-    <button className="w-full py-2 bg-slate-900 text-white font-medium rounded-md hover:bg-slate-800 dark:hover:bg-yellow-400 dark:hover:text-slate-950 transition-colors flex items-center justify-center">
-      Register Now
-      <ArrowRight className="ml-2 h-4 w-4" />
-    </button>
+     <button onClick={() => openPostLink(event.registrationLink)} className="w-full py-2 bg-slate-900 text-white font-medium rounded-md hover:bg-slate-800 dark:hover:bg-yellow-400 dark:hover:text-slate-950 transition-colors flex items-center justify-center">
+       Register Now
+       <ArrowRight className="ml-2 h-4 w-4" />
+     </button>
   </div>
 </motion.div>
         ))}

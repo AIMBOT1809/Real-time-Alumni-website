@@ -336,6 +336,7 @@ export function MainDashboard() {
   const [eventLocation, setEventLocation] = useState('');
   const [eventType, setEventType] = useState<'Networking' | 'Workshop' | 'Webinar'>('Webinar');
   const [eventDescription, setEventDescription] = useState('');
+  const [eventLink, setEventLink] = useState('');
   const [eventFile, setEventFile] = useState<File | null>(null);
   const [eventImageUrl, setEventImageUrl] = useState<string | null>(null);
   const [eventFileUrl, setEventFileUrl] = useState<string | null>(null);
@@ -1548,8 +1549,92 @@ const author =
                               <textarea required value={postDetails.supportNeeded || ''} onChange={(e) => setPostDetails({...postDetails, supportNeeded: e.target.value})} rows={3} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
                             </div>
                             <div className="md:col-span-2">
-                              <label className="block text-sm font-medium text-slate-300 mb-1">Contact Link/Email *</label>
-                              <input type="text" required value={postDetails.contactLink || ''} onChange={(e) => setPostDetails({...postDetails, contactLink: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Collaboration Details (Optional)</label>
+                              <textarea value={postDetails.collaborationDetails || ''} onChange={(e) => setPostDetails({...postDetails, collaborationDetails: e.target.value})} rows={3} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {postType === 'event' && (
+                        <div className="space-y-4 p-4 bg-slate-800 rounded-lg">
+                          <h3 className="text-lg font-semibold text-white">Event Details</h3>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Event Title *</label>
+                              <input
+                                type="text"
+                                required
+                                value={eventTitle}
+                                onChange={(e) => setEventTitle(e.target.value)}
+                                placeholder="Enter event title"
+                                className="w-full rounded-xl bg-white/70 dark:bg-slate-900/70 border border-slate-300 dark:border-yellow-400/20 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20 outline-none px-4 py-3"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Event Date *</label>
+                              <input
+                                type="date"
+                                required
+                                value={eventDate}
+                                onChange={(e) => setEventDate(e.target.value)}
+                                className="w-full rounded-xl bg-white/70 dark:bg-slate-900/70 border border-slate-300 dark:border-yellow-400/20 text-slate-900 dark:text-slate-100 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20 outline-none px-4 py-3"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Event Time *</label>
+                              <input
+                                type="time"
+                                required
+                                value={eventTime}
+                                onChange={(e) => setEventTime(e.target.value)}
+                                className="w-full rounded-xl bg-white/70 dark:bg-slate-900/70 border border-slate-300 dark:border-yellow-400/20 text-slate-900 dark:text-slate-100 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20 outline-none px-4 py-3"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Event Location *</label>
+                              <input
+                                type="text"
+                                required
+                                value={eventLocation}
+                                onChange={(e) => setEventLocation(e.target.value)}
+                                placeholder="Event venue or online link"
+                                className="w-full rounded-xl bg-white/70 dark:bg-slate-900/70 border border-slate-300 dark:border-yellow-400/20 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20 outline-none px-4 py-3"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Event Type *</label>
+                              <select
+                                required
+                                value={eventType}
+                                onChange={(e) => setEventType(e.target.value as any)}
+                                className="w-full rounded-xl bg-white/70 dark:bg-slate-900/70 border border-slate-300 dark:border-yellow-400/20 text-slate-900 dark:text-slate-100 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20 outline-none px-4 py-3"
+                              >
+                                <option value="Networking">Networking</option>
+                                <option value="Workshop">Workshop</option>
+                                <option value="Webinar">Webinar</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Event Link / Registration Link</label>
+                              <input
+                                type="url"
+                                value={eventLink}
+                                onChange={(e) => setEventLink(e.target.value)}
+                                placeholder="https://example.com/register"
+                                className="w-full rounded-xl bg-white/70 dark:bg-slate-900/70 border border-slate-300 dark:border-yellow-400/20 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20 outline-none px-4 py-3"
+                              />
+                            </div>
+                            <div className="md:col-span-2">
+                              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Event Description *</label>
+                              <textarea
+                                required
+                                value={eventDescription}
+                                onChange={(e) => setEventDescription(e.target.value)}
+                                rows={4}
+                                placeholder="Describe the event..."
+                                className="w-full rounded-xl bg-white/70 dark:bg-slate-900/70 border border-slate-300 dark:border-yellow-400/20 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20 outline-none px-4 py-3"
+                              />
                             </div>
                           </div>
                         </div>
@@ -1730,8 +1815,14 @@ const author =
                           onClick={() => {
                             if (postType === 'event') {
                               // Validate event fields
-                              if (!eventTitle.trim() || !eventDate || !eventTime || !eventLocation || !eventDescription.trim()) {
+                              if (!eventTitle.trim() || !eventDate || !eventTime || !eventLocation || !eventType.trim() || !eventDescription.trim()) {
                                 showGlobalToast('Please fill all required event fields', 'error');
+                                return;
+                              }
+                              
+                              // Validate event link if provided
+                              if (eventLink && !eventLink.startsWith('http://') && !eventLink.startsWith('https://')) {
+                                showGlobalToast('Event link must start with http:// or https://', 'error');
                                 return;
                               }
                               
@@ -1743,13 +1834,14 @@ const author =
                                 eventLocation,
                                 eventType,
                                 eventDescription,
+                                eventLink,
                               };
                               
                               addPost({
                                 title: eventTitle,
                                 alumniId: user?.id || 'unknown',
                                 authorRole: role,
-                                content: `Event Date: ${eventDate}\nEvent Time: ${eventTime}\nLocation: ${eventLocation}\nEvent Type: ${eventType}\n\n${eventDescription}`,
+                                content: `Event Date: ${eventDate}\nEvent Time: ${eventTime}\nLocation: ${eventLocation}\nEvent Type: ${eventType}\nRegistration Link: ${eventLink || 'Not provided'}\n\n${eventDescription}`,
                                 type: postType,
                                 likes: 0,
                                 comments: 0,
@@ -1764,6 +1856,7 @@ const author =
                               setEventLocation('');
                               setEventType('Webinar');
                               setEventDescription('');
+                              setEventLink('');
                               setEventFile(null);
                               setEventImageUrl(null);
                               setEventFileUrl(null);

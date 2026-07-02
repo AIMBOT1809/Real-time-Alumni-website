@@ -6,6 +6,23 @@ import { addActivityItem, getActivity } from '../data/activityStore';
 import { useEffect } from "react";
 import { supabase } from "../../supabaseClient";
 
+const normalizeUrl = (url?: string) => {
+  if (!url || !url.trim()) return "";
+  const trimmed = url.trim();
+  return trimmed.startsWith("http://") || trimmed.startsWith("https://")
+    ? trimmed
+    : `https://${trimmed}`;
+};
+
+const openPostLink = (url?: string) => {
+  const finalUrl = normalizeUrl(url);
+  if (!finalUrl) {
+    alert("Link not available for this post.");
+    return;
+  }
+  window.open(finalUrl, "_blank", "noopener,noreferrer");
+};
+
 type Job = {
   id: number;
   company: string;
@@ -94,10 +111,11 @@ useEffect(() => {
     setAppliedIds((current) => [...current, jobId]);
     addActivityItem(user?.id, 'appliedJobs', {
       id: String(job.id), title: job.post_details?.jobRole,
-subtitle: job.post_details?.companyName,
-category: "Job",
+      subtitle: job.post_details?.companyName,
+      category: "Job",
       date: new Date().toISOString(), status: 'Application sent',
     });
+    openPostLink(job.post_details?.applyLink);
   };
 
   return (
@@ -153,7 +171,7 @@ Job
   </span>
 ))}</dd></div>
                   </dl>
-                  <button disabled={applied} onClick={() => applyForJob(job.id)} className={`mt-auto flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 ${applied ? 'cursor-default bg-emerald-50 text-emerald-800' : 'bg-slate-900 text-white hover:bg-yellow-400 hover:text-slate-950'}`}>
+                  <button disabled={applied} onClick={() => openPostLink(job.post_details?.applyLink)} className={`mt-auto flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 ${applied ? 'cursor-default bg-emerald-50 text-emerald-800' : 'bg-slate-900 text-white hover:bg-yellow-400 hover:text-slate-950'}`}>
                     {applied ? <><CheckCircle2 className="h-4 w-4" />Application sent</> : <><Send className="h-4 w-4" />Apply now</>}
                   </button>
                 </article>

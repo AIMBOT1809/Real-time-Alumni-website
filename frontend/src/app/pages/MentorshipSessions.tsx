@@ -6,6 +6,23 @@ import { addActivityItem } from '../data/activityStore';
 import { useEffect } from "react";
 import { supabase } from "../../supabaseClient";
 
+const normalizeUrl = (url?: string) => {
+  if (!url || !url.trim()) return "";
+  const trimmed = url.trim();
+  return trimmed.startsWith("http://") || trimmed.startsWith("https://")
+    ? trimmed
+    : `https://${trimmed}`;
+};
+
+const openPostLink = (url?: string) => {
+  const finalUrl = normalizeUrl(url);
+  if (!finalUrl) {
+    alert("Link not available for this post.");
+    return;
+  }
+  window.open(finalUrl, "_blank", "noopener,noreferrer");
+};
+
 type SessionTab = 'available' | 'requested' | 'completed';
 type Mentor = { id: number; name: string; initials: string; domain: string; company: string; availability: string; accent: string };
 
@@ -58,6 +75,7 @@ export function MentorshipSessions() {
     });
     setActiveTab('requested');
     setSearch('');
+    openPostLink(mentor.post_details?.meetingLinkOrVenue);
   };
 
   const fetchMentors = async () => {
@@ -163,15 +181,15 @@ useEffect(() => {
   </div>
 
   <div className="mt-auto pt-5">
-    {activeTab === "available" && (
-      <button
-        onClick={() => requestMentorship(mentor)}
-        className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-yellow-400 hover:text-slate-950"
-      >
-        <Send className="h-4 w-4" />
-        Request Mentorship
-      </button>
-    )}
+     {activeTab === "available" && (
+       <button
+         onClick={() => openPostLink(mentor.post_details?.meetingLinkOrVenue)}
+         className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-yellow-400 hover:text-slate-950"
+       >
+         <Send className="h-4 w-4" />
+         Request Mentorship
+       </button>
+     )}
 
     {activeTab === "requested" && (
       <div className="flex items-center justify-center gap-2 rounded-xl bg-amber-50 dark:bg-amber-900/20 px-4 py-2.5 text-sm font-semibold text-amber-800 dark:text-amber-300">
