@@ -73,7 +73,20 @@ export function Layout() {
   }, [navLinks]);
 
   // Hide layout components on dashboard
-  const isDashboard = location.pathname === '/dashboard' || location.pathname.startsWith('/dashboard/') || ['/mentorship', '/jobs', '/referrals', '/internships', '/higher-education', '/business-startups', '/events'].includes(location.pathname);
+  const isDashboard =
+  location.pathname === '/dashboard' ||
+  location.pathname.startsWith('/dashboard/') ||
+  location.pathname.startsWith('/network') ||
+  location.pathname.startsWith('/alumni-directory') ||
+  [
+    '/mentorship',
+    '/jobs',
+    '/referrals',
+    '/internships',
+    '/higher-education',
+    '/business-startups',
+    '/events',
+  ].includes(location.pathname);
   const isAdminPage =
   location.pathname === '/admin' ||
   location.pathname.startsWith('/admin/') ||
@@ -82,6 +95,7 @@ export function Layout() {
   const isLandingPage = location.pathname === '/';
   const isLoginPage = location.pathname === '/login';
   const isRegisterPage = location.pathname === '/register';
+  const hideHeader = isLoginPage || isRegisterPage;
 
   // Add smooth scrolling CSS
   useEffect(() => {
@@ -105,6 +119,7 @@ export function Layout() {
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 font-sans text-slate-900">
       {/* Header */}
+          {!hideHeader && (
       <header className="sticky top-0 z-50 bg-slate-900 text-white shadow-md">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <Link to="/" className="flex items-center space-x-2 font-bold text-xl tracking-tight">
@@ -283,6 +298,7 @@ export function Layout() {
           )}
         </AnimatePresence>
       </header>
+      )}
 
       {/* Main Content */}
       <main className={`flex-grow container mx-auto px-4 ${isLandingPage ? 'py-0' : 'py-8'}`}>

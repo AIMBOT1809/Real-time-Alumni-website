@@ -286,18 +286,29 @@ const fetchAllProfiles = async () => {
   setAdminHighlights(data || []);
 };
 const fetchDashboardCounts = async () => {
-  const { count: pendingPostsCount } = await supabase
-    .from('posts')
-    .select('*', { count: 'exact', head: true })
-    .eq('status', 'pending');
+  const { count: pendingPostsCount, error: pendingPostsError } = await supabase
+    .from('pending_posts')
+    .select('*', { count: 'exact', head: true });
 
-  const { count: adminPostsCount } = await supabase
+  const { count: adminPostsCount, error: adminPostsError } = await supabase
     .from('admin_posts')
     .select('*', { count: 'exact', head: true });
 
-  const { count: eventsCount } = await supabase
+  const { count: eventsCount, error: eventsError } = await supabase
     .from('events')
     .select('*', { count: 'exact', head: true });
+
+  if (pendingPostsError) {
+    console.error('Pending posts count error:', pendingPostsError);
+  }
+
+  if (adminPostsError) {
+    console.error('Admin posts count error:', adminPostsError);
+  }
+
+  if (eventsError) {
+    console.error('Events count error:', eventsError);
+  }
 
   setDashboardCounts({
     pendingPosts: pendingPostsCount || 0,
@@ -312,7 +323,7 @@ useEffect(() => {
     .channel('admin_dashboard_counts')
     .on(
       'postgres_changes',
-      { event: '*', schema: 'public', table: 'posts' },
+      { event: '*', schema: 'public', table: 'pending_posts' },
       () => fetchDashboardCounts()
     )
     .on(
