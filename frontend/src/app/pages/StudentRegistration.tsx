@@ -60,7 +60,7 @@ export function StudentRegistration({ onBack }: StudentRegistrationProps) {
     // Backend uses role to call collegeIdValidator.js
     formData.append("role", "student");
 
-    const response = await fetch("/verify-id", {
+    const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/verify-id`, {
       method: "POST",
       body: formData,
     });
@@ -143,11 +143,26 @@ export function StudentRegistration({ onBack }: StudentRegistrationProps) {
         return;
       }
 
-      const allowedIdProofTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
-      if (!allowedIdProofTypes.includes(idproof.type)) {
-        alert('ID proof must be in JPG, PNG, or PDF format');
-        return;
-      }
+      const allowedIdProofTypes = [
+  'image/jpeg',
+  'image/png',
+  'image/jpg',
+  'application/pdf',
+];
+
+const allowedIdProofExtensions = ['.jpg', '.jpeg', '.png', '.pdf'];
+
+const idProofExtension = idproof.name
+  .substring(idproof.name.lastIndexOf('.'))
+  .toLowerCase();
+
+if (
+  !allowedIdProofTypes.includes(idproof.type) &&
+  !allowedIdProofExtensions.includes(idProofExtension)
+) {
+  alert('ID proof must be in JPG, JPEG, PNG, or PDF format');
+  return;
+}
     }
 
     if (!password || password.length < 8) {
@@ -549,18 +564,21 @@ export function StudentRegistration({ onBack }: StudentRegistrationProps) {
 
                 <div className="mb-4">
                   <label className="block text-sm font-medium mb-1">
-                    ID proof(only pdf) *
+                    ID Proof *
                   </label>
                   <input
                     name="idproof"
                     type="file"
-                    accept=".jpg,.jpeg,.png,.pdf"
+                    accept=".jpg,.jpeg,.png,.pdf,application/pdf"
                     required
                     onChange={handleDocumentValidation}
                     className="w-full border border-slate-300 rounded-md p-2
                     file:bg-yellow-50 file:text-yellow-700 file:border-0
                     file:px-3 file:py-2 file:rounded-md"
                   />
+                  <p className="mt-1 text-xs text-slate-500">
+                    Accepted formats: JPG, JPEG, PNG, PDF (Max size: 5MB)
+                  </p>
                 </div>
 
                 <div className="mb-4">
@@ -570,7 +588,7 @@ export function StudentRegistration({ onBack }: StudentRegistrationProps) {
                   <input
                     name="photo"
                     type="file"
-                    accept="image/jpeg,image/jpg,image/png"
+                    accept="image/jpeg,image/jpg,image/png,.pdf,application/pdf"
                     className="w-full border border-slate-300 rounded-md p-2
                     file:bg-yellow-50 file:text-yellow-700 file:border-0
                     file:px-3 file:py-2 file:rounded-md"
