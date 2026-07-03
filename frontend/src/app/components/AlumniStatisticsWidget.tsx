@@ -224,27 +224,27 @@ export function AlumniStatisticsWidget() {
   return (
     <div className="alumni-statistics-widget space-y-4">
       {/* Header Card */}
-      <div className="bg-slate-900 rounded-2xl border border-slate-800 p-5 shadow-lg">
-        <h2 className="text-xl font-bold text-white mb-1 flex items-center gap-2">
-          <Users className="h-5 w-5 text-yellow-400" />
+      <div className="glass-card shiny-border rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-lg bg-white dark:bg-slate-900">
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-1 flex items-center gap-2">
+          <Users className="h-5 w-5 text-yellow-500 dark:text-yellow-400" />
           Alumni Insights
         </h2>
-        <p className="text-sm text-slate-400">Registration statistics overview</p>
+        <p className="text-sm text-slate-600 dark:text-slate-400">Registration statistics overview</p>
       </div>
 
       {/* Count Cards */}
       <div className="grid grid-cols-2 gap-3">
         {/* Total Alumni */}
-        <div className="bg-slate-900 rounded-xl border border-slate-800 p-4 shadow-md hover:border-yellow-400/50 transition-all duration-300 group">
+        <div className="glass-card shiny-border rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-md hover:border-yellow-400/50 transition-all duration-300 group bg-white dark:bg-slate-900">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-yellow-400/10 group-hover:bg-yellow-400/20 transition-colors">
-              <Users className="h-5 w-5 text-yellow-400" />
+            <div className="p-2 rounded-lg bg-yellow-100 dark:bg-yellow-400/10 group-hover:bg-yellow-200 dark:group-hover:bg-yellow-400/20 transition-colors">
+              <Users className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
             </div>
             <div>
-              <p className="text-xs text-slate-400 uppercase tracking-wider">Total Alumni</p>
-              <p className="text-2xl font-bold text-white">
+              <p className="text-xs text-slate-600 dark:text-slate-400 uppercase tracking-wider">Total Alumni</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-white">
                 {loading ? (
-                  <span className="inline-block w-8 h-6 bg-slate-700 rounded animate-pulse" />
+                  <span className="inline-block w-8 h-6 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
                 ) : (
                   stats.total
                 )}
@@ -254,16 +254,16 @@ export function AlumniStatisticsWidget() {
         </div>
 
         {/* Working Professionals */}
-        <div className="bg-slate-900 rounded-xl border border-slate-800 p-4 shadow-md hover:border-blue-400/50 transition-all duration-300 group">
+        <div className="glass-card shiny-border rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-md hover:border-blue-400/50 transition-all duration-300 group bg-white dark:bg-slate-900">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-blue-500/10 group-hover:bg-blue-500/20 transition-colors">
-              <Briefcase className="h-5 w-5 text-blue-400" />
+            <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-500/10 group-hover:bg-blue-200 dark:group-hover:bg-blue-500/20 transition-colors">
+              <Briefcase className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <p className="text-xs text-slate-400 uppercase tracking-wider">Working</p>
-              <p className="text-2xl font-bold text-white">
+              <p className="text-xs text-slate-600 dark:text-slate-400 uppercase tracking-wider">Working</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-white">
                 {loading ? (
-                  <span className="inline-block w-8 h-6 bg-slate-700 rounded animate-pulse" />
+                  <span className="inline-block w-8 h-6 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
                 ) : (
                   stats.working
                 )}
@@ -273,16 +273,16 @@ export function AlumniStatisticsWidget() {
         </div>
 
         {/* Higher Studies */}
-        <div className="bg-slate-900 rounded-xl border border-slate-800 p-4 shadow-md hover:border-emerald-400/50 transition-all duration-300 group">
+        <div className="glass-card shiny-border rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-md hover:border-emerald-400/50 transition-all duration-300 group bg-white dark:bg-slate-900">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-emerald-500/10 group-hover:bg-emerald-500/20 transition-colors">
-              <GraduationCap className="h-5 w-5 text-emerald-400" />
+            <div className="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-500/10 group-hover:bg-emerald-200 dark:group-hover:bg-emerald-500/20 transition-colors">
+              <GraduationCap className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div>
-              <p className="text-xs text-slate-400 uppercase tracking-wider">Higher Studies</p>
-              <p className="text-2xl font-bold text-white">
+              <p className="text-xs text-slate-600 dark:text-slate-400 uppercase tracking-wider">Higher Studies</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-white">
                 {loading ? (
-                  <span className="inline-block w-8 h-6 bg-slate-700 rounded animate-pulse" />
+                  <span className="inline-block w-8 h-6 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
                 ) : (
                   stats.higherStudies
                 )}
@@ -292,16 +292,16 @@ export function AlumniStatisticsWidget() {
         </div>
 
         {/* Career Aspirants */}
-        <div className="bg-slate-900 rounded-xl border border-slate-800 p-4 shadow-md hover:border-amber-400/50 transition-all duration-300 group">
+        <div className="glass-card shiny-border rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-md hover:border-amber-400/50 transition-all duration-300 group bg-white dark:bg-slate-900">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-amber-500/10 group-hover:bg-amber-500/20 transition-colors">
-              <Rocket className="h-5 w-5 text-amber-400" />
+            <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-500/10 group-hover:bg-amber-200 dark:group-hover:bg-amber-500/20 transition-colors">
+              <Rocket className="h-5 w-5 text-amber-600 dark:text-amber-400" />
             </div>
             <div>
-              <p className="text-xs text-slate-400 uppercase tracking-wider">Entrepreneur</p>
-              <p className="text-2xl font-bold text-white">
+              <p className="text-xs text-slate-600 dark:text-slate-400 uppercase tracking-wider">Entrepreneur</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-white">
                 {loading ? (
-                  <span className="inline-block w-8 h-6 bg-slate-700 rounded animate-pulse" />
+                  <span className="inline-block w-8 h-6 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
                 ) : (
                   stats.entrepreneur
                 )}
@@ -312,15 +312,15 @@ export function AlumniStatisticsWidget() {
       </div>
 
       {/* Donut Chart */}
-      <div className="bg-slate-900 rounded-2xl border border-slate-800 p-5 shadow-lg">
-        <h3 className="text-sm font-semibold text-white mb-4 uppercase tracking-wider">Distribution</h3>
+      <div className="glass-card shiny-border rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-lg bg-white dark:bg-slate-900">
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4 uppercase tracking-wider">Distribution</h3>
         {loading ? (
           <div className="flex items-center justify-center h-48">
-            <div className="w-32 h-32 rounded-full border-4 border-slate-700 border-t-yellow-400 animate-spin" />
+            <div className="w-32 h-32 rounded-full border-4 border-slate-200 dark:border-slate-700 border-t-yellow-500 animate-spin" />
           </div>
         ) : chartData.length === 0 ? (
           <div className="flex items-center justify-center h-48">
-            <p className="text-slate-500 text-sm">No data available</p>
+            <p className="text-slate-500 dark:text-slate-400 text-sm">No data available</p>
           </div>
         ) : (
           <ResponsiveContainer width="100%" height={220}>
@@ -358,7 +358,7 @@ export function AlumniStatisticsWidget() {
                 verticalAlign="bottom"
                 height={36}
                 formatter={(value: string) => (
-                  <span className="text-slate-300 text-xs">{value}</span>
+                  <span className="text-slate-600 dark:text-slate-300 text-xs">{value}</span>
                 )}
               />
             </PieChart>

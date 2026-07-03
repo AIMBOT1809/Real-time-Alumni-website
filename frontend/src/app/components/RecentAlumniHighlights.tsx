@@ -48,16 +48,16 @@ export function RecentAlumniHighlights({ userId }: RecentAlumniHighlightsProps) 
 
   if (loading) {
     return (
-      <div className="bg-slate-900 rounded-3xl p-8">
+      <div className="glass-card shiny-border rounded-3xl p-8 bg-white dark:bg-slate-900">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <svg className="h-6 w-6 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
             </svg>
-            <h2 className="text-2xl font-bold text-white">Recent Alumni Highlights</h2>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Recent Alumni Highlights</h2>
           </div>
         </div>
-        <div className="text-center py-12 text-slate-400">
+        <div className="text-center py-12 text-slate-600 dark:text-slate-400">
           Loading highlights...
         </div>
       </div>
@@ -72,14 +72,14 @@ export function RecentAlumniHighlights({ userId }: RecentAlumniHighlightsProps) 
   const hasMultiple = highlights.length > 3;
 
   return (
-    <div className="bg-slate-900 rounded-3xl p-6 md:p-8">
+    <div className="glass-card shiny-border rounded-3xl p-6 md:p-8 bg-white dark:bg-slate-900">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <svg className="h-6 w-6 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
             <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
           </svg>
-          <h2 className="text-2xl font-bold text-white">Recent Alumni Highlights</h2>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Recent Alumni Highlights</h2>
         </div>
         <button className="inline-flex items-center gap-2 text-yellow-500 hover:text-yellow-400 transition-colors text-sm font-semibold">
           View all
@@ -96,7 +96,7 @@ export function RecentAlumniHighlights({ userId }: RecentAlumniHighlightsProps) 
           {visibleHighlights.map((highlight) => (
             <div
               key={highlight.id}
-              className="bg-slate-800 rounded-2xl overflow-hidden border border-slate-700 hover:border-slate-600 transition-all duration-300 group"
+              className="glass-card shiny-border rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 hover:border-yellow-400 dark:hover:border-yellow-500 transition-all duration-300 group bg-white dark:bg-slate-800"
             >
               {/* Image */}
               <div className="aspect-video bg-slate-700 relative overflow-hidden">
@@ -119,10 +119,10 @@ export function RecentAlumniHighlights({ userId }: RecentAlumniHighlightsProps) 
               <div className="p-5">
                 {/* Category Badge and Date */}
                 <div className="flex items-center justify-between mb-3">
-                  <span className="inline-flex items-center rounded-full bg-yellow-500/20 px-3 py-1 text-xs font-bold text-yellow-500">
+                  <span className="inline-flex items-center rounded-full bg-yellow-500/20 px-3 py-1 text-xs font-bold text-yellow-600 dark:text-yellow-500">
                     {highlight.category}
                   </span>
-                  <span className="text-xs text-slate-400">
+                  <span className="text-xs text-slate-600 dark:text-slate-400">
                     {new Date(highlight.date).toLocaleDateString('en-US', {
                       month: 'short',
                       day: 'numeric',
@@ -132,12 +132,12 @@ export function RecentAlumniHighlights({ userId }: RecentAlumniHighlightsProps) 
                 </div>
 
                 {/* Title */}
-                <h3 className="text-lg font-bold text-white mb-2 line-clamp-2 group-hover:text-yellow-500 transition-colors">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-2 line-clamp-2 group-hover:text-yellow-600 dark:group-hover:text-yellow-500 transition-colors">
                   {highlight.title}
                 </h3>
 
                 {/* Description */}
-                <p className="text-sm text-slate-300 line-clamp-3">
+                <p className="text-sm text-slate-700 dark:text-slate-300 line-clamp-3">
                   {highlight.description}
                 </p>
               </div>
@@ -150,7 +150,7 @@ export function RecentAlumniHighlights({ userId }: RecentAlumniHighlightsProps) 
           <>
             <button
               onClick={goToPrevious}
-              className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 bg-slate-800 hover:bg-slate-700 text-white p-2 rounded-full shadow-lg border border-slate-700 transition-all duration-200 hover:scale-110"
+              className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-900 dark:text-white p-2 rounded-full shadow-lg border border-slate-200 dark:border-slate-700 transition-all duration-200 hover:scale-110"
               aria-label="Previous highlights"
             >
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -159,7 +159,7 @@ export function RecentAlumniHighlights({ userId }: RecentAlumniHighlightsProps) 
             </button>
             <button
               onClick={goToNext}
-              className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 bg-slate-800 hover:bg-slate-700 text-white p-2 rounded-full shadow-lg border border-slate-700 transition-all duration-200 hover:scale-110"
+              className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-900 dark:text-white p-2 rounded-full shadow-lg border border-slate-200 dark:border-slate-700 transition-all duration-200 hover:scale-110"
               aria-label="Next highlights"
             >
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -170,23 +170,23 @@ export function RecentAlumniHighlights({ userId }: RecentAlumniHighlightsProps) 
         )}
       </div>
 
-      {/* Dots Indicator */}
-      {hasMultiple && (
-        <div className="flex justify-center gap-2 mt-6">
-          {Array.from({ length: Math.ceil(highlights.length / 3) }).map((_, index) => (
-            <button
-              key={index}
-              onClick={() => setCurrentIndex(index * 3)}
-              className={`h-2 rounded-full transition-all duration-300 ${
-                currentIndex === index * 3
-                  ? 'w-8 bg-yellow-500'
-                  : 'w-2 bg-slate-600 hover:bg-slate-500'
-              }`}
-              aria-label={`Go to page ${index + 1}`}
-            />
-          ))}
-        </div>
-      )}
-    </div>
+        {/* Dots Indicator */}
+        {hasMultiple && (
+          <div className="flex justify-center gap-2 mt-6">
+            {Array.from({ length: Math.ceil(highlights.length / 3) }).map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentIndex(index * 3)}
+                className={`h-2 rounded-full transition-all duration-300 ${
+                  currentIndex === index * 3
+                    ? 'w-8 bg-yellow-500'
+                    : 'w-2 bg-slate-300 dark:bg-slate-600 hover:bg-slate-400 dark:hover:bg-slate-500'
+                }`}
+                aria-label={`Go to page ${index + 1}`}
+              />
+            ))}
+          </div>
+        )}
+      </div>
   );
 }

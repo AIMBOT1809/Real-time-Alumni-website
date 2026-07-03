@@ -300,7 +300,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         console.log('[AuthContext] Events fetched, count =', data.length);
         if (mounted) {
-          const mappedEvents = data.map((r: any) => ({
+        const mappedEvents = data.map((r: any) => ({
             id: String(r.id),
             title: r.title ?? 'Untitled Event',
             date: r.event_date ?? r.date ?? '',
@@ -312,6 +312,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             organizer: r.organizer ?? 'Admin',
             alumniId: r.created_by ?? r.alumniId ?? 'admin',
             source: 'admin' as const,
+            event_link: r.event_link ?? '',
+            registration_link: r.registration_link ?? '',
+            link: r.link ?? '',
           }));
 
           setEvents(mappedEvents as Event[]);
@@ -411,6 +414,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           reviewedBy: r.reviewed_by,
           reviewedAt: r.reviewed_at,
           post_details: r.post_details ?? undefined,
+          event_link: r.event_link ?? '',
+          registration_link: r.registration_link ?? '',
+          link: r.link ?? '',
         }));
 
         if (mounted) {

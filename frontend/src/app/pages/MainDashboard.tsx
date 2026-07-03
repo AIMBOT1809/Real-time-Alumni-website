@@ -1686,20 +1686,31 @@ const author =
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {(eventView === 'upcoming' ? upcomingEvents : currentEvents).map((event) => (
-                    <div key={event.id} className="bg-slate-900 rounded-lg border border-slate-800 overflow-hidden hover:border-[#FFD700] transition-colors">
+                    <div key={event.id} className="glass-card shiny-border rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden hover:border-[#FFD700] transition-colors bg-white dark:bg-slate-800">
                       <img 
                         src={event.image} 
                         alt={event.title}
                         className="w-full h-48 object-cover"
                       />
-                      <div className="p-6">
-                        <h3 className="text-xl font-bold text-white mb-2">{event.title}</h3>
-                        <p className="text-slate-300 mb-4">{event.date} at {event.time}</p>
-                        <p className="text-slate-400 text-sm mb-4">{event.location}</p>
-                        <button className="w-full py-2 bg-[#FFD700] text-black rounded-lg font-semibold hover:bg-yellow-600 transition-colors">
-                          Register
-                        </button>
-                      </div>
+                       <div className="p-6">
+                         <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">{event.title}</h3>
+                         <p className="text-slate-700 dark:text-slate-300 mb-4">{event.date} at {event.time}</p>
+                         <p className="text-slate-600 dark:text-slate-400 text-sm mb-4">{event.location}</p>
+                         {(event as any).event_link || (event as any).registration_link || (event as any).link ? (
+                           <a
+                             href={(event as any).event_link || (event as any).registration_link || (event as any).link}
+                             target="_blank"
+                             rel="noopener noreferrer"
+                             className="w-full py-2 bg-[#FFD700] text-black rounded-lg font-semibold hover:bg-yellow-600 transition-colors text-center block"
+                           >
+                             Register
+                           </a>
+                         ) : (
+                           <button className="w-full py-2 bg-[#FFD700] text-black rounded-lg font-semibold hover:bg-yellow-600 transition-colors">
+                             Register
+                           </button>
+                         )}
+                       </div>
                     </div>
                   ))}
                   
@@ -1748,26 +1759,37 @@ const author =
                 
                 <div className="space-y-4">
                   {followedJobs.map((job) => (
-                    <div key={job.id} className="bg-slate-900 rounded-lg border border-slate-800 p-6 hover:border-[#FFD700] transition-colors">
+                    <div key={job.id} className="glass-card shiny-border rounded-lg border border-slate-200 dark:border-slate-700 p-6 hover:border-[#FFD700] transition-colors bg-white dark:bg-slate-800">
                       <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h3 className="text-xl font-bold text-white mb-2">{job.title}</h3>
-                          <p className="text-slate-300 mb-3">{job.company}</p>
-                          <div className="flex items-center space-x-4 text-sm text-slate-400 mb-4">
-                            <span className="px-2 py-1 bg-slate-700 rounded">{job.type}</span>
-                            <span>{job.location}</span>
-                            <span>Posted {(() => {
-                              try {
-                                const d = new Date(job.postedDate);
-                                return isNaN(d.getTime()) ? job.postedDate : d.toLocaleDateString();
-                              } catch { return job.postedDate; }
-                            })()}</span>
-                          </div>
-                          <p className="text-slate-200">{job.description}</p>
-                        </div>
-                        <button className="px-6 py-2 bg-[#FFD700] text-black rounded-lg font-semibold hover:bg-yellow-600 transition-colors ml-6">
-                          Apply
-                        </button>
+                         <div className="flex-1">
+                           <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">{job.title}</h3>
+                           <p className="text-slate-700 dark:text-slate-300 mb-3">{job.company}</p>
+                           <div className="flex items-center space-x-4 text-sm text-slate-600 dark:text-slate-400 mb-4">
+                             <span className="px-2 py-1 bg-slate-100 dark:bg-slate-700 rounded">{job.type}</span>
+                             <span>{job.location}</span>
+                             <span>Posted {(() => {
+                               try {
+                                 const d = new Date(job.postedDate);
+                                 return isNaN(d.getTime()) ? job.postedDate : d.toLocaleDateString();
+                               } catch { return job.postedDate; }
+                             })()}</span>
+                           </div>
+                           <p className="text-slate-700 dark:text-slate-300">{job.description}</p>
+                         </div>
+                         {(job as any).link || (job as any).applyLink ? (
+                           <a
+                             href={(job as any).link || (job as any).applyLink}
+                             target="_blank"
+                             rel="noopener noreferrer"
+                             className="px-6 py-2 bg-[#FFD700] text-black rounded-lg font-semibold hover:bg-yellow-600 transition-colors ml-6 inline-block"
+                           >
+                             Apply
+                           </a>
+                         ) : (
+                           <button className="px-6 py-2 bg-[#FFD700] text-black rounded-lg font-semibold hover:bg-yellow-600 transition-colors ml-6">
+                             Apply
+                           </button>
+                         )}
                       </div>
                     </div>
                   ))}

@@ -93,6 +93,7 @@ const fetchSiteStats = async () => {
   setLoadingSiteStats(true);
 
   try {
+    console.log('[Home] Fetching site stats...');
     const [alumniResult, studentResult, facultyResult, postsResult] = await Promise.all([
       supabase.from('alumni_profiles').select('*'),
       supabase.from('student_profiles').select('*'),
@@ -100,20 +101,26 @@ const fetchSiteStats = async () => {
       supabase.from('posts').select('*'),
     ]);
 
+    console.log('[Home] Alumni data:', alumniResult.data);
+    console.log('[Home] Alumni error:', alumniResult.error);
+    console.log('[Home] Student data:', studentResult.data);
+    console.log('[Home] Faculty data:', facultyResult.data);
+    console.log('[Home] Posts data:', postsResult.data);
+
     if (alumniResult.error) {
-      console.error('Alumni count error:', alumniResult.error);
+      console.error('[Home] Alumni count error:', alumniResult.error);
     }
 
     if (studentResult.error) {
-      console.error('Student count error:', studentResult.error);
+      console.error('[Home] Student count error:', studentResult.error);
     }
 
     if (facultyResult.error) {
-      console.error('Faculty count error:', facultyResult.error);
+      console.error('[Home] Faculty count error:', facultyResult.error);
     }
 
     if (postsResult.error) {
-      console.error('Posts count error:', postsResult.error);
+      console.error('[Home] Posts count error:', postsResult.error);
     }
 
     const alumniCount = alumniResult.data?.length || 0;
@@ -135,14 +142,18 @@ const fetchSiteStats = async () => {
   const fetchPublishedHighlights = async () => {
   setLoadingHighlights(true);
 
+  console.log('[Home] Fetching alumni highlights...');
   const { data, error } = await supabase
     .from('alumni_highlights')
     .select('id, title, images, published, created_at')
     .eq('published', true)
     .order('created_at', { ascending: false });
 
+  console.log('[Home] Highlights data:', data);
+  console.log('[Home] Highlights error:', error);
+
   if (error) {
-    console.error('Error fetching alumni highlights:', error);
+    console.error('[Home] Error fetching alumni highlights:', error);
     setLoadingHighlights(false);
     return;
   }
@@ -210,13 +221,17 @@ useEffect(() => {
 }, []);
 const fetchHomeEvents = async () => {
   setLoadingEvents(true);
+  console.log('[Home] Fetching events...');
   const { data, error } = await supabase
     .from('events')
     .select('*')
     .order('created_at', { ascending: false });
 
+  console.log('[Home] Events data:', data);
+  console.log('[Home] Events error:', error);
+
   if (error) {
-    console.error('Error fetching events:', error);
+    console.error('[Home] Error fetching events:', error);
     setLoadingEvents(false);
     return;
   }

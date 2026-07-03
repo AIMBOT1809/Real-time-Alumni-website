@@ -170,6 +170,12 @@ export interface Event {
 
   source?: 'admin' | 'post';
 
+  event_link?: string;
+
+  registration_link?: string;
+
+  link?: string;
+
 }
 
 
@@ -219,6 +225,12 @@ export interface Post {
   file?: string;
 
   post_details?: Record<string, any>;
+
+  event_link?: string;
+
+  registration_link?: string;
+
+  link?: string;
 
 }
 
