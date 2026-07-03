@@ -6,6 +6,23 @@ import { addActivityItem } from '../data/activityStore';
 import { useEffect } from "react";
 import { supabase } from "../../supabaseClient";
 
+const normalizeUrl = (url?: string) => {
+  if (!url || !url.trim()) return "";
+  const trimmed = url.trim();
+  return trimmed.startsWith("http://") || trimmed.startsWith("https://")
+    ? trimmed
+    : `https://${trimmed}`;
+};
+
+const openPostLink = (url?: string) => {
+  const finalUrl = normalizeUrl(url);
+  if (!finalUrl) {
+    alert("Link not available for this post.");
+    return;
+  }
+  window.open(finalUrl, "_blank", "noopener,noreferrer");
+};
+
 type ReferralStatus = 'Pending' | 'Accepted' | 'Rejected';
 type ReferralOpportunity = { id: number; company: string; role: string; alumnus: string; eligibility: string; skills: string[]; initials: string; accent: string };
 type ReferralRequest = { id: number; company: string; role: string; alumnus: string; status: ReferralStatus; updated: string };
@@ -59,6 +76,7 @@ export function Referrals() {
       date: new Date().toISOString(), status: 'Pending', category: 'Referral',
     });
     setActiveStatus('Pending');
+    openPostLink(opportunity.post_details?.resumeLink);
   };
 
   const postOpportunity = (event: FormEvent) => {
@@ -189,7 +207,7 @@ useEffect(() => {
 
   <button
     disabled={!canRequest || requested}
-    onClick={() => requestReferral(opportunity)}
+    onClick={() => openPostLink(opportunity.post_details?.resumeLink)}
     className={`mt-auto flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
       requested
         ? "bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300"

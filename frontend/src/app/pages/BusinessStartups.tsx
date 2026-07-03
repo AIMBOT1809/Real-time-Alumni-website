@@ -10,6 +10,23 @@ import {
 } from "lucide-react";
 import { supabase } from "../../supabaseClient";
 
+const normalizeUrl = (url?: string) => {
+  if (!url || !url.trim()) return "";
+  const trimmed = url.trim();
+  return trimmed.startsWith("http://") || trimmed.startsWith("https://")
+    ? trimmed
+    : `https://${trimmed}`;
+};
+
+const openPostLink = (url?: string) => {
+  const finalUrl = normalizeUrl(url);
+  if (!finalUrl) {
+    alert("Link not available for this post.");
+    return;
+  }
+  window.open(finalUrl, "_blank", "noopener,noreferrer");
+};
+
 
 
 type CommunityTab = 'ideas' | 'mentors' | 'cofounders';
@@ -200,11 +217,7 @@ id === "ideas"
   </div>
 
   <button
-onClick={() => {
-  if (item.contactLink) {
-    window.open(item.contactLink, "_blank");
-  }
-}}
+onClick={() => openPostLink(item.contactLink)}
 className="mt-auto flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-yellow-400 hover:text-slate-950"
 >
   <MessageCircle className="h-4 w-4" />

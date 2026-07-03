@@ -3,6 +3,23 @@ import { Search, GraduationCap, MapPin, BookOpen, Calendar, ExternalLink, FileTe
 import { useAuth } from '../context/AuthContext';
 import { getApprovedHigherEducationPosts } from '../data/localStoragePosts';
 
+const normalizeUrl = (url?: string) => {
+  if (!url || !url.trim()) return "";
+  const trimmed = url.trim();
+  return trimmed.startsWith("http://") || trimmed.startsWith("https://")
+    ? trimmed
+    : `https://${trimmed}`;
+};
+
+const openPostLink = (url?: string) => {
+  const finalUrl = normalizeUrl(url);
+  if (!finalUrl) {
+    alert("Link not available for this post.");
+    return;
+  }
+  window.open(finalUrl, "_blank", "noopener,noreferrer");
+};
+
 export function HigherEducation() {
   const { getAlumniById } = useAuth();
   const [search, setSearch] = useState('');
@@ -246,6 +263,19 @@ export function HigherEducation() {
                         <FileText className="h-4 w-4" />
                         {post.attachmentName || 'View Attachment'}
                       </a>
+                    </div>
+                  )}
+
+                  {/* Apply Button */}
+                  {details.link && (
+                    <div className="mb-4">
+                      <button
+                        onClick={() => openPostLink(details.link)}
+                        className="w-full py-2 bg-slate-900 text-white font-medium rounded-md hover:bg-slate-800 dark:hover:bg-yellow-400 dark:hover:text-slate-950 transition-colors flex items-center justify-center gap-2"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                        Apply / View Details
+                      </button>
                     </div>
                   )}
 

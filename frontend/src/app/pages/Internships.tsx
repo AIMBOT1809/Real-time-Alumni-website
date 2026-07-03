@@ -4,6 +4,23 @@ import { BriefcaseBusiness, Building2, CalendarCheck, CheckCircle2, Clock3, Grad
 import { useEffect } from "react";
 import { supabase } from '../../supabaseClient';
 
+const normalizeUrl = (url?: string) => {
+  if (!url || !url.trim()) return "";
+  const trimmed = url.trim();
+  return trimmed.startsWith("http://") || trimmed.startsWith("https://")
+    ? trimmed
+    : `https://${trimmed}`;
+};
+
+const openPostLink = (url?: string) => {
+  const finalUrl = normalizeUrl(url);
+  if (!finalUrl) {
+    alert("Link not available for this post.");
+    return;
+  }
+  window.open(finalUrl, "_blank", "noopener,noreferrer");
+};
+
 type WorkMode = 'Remote' | 'Hybrid' | 'On-site';
 type Internship = {
   id: number;
@@ -94,7 +111,13 @@ useEffect(() => {
   });
 }, [internships, search, workMode]);
 
-  const apply = (id: number) => setAppliedIds((current) => current.includes(id) ? current : [...current, id]);
+  const apply = (id: number) => {
+    setAppliedIds((current) => current.includes(id) ? current : [...current, id]);
+    const internship = internships.find((item) => item.id === id);
+    if (internship) {
+      openPostLink(internship.post_details?.applyLink);
+    }
+  };
 
   return (
     <div className="-mx-4 -my-8 min-h-[calc(100vh-4rem)] bg-slate-50 dark:bg-slate-950">
@@ -125,7 +148,7 @@ useEffect(() => {
                     <div className="flex items-center justify-between gap-3"><dt className="flex items-center gap-2 text-slate-500 dark:text-slate-400"><Laptop2 className="h-4 w-4" />Work mode</dt><dd className="font-semibold text-slate-900 dark:text-slate-100">{internship.post_details?.locationType}</dd></div>
                     <div className="pt-1"><dt className="font-medium text-slate-500 dark:text-slate-400">Required skills</dt><dd className="mt-2 flex flex-wrap gap-2">{(internship.post_details?.requiredSkills?.split(",") || []).map((skill: string) =>  <span key={skill} className="rounded-lg bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-xs font-medium text-slate-700 dark:text-slate-300">{skill}</span>)}</dd></div>
                   </dl>
-                  <button disabled={applied} onClick={() => apply(internship.id)} className={`mt-auto flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 ${applied ? 'cursor-default bg-emerald-50 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-300' : 'bg-slate-900 text-white hover:bg-yellow-400 hover:text-slate-950'}`}>{applied ? <><CheckCircle2 className="h-4 w-4" />Application sent</> : <><Send className="h-4 w-4" />Apply now</>}</button>
+                  <button disabled={applied} onClick={() => openPostLink(internship.post_details?.applyLink)} className={`mt-auto flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 ${applied ? 'cursor-default bg-emerald-50 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-300' : 'bg-slate-900 text-white hover:bg-yellow-400 hover:text-slate-950'}`}>{applied ? <><CheckCircle2 className="h-4 w-4" />Application sent</> : <><Send className="h-4 w-4" />Apply now</>}</button>
                 </article>
               );
             })}
