@@ -59,11 +59,13 @@ export function AdminDashboard() {
     addPost,
     addJob,
     addEvent,
+    adminPosts: authAdminPosts,
+    fetchAdminPosts,
   } = useAuth();
 
   const adminPosts = useMemo(
-    () => posts.filter((post) => post.alumniId === user?.id),
-    [posts, user?.id],
+    () => authAdminPosts || [],
+    [authAdminPosts],
   );
 
   const [adminEvents, setAdminEvents] = useState<any[]>([]);
@@ -174,6 +176,34 @@ const [dashboardCounts, setDashboardCounts] = useState({
       supabase.removeChannel(channel);
     };
   }, []);
+
+  useEffect(() => {
+    console.log('[AdminDashboard] Fetching admin posts...');
+    fetchAdminPosts();
+
+    const channel = supabase
+      .channel('admin_posts_realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'admin_posts' },
+        (payload) => {
+          console.log('[AdminDashboard] Realtime update received:', payload.eventType);
+          fetchAdminPosts();
+        }
+      )
+      .subscribe((status) => {
+        console.log('[AdminDashboard] Realtime subscription status:', status);
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchAdminPosts]);
+
+  // Debug: Log adminPosts changes
+  useEffect(() => {
+    console.log('[AdminDashboard] adminPosts updated:', adminPosts.length, 'posts');
+  }, [adminPosts]);
   useEffect(() => {
   fetchAdminHighlights();
 
@@ -394,7 +424,72 @@ useEffect(() => {
       return;
     }
 
-    const attachmentUrl = newPostFile ? URL.createObjectURL(newPostFile) : undefined;
+    let uploadedImageUrl: string | undefined;
+    let uploadedFileUrl: string | undefined;
+
+    // Upload file to Supabase Storage if provided
+    if (newPostFile) {
+      try {
+        const fileExt = newPostFile.name.split('.').pop();
+        const fileName = `admin_post/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+
+        let uploadError: any = null;
+        let publicUrl: string | null = null;
+
+        // Try to upload to admin_post bucket
+        const uploadResult = await supabase.storage
+          .from('admin_post')
+          .upload(fileName, newPostFile);
+
+        uploadError = uploadResult.error;
+
+        // If bucket not found, try to create it and retry
+        if (uploadError && uploadError.message?.includes('bucket')) {
+          console.log('admin_post bucket not found, attempting to create it...');
+          const { error: createError } = await supabase.storage.createBucket('admin_post', {
+            public: true,
+            fileSizeLimit: 52428800, // 50MB
+            allowedMimeTypes: ['image/*', 'application/pdf', 'text/*', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
+          });
+          
+          if (createError) {
+            console.error('Failed to create bucket:', createError);
+            alert(`Warning: Failed to create storage bucket. Post will be created without attachment. Error: ${createError.message}`);
+          } else {
+            // Retry upload after creating bucket
+            const retryResult = await supabase.storage
+              .from('admin_post')
+              .upload(fileName, newPostFile);
+            uploadError = retryResult.error;
+          }
+        }
+
+        if (uploadError) {
+          console.error('File upload error:', uploadError);
+          alert(`Warning: File upload failed. Post will be created without attachment. Error: ${uploadError.message}`);
+        } else {
+          // Get public URL from admin_post bucket
+          const { data } = supabase.storage.from('admin_post').getPublicUrl(fileName);
+          publicUrl = data.publicUrl;
+          
+          console.log('[AdminDashboard] File uploaded successfully to admin_post bucket:', {
+            fileName,
+            publicUrl,
+            fileType: newPostFile.type,
+            isImage: newPostFile.type.startsWith('image/')
+          });
+
+          if (newPostFile.type.startsWith('image/')) {
+            uploadedImageUrl = publicUrl;
+          } else {
+            uploadedFileUrl = publicUrl;
+          }
+        }
+      } catch (uploadErr) {
+        console.error('Upload exception:', uploadErr);
+        alert(`Warning: File upload failed. Post will be created without attachment.`);
+      }
+    }
 
     const { error } = await supabase
       .from('admin_posts')
@@ -404,7 +499,10 @@ useEffect(() => {
           description,
           created_by: user.id,
           created_at: new Date().toISOString(),
-          file_url: attachmentUrl
+          image: uploadedImageUrl,        // Using 'image' column (existing)
+          image_url: uploadedImageUrl,    // Using 'image_url' column (new)
+          file_url: uploadedFileUrl,
+          file_name: newPostFile ? newPostFile.name : undefined,
         }
       ]);
 
@@ -999,48 +1097,67 @@ entrepreneurRatio: Math.round((entrepreneurCount / effectiveTotal) * 100),
 
                     <div className="space-y-4">
                       {adminPosts.length > 0 ? (
-                        adminPosts.map((post) => (
-                          <div key={post.id} className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm">
-                            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                              <div>
-                                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">{post.type}</p>
-                                <h3 className="mt-2 text-xl font-semibold text-slate-900">{getPostTitle(post)}</h3>
-                                <p className="mt-2 text-sm text-slate-500">{formatTimestamp(post.timestamp)}</p>
+                        adminPosts.map((post) => {
+                          console.log('[AdminDashboard] Rendering post:', {
+                            id: post.id,
+                            title: getPostTitle(post),
+                            image: post.image,
+                            attachment_url: post.attachment_url,
+                            attachment_name: post.attachment_name
+                          });
+                          
+                          return (
+                            <div key={post.id} className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm">
+                              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                                <div>
+                                  <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">General</p>
+                                  <h3 className="mt-2 text-xl font-semibold text-slate-900">{getPostTitle(post)}</h3>
+                                  <p className="mt-2 text-sm text-slate-500">{formatTimestamp(post.created_at)}</p>
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                  <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-2 text-sm text-slate-600">
+                                    {post.likes} likes
+                                  </span>
+                                  <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-2 text-sm text-slate-600">
+                                    {post.comments} comments
+                                  </span>
+                                </div>
                               </div>
-                              <div className="flex flex-wrap gap-2">
-                                <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-2 text-sm text-slate-600">
-                                  {post.likes} likes
-                                </span>
-                                <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-2 text-sm text-slate-600">
-                                  {post.comments} comments
-                                </span>
-                              </div>
+
+                              <p className="mt-4 text-slate-600 whitespace-pre-line">{getPostDescription(post)}</p>
+
+                              {post.image && (
+                                <div className="mt-4">
+                                  <img
+                                    src={post.image}
+                                    alt="Post attachment"
+                                    className="h-56 w-full rounded-3xl object-cover"
+                                    onError={(e) => {
+                                      console.error('[AdminDashboard] Image failed to load:', post.image);
+                                      e.currentTarget.style.display = 'none';
+                                    }}
+                                    onLoad={() => {
+                                      console.log('[AdminDashboard] Image loaded successfully:', post.image);
+                                    }}
+                                  />
+                                </div>
+                              )}
+
+                              {post.attachment_url && !post.image && (
+                                <div className="mt-4 flex items-center gap-2 text-slate-600">
+                                  <a
+                                    href={post.attachment_url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="font-medium text-slate-900 hover:text-yellow-600"
+                                  >
+                                    {post.attachment_name ?? 'View attachment'}
+                                  </a>
+                                </div>
+                              )}
                             </div>
-
-                            <p className="mt-4 text-slate-600 whitespace-pre-line">{getPostDescription(post)}</p>
-
-                            {post.image && (
-                              <img
-                                src={post.image}
-                                alt="Post attachment"
-                                className="mt-4 h-56 w-full rounded-3xl object-cover"
-                              />
-                            )}
-
-                            {post.attachmentUrl && !post.image && (
-                              <div className="mt-4 flex items-center gap-2 text-slate-600">
-                                <a
-                                  href={post.attachmentUrl}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="font-medium text-slate-900 hover:text-yellow-600"
-                                >
-                                  {post.attachmentName ?? 'View attachment'}
-                                </a>
-                              </div>
-                            )}
-                          </div>
-                        ))
+                          );
+                        })
                       ) : (
                         <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center text-slate-500">
                           No posts available.
