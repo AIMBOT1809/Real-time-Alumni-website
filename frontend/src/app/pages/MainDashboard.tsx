@@ -391,7 +391,7 @@ export function MainDashboard() {
 
   useEffect(() => {
   createChat({
-    webhookUrl: 'https://shaaz-03.app.n8n.cloud/webhook/2c823375-ff32-43b7-b598-63fb73838f86/chat'
+    webhookUrl: 'https://shaaz-03.app.n8n.cloud/webhook/c3cc969a-f11f-47ad-8634-3dfe21120a56/cha'
   });
 
   // Replace the n8n chat toggle icon with the chatbot video
