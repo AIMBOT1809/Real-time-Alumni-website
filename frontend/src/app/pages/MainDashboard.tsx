@@ -394,7 +394,7 @@ export function MainDashboard() {
     webhookUrl: 'https://shaaz-03.app.n8n.cloud/webhook/c3cc969a-f11f-47ad-8634-3dfe21120a56/cha'
   });
 
-  // Replace the n8n chat toggle icon with the chatbot video
+  // Replddddace the n8n chat toggle icon with the chatbot video
   const tryInjectVideo = () => {
     const toggleBtn = document.querySelector('.chat-window-toggle') as HTMLElement | null;
     if (!toggleBtn) return;
