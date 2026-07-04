@@ -3,11 +3,19 @@ const { createClient } = require('@supabase/supabase-js');
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  throw new Error('SUPABASE_URL and SUPABASE_ANON_KEY must be set in the environment.');
-}
+let supabase = null;
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+if (SUPABASE_URL && SUPABASE_ANON_KEY && SUPABASE_URL.startsWith('http')) {
+  try {
+    supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    console.log('Supabase client initialized successfully');
+  } catch (error) {
+    console.warn('Failed to initialize Supabase client:', error.message);
+  }
+} else {
+  console.warn('Supabase credentials not configured. Database features will be disabled.');
+  console.warn('Please set SUPABASE_URL and SUPABASE_ANON_KEY in .env file');
+}
 
 /**
  * Express middleware: extracts userId from the request.

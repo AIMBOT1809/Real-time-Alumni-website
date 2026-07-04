@@ -13,6 +13,7 @@ router.use(authMiddleware);
 // POST /api/requests — Send a connection request
 router.post('/requests', async (req, res) => {
   try {
+    if (!supabase) return res.status(503).json({ error: "Database not configured" });
     const { receiverId } = req.body;
     if (!receiverId) return res.status(400).json({ error: 'receiverId is required' });
 
@@ -72,6 +73,7 @@ router.post('/requests', async (req, res) => {
 // GET /api/requests/incoming — Pending requests for logged-in user
 router.get('/requests/incoming', async (req, res) => {
   try {
+    if (!supabase) return res.status(503).json({ error: "Database not configured" });
     const { data, error } = await supabase
       .from('connection_requests')
       .select('*')
@@ -89,6 +91,7 @@ router.get('/requests/incoming', async (req, res) => {
 // GET /api/requests/outgoing — Sent requests for logged-in user
 router.get('/requests/outgoing', async (req, res) => {
   try {
+    if (!supabase) return res.status(503).json({ error: "Database not configured" });
     const { data, error } = await supabase
       .from('connection_requests')
       .select('*')
@@ -105,6 +108,7 @@ router.get('/requests/outgoing', async (req, res) => {
 // PATCH /api/requests/:id — Accept or decline
 router.patch('/requests/:id', async (req, res) => {
   try {
+    if (!supabase) return res.status(503).json({ error: "Database not configured" });
     const { action } = req.body; // 'accept' or 'decline'
     if (!['accept', 'decline'].includes(action)) {
       return res.status(400).json({ error: 'action must be "accept" or "decline"' });
@@ -179,6 +183,7 @@ router.patch('/requests/:id', async (req, res) => {
 // GET /api/conversations — List all conversations for logged-in user
 router.get('/conversations', async (req, res) => {
   try {
+    if (!supabase) return res.status(503).json({ error: "Database not configured" });
     // Get conversation IDs for this user
     const { data: participations, error: partErr } = await supabase
       .from('conversation_participants')
@@ -238,6 +243,7 @@ router.get('/conversations', async (req, res) => {
 // GET /api/conversations/:id/messages — Paginated message history
 router.get('/conversations/:id/messages', async (req, res) => {
   try {
+    if (!supabase) return res.status(503).json({ error: "Database not configured" });
     const limit = parseInt(req.query.limit) || 50;
     const before = req.query.before; // ISO timestamp for cursor-based pagination
 
@@ -265,6 +271,7 @@ router.get('/conversations/:id/messages', async (req, res) => {
 // POST /api/conversations/:id/messages — Send message (REST fallback)
 router.post('/conversations/:id/messages', async (req, res) => {
   try {
+    if (!supabase) return res.status(503).json({ error: "Database not configured" });
     const { text, attachmentUrl } = req.body;
 
     const { data, error } = await supabase
@@ -294,6 +301,7 @@ router.post('/conversations/:id/messages', async (req, res) => {
 // PATCH /api/conversations/:id/read — Mark messages as read
 router.patch('/conversations/:id/read', async (req, res) => {
   try {
+    if (!supabase) return res.status(503).json({ error: "Database not configured" });
     const { error } = await supabase
       .from('messages')
       .update({ read_at: new Date().toISOString() })

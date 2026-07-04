@@ -40,6 +40,7 @@ app.use("/api", chatRoutes);
 
 // Delete post
 app.delete("/api/posts/:id", async (req, res) => {
+  if (!supabase) return res.status(503).json({ error: "Database not configured" });
   const { id } = req.params;
   const { error } = await supabase.from("posts").delete().eq("id", id);
   if (error) return res.status(500).json({ error: error.message });
@@ -49,6 +50,7 @@ app.delete("/api/posts/:id", async (req, res) => {
 
 // Like post (increment likes)
 app.post("/api/posts/:id/like", async (req, res) => {
+  if (!supabase) return res.status(503).json({ error: "Database not configured" });
   const { id } = req.params;
   const { data, error } = await supabase
     .from("posts")
@@ -63,6 +65,7 @@ app.post("/api/posts/:id/like", async (req, res) => {
 
 // Comment on post
 app.post("/api/posts/:id/comment", async (req, res) => {
+  if (!supabase) return res.status(503).json({ error: "Database not configured" });
   const { id } = req.params;
   const { content, userId } = req.body;
   // Insert comment record (assumes a comments table exists)
@@ -80,6 +83,7 @@ app.post("/api/posts/:id/comment", async (req, res) => {
 
 // Share post (increment share count)
 app.post("/api/posts/:id/share", async (req, res) => {
+  if (!supabase) return res.status(503).json({ error: "Database not configured" });
   const { id } = req.params;
   const { data, error } = await supabase
     .from("posts")
@@ -94,6 +98,7 @@ app.post("/api/posts/:id/share", async (req, res) => {
 
 // Edit post (partial update)
 app.patch("/api/posts/:id", async (req, res) => {
+  if (!supabase) return res.status(503).json({ error: "Database not configured" });
   const { id } = req.params;
   const updates = req.body;
   const { data, error } = await supabase.from("posts").update(updates).eq("id", id).select().single();
@@ -104,6 +109,7 @@ app.patch("/api/posts/:id", async (req, res) => {
 
 // Delete event
 app.delete("/api/events/:id", async (req, res) => {
+  if (!supabase) return res.status(503).json({ error: "Database not configured" });
   const { id } = req.params;
   const { error } = await supabase.from("events").delete().eq("id", id);
   if (error) return res.status(500).json({ error: error.message });
@@ -113,6 +119,7 @@ app.delete("/api/events/:id", async (req, res) => {
 
 // Like event
 app.post("/api/events/:id/like", async (req, res) => {
+  if (!supabase) return res.status(503).json({ error: "Database not configured" });
   const { id } = req.params;
   const { data, error } = await supabase
     .from("events")
@@ -127,6 +134,7 @@ app.post("/api/events/:id/like", async (req, res) => {
 
 // Edit event (partial)
 app.patch("/api/events/:id", async (req, res) => {
+  if (!supabase) return res.status(503).json({ error: "Database not configured" });
   const { id } = req.params;
   const updates = req.body;
   const { data, error } = await supabase.from("events").update(updates).eq("id", id).select().single();
@@ -135,11 +143,13 @@ app.patch("/api/events/:id", async (req, res) => {
   res.json(data);
 });
 app.get("/api/posts", async (req, res) => {
+  if (!supabase) return res.status(503).json({ error: "Database not configured" });
   const { data, error } = await supabase.from("posts").select("*").order("created_at", { ascending: false });
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
 });
 app.post("/api/posts", async (req, res) => {
+  if (!supabase) return res.status(503).json({ error: "Database not configured" });
   const { title, content, role } = req.body;
   const userId = req.userId;
   const { data, error } = await supabase.from("posts").insert({ title, content, user_id: userId, role }).select().single();
@@ -150,11 +160,13 @@ app.post("/api/posts", async (req, res) => {
 
 // Events API routes
 app.get("/api/events", async (req, res) => {
+  if (!supabase) return res.status(503).json({ error: "Database not configured" });
   const { data, error } = await supabase.from("events").select("*").order("created_at", { ascending: false });
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
 });
 app.post("/api/events", async (req, res) => {
+  if (!supabase) return res.status(503).json({ error: "Database not configured" });
   const { title, description, location, start_time, end_time, role } = req.body;
   const userId = req.userId;
   const { data, error } = await supabase.from("events").insert({ title, description, location, start_time, end_time, user_id: userId, role }).select().single();
@@ -211,6 +223,10 @@ io.on("connection", (socket) => {
   socket.on("send_message", async (data) => {
     const { conversationId, text, tempId } = data;
     if (!socket.userId || !conversationId) return;
+    if (!supabase) {
+      socket.emit("message_error", { tempId, error: "Database not configured" });
+      return;
+    }
 
     try {
       const { data: message, error } = await supabase
@@ -258,6 +274,7 @@ io.on("connection", (socket) => {
   // Mark messages as read
   socket.on("message_read", async ({ conversationId }) => {
     if (!socket.userId || !conversationId) return;
+    if (!supabase) return;
 
     await supabase
       .from("messages")
