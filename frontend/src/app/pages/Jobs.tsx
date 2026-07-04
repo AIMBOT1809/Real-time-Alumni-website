@@ -6,6 +6,23 @@ import { addActivityItem, getActivity } from '../data/activityStore';
 import { useEffect } from "react";
 import { supabase } from "../../supabaseClient";
 
+const normalizeUrl = (url?: string) => {
+  if (!url || !url.trim()) return "";
+  const trimmed = url.trim();
+  return trimmed.startsWith("http://") || trimmed.startsWith("https://")
+    ? trimmed
+    : `https://${trimmed}`;
+};
+
+const openPostLink = (url?: string) => {
+  const finalUrl = normalizeUrl(url);
+  if (!finalUrl) {
+    alert("Link not available for this post.");
+    return;
+  }
+  window.open(finalUrl, "_blank", "noopener,noreferrer");
+};
+
 type Job = {
   id: number;
   company: string;
@@ -94,66 +111,67 @@ useEffect(() => {
     setAppliedIds((current) => [...current, jobId]);
     addActivityItem(user?.id, 'appliedJobs', {
       id: String(job.id), title: job.post_details?.jobRole,
-subtitle: job.post_details?.companyName,
-category: "Job",
+      subtitle: job.post_details?.companyName,
+      category: "Job",
       date: new Date().toISOString(), status: 'Application sent',
     });
+    openPostLink(job.post_details?.applyLink);
   };
 
   return (
-    <div className="-mx-4 -my-8 min-h-[calc(100vh-4rem)] bg-slate-50">
+    <div className="-mx-4 -my-8 min-h-[calc(100vh-4rem)] bg-slate-50 dark:bg-slate-950">
       <div className="mx-auto flex max-w-[1440px]">
 
         <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-10 lg:py-10">
           <div className="mb-7 flex items-start gap-3">
             <div>
-              <p className="mb-2 text-sm font-semibold text-yellow-600">ALUMNI CAREER BOARD</p>
-              <h1 className="text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">Jobs</h1>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">Explore curated roles and internships shared by the alumni community.</p>
+              <p className="mb-2 text-sm font-semibold text-yellow-600 dark:text-yellow-400">ALUMNI CAREER BOARD</p>
+              <h1 className="text-3xl font-bold tracking-tight text-slate-950 dark:text-slate-100 sm:text-4xl">Jobs</h1>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300 sm:text-base">Explore curated roles and internships shared by the alumni community.</p>
             </div>
           </div>
 
-          <section className="mb-6 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row" aria-label="Job filters">
+          <section className="mb-6 flex flex-col gap-3 rounded-2xl border border-slate-200 dark:border-yellow-400/20 bg-white dark:bg-slate-900/70 p-4 shadow-sm sm:flex-row" aria-label="Job filters">
             <label className="relative min-w-0 flex-1">
               <span className="sr-only">Search jobs</span>
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search company, role, or skill" className="w-full rounded-xl border border-slate-300 bg-slate-50 py-2.5 pl-9 pr-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-yellow-500 focus:ring-2 focus:ring-yellow-500/20" />
+              <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search company, role, or skill" className="w-full rounded-xl border border-slate-300 dark:border-yellow-400/20 bg-white/70 dark:bg-slate-900/70 py-2.5 pl-9 pr-3 text-sm outline-none transition text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-yellow-500 focus:ring-2 focus:ring-yellow-500/20" />
             </label>
-            <select value={jobType} onChange={(event) => setJobType(event.target.value as 'All' | Job['type'])} className="rounded-xl border border-slate-300 bg-slate-50 px-4 py-2.5 text-sm text-slate-700 outline-none focus:border-yellow-500 focus:ring-2 focus:ring-yellow-500/20" aria-label="Filter by job type">
+            <select value={jobType} onChange={(event) => setJobType(event.target.value as 'All' | Job['type'])} className="rounded-xl border border-slate-300 dark:border-yellow-400/20 bg-white/70 dark:bg-slate-900/70 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-300 outline-none focus:border-yellow-500 focus:ring-2 focus:ring-yellow-500/20" aria-label="Filter by job type">
               <option>All</option><option>Full-time</option><option>Internship</option>
             </select>
           </section>
 
           <div className="mb-5 flex items-center justify-between">
-            <h2 className="font-semibold text-slate-900">Open positions</h2>
-            <span className="text-sm text-slate-500">{filteredJobs.length} opportunities</span>
+            <h2 className="font-semibold text-slate-900 dark:text-slate-100">Open positions</h2>
+            <span className="text-sm text-slate-500 dark:text-slate-400">{filteredJobs.length} opportunities</span>
           </div>
 
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
             {filteredJobs.map((job) => {
               const applied = appliedIds.includes(job.id);
               return (
-                <article key={job.id} className="flex min-h-[25rem] flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-yellow-300 hover:shadow-md">
+                <article key={job.id} className="flex min-h-[25rem] flex-col rounded-2xl border border-slate-200 dark:border-yellow-400/20 bg-white dark:bg-slate-900/70 p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-yellow-300 hover:shadow-md">
                   <div className="flex items-start justify-between gap-3">
-                    <div className={`flex h-14 w-14 items-center justify-center rounded-2xl text-base font-bold bg-yellow-100 text-yellow-700`}>{job.post_details?.companyName?.substring(0,2).toUpperCase()}</div>
-                    <span className="rounded-full bg-emerald-50 text-emerald-700 px-2.5 py-1 text-xs font-semibold">
+                    <div className={`flex h-14 w-14 items-center justify-center rounded-2xl text-base font-bold bg-yellow-100 dark:bg-yellow-400/20 text-yellow-700 dark:text-yellow-300`}>{job.post_details?.companyName?.substring(0,2).toUpperCase()}</div>
+                    <span className="rounded-full bg-emerald-50 dark:bg-emerald-400/20 text-emerald-700 dark:text-emerald-300 px-2.5 py-1 text-xs font-semibold">
 Job
 </span>
                   </div>
-                  <div className="mt-4"><p className="text-sm font-semibold text-yellow-700">{job.post_details?.companyName}</p><h3 className="mt-1 text-xl font-bold text-slate-950">{job.post_details?.jobRole}</h3></div>
+                  <div className="mt-4"><p className="text-sm font-semibold text-yellow-700 dark:text-yellow-400">{job.post_details?.companyName}</p><h3 className="mt-1 text-xl font-bold text-slate-950 dark:text-slate-100">{job.post_details?.jobRole}</h3></div>
                   <dl className="mt-5 space-y-4 text-sm">
-                    <div><dt className="flex items-center gap-2 font-medium text-slate-500"><IndianRupee className="h-4 w-4" />Package</dt><dd className="mt-1 pl-6 font-semibold text-slate-900">{job.post_details?.salary}</dd></div>
-                    <div><dt className="font-medium text-slate-500">Eligibility</dt><dd className="mt-1 leading-5 text-slate-700">{job.post_details?.experience}</dd></div>
-                    <div><dt className="font-medium text-slate-500">Required skills</dt><dd className="mt-2 flex flex-wrap gap-2">{(job.post_details?.requiredSkills?.split(",") || []).map((skill: string) => (
+                    <div><dt className="flex items-center gap-2 font-medium text-slate-500 dark:text-slate-400"><IndianRupee className="h-4 w-4" />Package</dt><dd className="mt-1 pl-6 font-semibold text-slate-900 dark:text-slate-100">{job.post_details?.salary}</dd></div>
+                    <div><dt className="font-medium text-slate-500 dark:text-slate-400">Eligibility</dt><dd className="mt-1 leading-5 text-slate-700 dark:text-slate-300">{job.post_details?.experience}</dd></div>
+                    <div><dt className="font-medium text-slate-500 dark:text-slate-400">Required skills</dt><dd className="mt-2 flex flex-wrap gap-2">{(job.post_details?.requiredSkills?.split(",") || []).map((skill: string) => (
   <span
     key={skill}
-    className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700"
+    className="rounded-lg bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-xs font-medium text-slate-700 dark:text-slate-300"
   >
     {skill}
   </span>
 ))}</dd></div>
                   </dl>
-                  <button disabled={applied} onClick={() => applyForJob(job.id)} className={`mt-auto flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 ${applied ? 'cursor-default bg-emerald-50 text-emerald-800' : 'bg-slate-900 text-white hover:bg-yellow-400 hover:text-slate-950'}`}>
+                  <button disabled={applied} onClick={() => openPostLink(job.post_details?.applyLink)} className={`mt-auto flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 ${applied ? 'cursor-default bg-emerald-50 text-emerald-800' : 'bg-slate-900 text-white hover:bg-yellow-400 hover:text-slate-950'}`}>
                     {applied ? <><CheckCircle2 className="h-4 w-4" />Application sent</> : <><Send className="h-4 w-4" />Apply now</>}
                   </button>
                 </article>
@@ -161,7 +179,7 @@ Job
             })}
           </div>
 
-          {filteredJobs.length === 0 && <div className="rounded-2xl border border-dashed border-slate-300 bg-white py-16 text-center"><BriefcaseBusiness className="mx-auto h-10 w-10 text-slate-300" /><h3 className="mt-3 font-semibold text-slate-900">No jobs found</h3><p className="mt-1 text-sm text-slate-500">Try a different company, role, skill, or job type.</p></div>}
+          {filteredJobs.length === 0 && <div className="rounded-2xl border border-dashed border-slate-300 dark:border-yellow-400/20 bg-white dark:bg-slate-900/70 py-16 text-center"><BriefcaseBusiness className="mx-auto h-10 w-10 text-slate-300 dark:text-slate-500" /><h3 className="mt-3 font-semibold text-slate-900 dark:text-slate-100">No jobs found</h3><p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Try a different company, role, skill, or job type.</p></div>}
         </main>
       </div>
     </div>

@@ -2,6 +2,7 @@
 import { RouterProvider } from 'react-router';
 import { router } from './routes';
 import { AuthProvider } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { useEffect, useState } from 'react';
 import IntroVideo from './components/IntroVideo';
 import Toast from './components/Toast';
@@ -33,10 +34,12 @@ export default function App() {
   }, []);
 
   return (
-    <AuthProvider>
-      <RouterProvider router={router} />
-      <Toast />
-      {showIntro && <IntroVideo onFinish={() => setShowIntro(false)} />}
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <RouterProvider router={router} />
+        <Toast />
+        {showIntro && <IntroVideo onFinish={() => setShowIntro(false)} />}
+      </AuthProvider>
+    </ThemeProvider>
   );
 }

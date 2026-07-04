@@ -10,10 +10,21 @@ export function AlumniHighlightsCarousel({ userId }: AlumniHighlightsCarouselPro
   const [highlights, setHighlights] = useState<AlumniHighlight[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
     fetchPublishedHighlights();
   }, []);
+
+  useEffect(() => {
+    if (isPaused || highlights.length <= 1) return;
+
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % highlights.length);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [isPaused, highlights.length]);
 
   const fetchPublishedHighlights = async () => {
     try {
@@ -63,7 +74,11 @@ export function AlumniHighlightsCarousel({ userId }: AlumniHighlightsCarouselPro
   const currentHighlight = highlights[currentIndex];
 
   return (
-    <div className="w-full bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl overflow-hidden shadow-2xl">
+    <div 
+      className="w-full bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl overflow-hidden shadow-2xl"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+    >
       {/* Carousel Content */}
       <div className="relative h-[500px]">
         {/* Image Display */}
@@ -72,7 +87,7 @@ export function AlumniHighlightsCarousel({ userId }: AlumniHighlightsCarouselPro
             <img
               src={currentHighlight.images[0]}
               alt={currentHighlight.title}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover transition-transform duration-700 ease-in-out"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
           </div>
@@ -123,7 +138,7 @@ export function AlumniHighlightsCarousel({ userId }: AlumniHighlightsCarouselPro
           <>
             <button
               onClick={goToPrevious}
-              className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white p-3 rounded-full transition-all"
+              className="icon-hover absolute left-4 top-1/2 -translate-y-1/2 bg-white/70 dark:bg-slate-900/70 border border-slate-900/10 dark:border-yellow-400/20 text-slate-700 dark:text-slate-200 hover:text-yellow-600 dark:hover:text-yellow-300 p-3 rounded-full transition-all duration-200 hover:scale-110"
               aria-label="Previous slide"
             >
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -132,7 +147,7 @@ export function AlumniHighlightsCarousel({ userId }: AlumniHighlightsCarouselPro
             </button>
             <button
               onClick={goToNext}
-              className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white p-3 rounded-full transition-all"
+              className="icon-hover absolute right-4 top-1/2 -translate-y-1/2 bg-white/70 dark:bg-slate-900/70 border border-slate-900/10 dark:border-yellow-400/20 text-slate-700 dark:text-slate-200 hover:text-yellow-600 dark:hover:text-yellow-300 p-3 rounded-full transition-all duration-200 hover:scale-110"
               aria-label="Next slide"
             >
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -150,9 +165,9 @@ export function AlumniHighlightsCarousel({ userId }: AlumniHighlightsCarouselPro
             <button
               key={index}
               onClick={() => goToSlide(index)}
-              className={`h-2 rounded-full transition-all ${
+              className={`h-2 rounded-full transition-all duration-300 ${
                 index === currentIndex
-                  ? 'w-8 bg-yellow-500'
+                  ? 'w-8 bg-yellow-400'
                   : 'w-2 bg-white/50 hover:bg-white/70'
               }`}
               aria-label={`Go to slide ${index + 1}`}

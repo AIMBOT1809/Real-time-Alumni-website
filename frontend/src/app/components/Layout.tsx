@@ -4,6 +4,7 @@ import { Menu, X, GraduationCap, User, Bell, Search, LogOut } from 'lucide-react
 import { useAuth } from '../context/AuthContext';
 import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'motion/react';
+import ThemeToggle from './ThemeToggle';
 
 export function Layout() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -117,16 +118,16 @@ export function Layout() {
 }
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 font-sans text-slate-900">
+    <div className="glass-page min-h-screen flex flex-col font-sans text-slate-900 dark:text-slate-100">
       {/* Header */}
-          {!hideHeader && (
-      <header className="sticky top-0 z-50 bg-slate-900 text-white shadow-md">
+           {!hideHeader && (
+      <header className="glass-panel sticky top-0 z-50 rounded-none border-b border-yellow-400/40">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <Link to="/" className="flex items-center space-x-2 font-bold text-xl tracking-tight">
             <div className="bg-yellow-500 p-1.5 rounded-md text-slate-900">
               <GraduationCap size={24} />
             </div>
-            <span className="text-white">Alumni Connect</span>
+            <span className="text-slate-900 dark:text-slate-100">Alumni Connect</span>
           </Link>
 
           {/* Desktop Nav */}
@@ -141,10 +142,10 @@ export function Layout() {
                   href={link.href}
                   onClick={(e) => scrollToSection(e, link.href)}
                   className={clsx(
-                    'relative px-4 py-2 text-sm font-medium transition-all duration-200 rounded-lg',
+                    'nav-hover px-4 py-2 rounded-xl text-slate-700 dark:text-slate-300 hover:text-yellow-600 dark:hover:text-yellow-300 hover:bg-yellow-50/80 dark:hover:bg-yellow-400/10 font-medium transition-all duration-300',
                     isActive
-                      ? 'text-yellow-400 bg-slate-800'
-                      : 'text-slate-300 hover:text-yellow-400 hover:bg-slate-800'
+                      ? 'bg-slate-900 dark:bg-yellow-400 text-white dark:text-slate-950 border-b-2 border-yellow-400 font-semibold shadow-sm'
+                      : ''
                   )}
                 >
                   {link.name}
@@ -161,15 +162,7 @@ export function Layout() {
 
           {/* User Controls */}
           <div className="hidden md:flex items-center space-x-4">
-            <button
-              onClick={() => {
-                document.documentElement.classList.toggle('dark');
-              }}
-              className="p-2 text-slate-300 hover:text-white transition-colors"
-              title="Toggle Dark Mode"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg>
-            </button>
+            <ThemeToggle />
             {isLandingPage || isLoginPage || isRegisterPage || isAdminPage ? (
               // Hide buttons on landing, login, register, and admin dashboard pages
               <div className="flex items-center space-x-3">
@@ -216,7 +209,7 @@ export function Layout() {
           </div>
 
           {/* Mobile Menu Button */}
-          <button onClick={toggleMenu} className="md:hidden text-white focus:outline-none">
+          <button onClick={toggleMenu} className="md:hidden text-slate-900 dark:text-slate-100 focus:outline-none">
             {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
@@ -230,30 +223,30 @@ export function Layout() {
               exit={{ height: 0, opacity: 0 }}
               className="md:hidden bg-slate-800 border-t border-slate-700 overflow-hidden"
             >
-              <nav className="flex flex-col p-4 space-y-2">
-                {navLinks.map((link) => {
-                  const sectionId = link.href.replace('#', '');
-                  const isActive = activeSection === sectionId;
-                  
-                  return (
-                    <a
-                      key={link.name}
-                      href={link.href}
-                      onClick={(e) => {
-                        scrollToSection(e, link.href);
-                        setIsMobileMenuOpen(false);
-                      }}
-                      className={clsx(
-                        'text-base font-medium transition-all duration-200 block py-3 px-4 rounded-lg',
-                        isActive
-                          ? 'text-yellow-400 bg-slate-700'
-                          : 'text-slate-300 hover:text-yellow-400 hover:bg-slate-700'
-                      )}
-                    >
-                      {link.name}
-                    </a>
-                  );
-                })}
+               <nav className="flex flex-col p-4 space-y-2">
+                 {navLinks.map((link) => {
+                   const sectionId = link.href.replace('#', '');
+                   const isActive = activeSection === sectionId;
+                   
+                   return (
+                     <a
+                       key={link.name}
+                       href={link.href}
+                       onClick={(e) => {
+                         scrollToSection(e, link.href);
+                         setIsMobileMenuOpen(false);
+                       }}
+                   className={clsx(
+                     'nav-hover text-base font-medium transition-all duration-200 block py-3 px-4 rounded-lg',
+                     isActive
+                       ? 'bg-slate-900 dark:bg-yellow-400 text-white dark:text-slate-950 border-l-4 border-yellow-400 font-semibold shadow-sm'
+                       : 'text-slate-200 dark:text-slate-300 hover:text-white dark:hover:text-yellow-300 font-medium transition-all duration-300'
+                   )}
+                     >
+                       {link.name}
+                     </a>
+                   );
+                 })}
                 <div className="border-t border-slate-700 pt-4 mt-4">
                   {isLandingPage || isLoginPage || isRegisterPage || isAdminPage ? (
                     // Hide buttons on landing, login, register, and admin pages mobile menu

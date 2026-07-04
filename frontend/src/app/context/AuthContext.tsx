@@ -1676,9 +1676,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         likes: Number(r.likes ?? 0),
         comments: Number(r.comments ?? 0),
         shares: Number(r.shares ?? 0),
-        image: r.image ?? undefined,
-        attachment_url: r.attachment_url ?? undefined,
-        attachment_name: r.attachment_name ?? undefined,
+        image: r.image ?? r.image_url ?? undefined,
+        attachment_url: r.file_url ?? r.attachment_url ?? undefined,
+        attachment_name: r.file_name ?? r.attachment_name ?? undefined,
         attachment_type: r.attachment_type ?? undefined,
         post_details: r.post_details ?? undefined,
       }));

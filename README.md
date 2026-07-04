@@ -1,4 +1,3 @@
-
 # Alumni website
 
 This is a code bundle for Alumni website. The original project is available at https://www.figma.com/design/oSMaPjvhx064Ac8T9iwj9m/Alumni-website.
@@ -145,4 +144,3 @@ This project includes a `render.yaml` file for easy deployment to Render.
 - **Custom Domains**: You can add custom domains in the Render dashboard under Settings → Custom Domains.
 
 For detailed deployment instructions, see [DEPLOYMENT.md](./DEPLOYMENT.md).
-  
