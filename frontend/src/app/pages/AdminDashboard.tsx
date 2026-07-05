@@ -59,11 +59,11 @@ export function AdminDashboard() {
     addPost,
     addJob,
     addEvent,
+    adminPosts: adminPostsFromContext,
   } = useAuth();
-
   const adminPosts = useMemo(
-    () => posts.filter((post) => post.alumniId === user?.id),
-    [posts, user?.id],
+    () => adminPostsFromContext,
+    [adminPostsFromContext],
   );
 
   const [adminEvents, setAdminEvents] = useState<any[]>([]);
@@ -1013,9 +1013,9 @@ entrepreneurRatio: Math.round((entrepreneurCount / effectiveTotal) * 100),
                           <div key={post.id} className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm">
                             <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                               <div>
-                                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">{post.type}</p>
+                                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Admin Post</p>
                                 <h3 className="mt-2 text-xl font-semibold text-slate-900">{getPostTitle(post)}</h3>
-                                <p className="mt-2 text-sm text-slate-500">{formatTimestamp(post.timestamp)}</p>
+                                <p className="mt-2 text-sm text-slate-500">{formatTimestamp(post.created_at)}</p>
                               </div>
                               <div className="flex flex-wrap gap-2">
                                 <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-2 text-sm text-slate-600">
@@ -1027,7 +1027,7 @@ entrepreneurRatio: Math.round((entrepreneurCount / effectiveTotal) * 100),
                               </div>
                             </div>
 
-                            <p className="mt-4 text-slate-600 whitespace-pre-line">{getPostDescription(post)}</p>
+                            <p className="mt-4 text-slate-600 whitespace-pre-line">{post.content || getPostDescription(post)}</p>
 
                             {post.image && (
                               <img
@@ -1037,15 +1037,15 @@ entrepreneurRatio: Math.round((entrepreneurCount / effectiveTotal) * 100),
                               />
                             )}
 
-                            {post.attachmentUrl && !post.image && (
+                            {post.attachment_url && !post.image && (
                               <div className="mt-4 flex items-center gap-2 text-slate-600">
                                 <a
-                                  href={post.attachmentUrl}
+                                  href={post.attachment_url}
                                   target="_blank"
                                   rel="noreferrer"
                                   className="font-medium text-slate-900 hover:text-yellow-600"
                                 >
-                                  {post.attachmentName ?? 'View attachment'}
+                                  {post.attachment_name ?? 'View attachment'}
                                 </a>
                               </div>
                             )}

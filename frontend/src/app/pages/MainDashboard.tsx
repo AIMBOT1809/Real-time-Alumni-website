@@ -36,6 +36,7 @@ import { Chat } from './Chat';
 import { getApprovedPosts, getPostsByAuthor } from '../data/localStoragePosts';
 import { showGlobalToast } from '../components/Toast';
 import { ConfirmModal } from '../components/ConfirmModal';
+import { PostImageViewer } from '../components/PostImageViewer';
 import { PostComment, AdminPost, AdminPostComment } from '../data/types';
 
 // Recursive component for rendering threaded comments
@@ -76,8 +77,8 @@ function CommentItem({
       )}
       
       <div className={`${isReply ? 'bg-slate-700/50' : 'bg-slate-800'} rounded-lg p-3 ${isReply ? 'border-l-2 border-slate-600' : ''} ${comment.id === highlightedCommentId ? 'ring-2 ring-yellow-400 bg-yellow-100' : ''}`}>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-          <div className="flex-1 min-w-0">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
               <span className={`${isReply ? 'text-xs' : 'text-sm'} font-medium text-white`}>
                 {comment.user_name || comment.user?.name || 'User'}
@@ -391,10 +392,10 @@ export function MainDashboard() {
 
   useEffect(() => {
   createChat({
-    webhookUrl: 'https://shaaz-03.app.n8n.cloud/webhook/c3cc969a-f11f-47ad-8634-3dfe21120a56/cha'
+    webhookUrl: 'https://shaaz-03.app.n8n.cloud/webhook/2c823375-ff32-43b7-b598-63fb73838f86/chat'
   });
 
-  // Replddddace the n8n chat toggle icon with the chatbot video
+  // Replace the n8n chat toggle icon with the chatbot video
   const tryInjectVideo = () => {
     const toggleBtn = document.querySelector('.chat-window-toggle') as HTMLElement | null;
     if (!toggleBtn) return;
@@ -962,7 +963,7 @@ export function MainDashboard() {
         <div className="flex flex-col lg:flex-row gap-6">
 
           {/* Main Content Area */}
-          <main className="flex-1 min-w-0 space-y-6 w-full">
+          <main className="flex-1 min-w-0 space-y-6">
             {activeMenu === 'home' && (
               <>
                 {/* Recent Alumni Highlights */}
@@ -1043,15 +1044,15 @@ const author =
                     return (
                       <article key={post.id} className="bg-slate-900 rounded-lg border border-slate-800 overflow-hidden">
                         {/* Post Header */}
-                        <div className="p-4 flex flex-col gap-3 sm:flex-row sm:items-start">
+                        <div className="p-4 flex items-start space-x-3">
                           <img 
                             src={author.avatar || 'https://ui-avatars.com/api/?name=User&background=FDE68A&color=111827&size=256'} 
                             alt={author.name || 'User'}
                             className="h-12 w-12 rounded-full object-cover"
                           />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                              <div className="min-w-0">
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between">
+                              <div>
                                 <h4 className="font-semibold text-white">{author.name || 'Unknown User'}</h4>
                                 <p className="text-sm text-slate-400">
                                   {author.position || 'Alumni'} at {author.company || 'Company'}
@@ -1092,22 +1093,21 @@ const author =
                           <p className="text-slate-200">{post.content}</p>
                         </div>
 
-                        {/* Post Image */}
+                        {/* Post Image - Click to enlarge */}
                         {post.image && (
-                          <img 
+                          <PostImageViewer 
                             src={post.image} 
                             alt="Post content"
-                            className="w-full h-64 object-cover"
                           />
                         )}
 
                         {/* Post Actions */}
                         <div className="px-4 py-3 border-t border-slate-800">
-                          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-sm text-slate-400 mb-3">
+                          <div className="flex items-center justify-between text-sm text-slate-400 mb-3">
                             <span>{post.likes || 0} likes</span>
                             <span>{post.comments || 0} comments</span>
                           </div>
-                          <div className="flex flex-col gap-3 sm:flex-row sm:justify-around border-t border-slate-800 pt-2">
+                          <div className="flex items-center justify-around border-t border-slate-800 pt-2">
                             <button 
                               onClick={async () => {
                                 const actions = getPostActions(post);
@@ -1658,9 +1658,9 @@ const author =
 
             {activeMenu === 'events' && (
               <div className="space-y-6">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center justify-between">
                   <h2 className="text-2xl font-bold text-white">Events</h2>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex space-x-2">
                     <button 
                       onClick={() => setEventView('upcoming')}
                       className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
@@ -1686,31 +1686,20 @@ const author =
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {(eventView === 'upcoming' ? upcomingEvents : currentEvents).map((event) => (
-                    <div key={event.id} className="glass-card shiny-border rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden hover:border-[#FFD700] transition-colors bg-white dark:bg-slate-800">
+                    <div key={event.id} className="bg-slate-900 rounded-lg border border-slate-800 overflow-hidden hover:border-[#FFD700] transition-colors">
                       <img 
                         src={event.image} 
                         alt={event.title}
                         className="w-full h-48 object-cover"
                       />
-                       <div className="p-6">
-                         <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">{event.title}</h3>
-                         <p className="text-slate-700 dark:text-slate-300 mb-4">{event.date} at {event.time}</p>
-                         <p className="text-slate-600 dark:text-slate-400 text-sm mb-4">{event.location}</p>
-                         {(event as any).event_link || (event as any).registration_link || (event as any).link ? (
-                           <a
-                             href={(event as any).event_link || (event as any).registration_link || (event as any).link}
-                             target="_blank"
-                             rel="noopener noreferrer"
-                             className="w-full py-2 bg-[#FFD700] text-black rounded-lg font-semibold hover:bg-yellow-600 transition-colors text-center block"
-                           >
-                             Register
-                           </a>
-                         ) : (
-                           <button className="w-full py-2 bg-[#FFD700] text-black rounded-lg font-semibold hover:bg-yellow-600 transition-colors">
-                             Register
-                           </button>
-                         )}
-                       </div>
+                      <div className="p-6">
+                        <h3 className="text-xl font-bold text-white mb-2">{event.title}</h3>
+                        <p className="text-slate-300 mb-4">{event.date} at {event.time}</p>
+                        <p className="text-slate-400 text-sm mb-4">{event.location}</p>
+                        <button className="w-full py-2 bg-[#FFD700] text-black rounded-lg font-semibold hover:bg-yellow-600 transition-colors">
+                          Register
+                        </button>
+                      </div>
                     </div>
                   ))}
                   
@@ -1759,37 +1748,26 @@ const author =
                 
                 <div className="space-y-4">
                   {followedJobs.map((job) => (
-                    <div key={job.id} className="glass-card shiny-border rounded-lg border border-slate-200 dark:border-slate-700 p-6 hover:border-[#FFD700] transition-colors bg-white dark:bg-slate-800">
-                      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                         <div className="flex-1 min-w-0">
-                           <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">{job.title}</h3>
-                           <p className="text-slate-700 dark:text-slate-300 mb-3">{job.company}</p>
-                           <div className="flex flex-wrap gap-2 text-sm text-slate-600 dark:text-slate-400 mb-4">
-                             <span className="px-2 py-1 bg-slate-100 dark:bg-slate-700 rounded">{job.type}</span>
-                             <span>{job.location}</span>
-                             <span>Posted {(() => {
-                               try {
-                                 const d = new Date(job.postedDate);
-                                 return isNaN(d.getTime()) ? job.postedDate : d.toLocaleDateString();
-                               } catch { return job.postedDate; }
-                             })()}</span>
-                           </div>
-                           <p className="text-slate-700 dark:text-slate-300">{job.description}</p>
-                         </div>
-                         {(job as any).link || (job as any).applyLink ? (
-                           <a
-                             href={(job as any).link || (job as any).applyLink}
-                             target="_blank"
-                             rel="noopener noreferrer"
-                             className="w-full sm:w-auto px-6 py-2 bg-[#FFD700] text-black rounded-lg font-semibold hover:bg-yellow-600 transition-colors sm:ml-6 inline-block text-center"
-                           >
-                             Apply
-                           </a>
-                         ) : (
-                           <button className="w-full sm:w-auto px-6 py-2 bg-[#FFD700] text-black rounded-lg font-semibold hover:bg-yellow-600 transition-colors sm:ml-6 text-center">
-                             Apply
-                           </button>
-                         )}
+                    <div key={job.id} className="bg-slate-900 rounded-lg border border-slate-800 p-6 hover:border-[#FFD700] transition-colors">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h3 className="text-xl font-bold text-white mb-2">{job.title}</h3>
+                          <p className="text-slate-300 mb-3">{job.company}</p>
+                          <div className="flex items-center space-x-4 text-sm text-slate-400 mb-4">
+                            <span className="px-2 py-1 bg-slate-700 rounded">{job.type}</span>
+                            <span>{job.location}</span>
+                            <span>Posted {(() => {
+                              try {
+                                const d = new Date(job.postedDate);
+                                return isNaN(d.getTime()) ? job.postedDate : d.toLocaleDateString();
+                              } catch { return job.postedDate; }
+                            })()}</span>
+                          </div>
+                          <p className="text-slate-200">{job.description}</p>
+                        </div>
+                        <button className="px-6 py-2 bg-[#FFD700] text-black rounded-lg font-semibold hover:bg-yellow-600 transition-colors ml-6">
+                          Apply
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -1840,8 +1818,8 @@ const author =
                         : "border-slate-800 bg-slate-900 hover:border-slate-700"
                     }`}
                   >
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                      <div className="min-w-0">
+                    <div className="flex items-center justify-between">
+                      <div>
                         <h4 className="font-semibold text-white">Following</h4>
                         <p className="text-sm text-slate-400">Alumni you follow</p>
                       </div>
@@ -1861,8 +1839,8 @@ const author =
                             : "border-slate-800 bg-slate-900 hover:border-slate-700"
                         }`}
                       >
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                          <div className="min-w-0">
+                        <div className="flex items-center justify-between">
+                          <div>
                             <h4 className="font-semibold text-white">Registered Events</h4>
                             <p className="text-sm text-slate-400">Events joined</p>
                           </div>
@@ -1880,8 +1858,8 @@ const author =
                             : "border-slate-800 bg-slate-900 hover:border-slate-700"
                         }`}
                       >
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                          <div className="min-w-0">
+                        <div className="flex items-center justify-between">
+                          <div>
                             <h4 className="font-semibold text-white">Attended Events</h4>
                             <p className="text-sm text-slate-400">Events attended</p>
                           </div>
@@ -1904,7 +1882,7 @@ const author =
                     {/* Posts Created Details */}
                     {selectedActivityCard === "postsCreated" && (role === "alumni") && (
                       <div className="bg-slate-900 rounded-lg border border-slate-800 p-6">
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
+                        <div className="flex items-center justify-between mb-6">
                           <h3 className="text-xl font-bold text-white">Your Posts</h3>
                           <span className="px-3 py-1 rounded-full text-sm font-semibold bg-slate-800 text-slate-300">
                             {userPosts.length} total
@@ -1914,8 +1892,8 @@ const author =
                           {userPosts.length > 0 ? (
                             userPosts.map((post) => (
                               <div key={post.id} className="bg-slate-800 rounded-lg p-4 border border-slate-700 hover:border-[#FFD700] transition-colors group">
-                                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-3">
-                                  <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between mb-3">
+                                  <div className="flex-1">
                                     <h4 className="font-semibold text-white">{post.title || 'Untitled Post'}</h4>
                                     <p className="text-sm text-slate-400 mt-1 line-clamp-2">{post.content?.substring(0, 150) || 'No content'}{post.content && post.content.length > 150 ? '...' : ''}</p>
                                   </div>
@@ -1929,7 +1907,7 @@ const author =
                                     {post.status === 'rejected' && 'Rejected'}
                                   </span>
                                 </div>
-                                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                <div className="flex items-center justify-between">
                                   <p className="text-xs text-slate-500">
                                     {(() => {
                                       try {
@@ -2029,8 +2007,8 @@ const author =
                           {registeredEvents && registeredEvents.length > 0 ? (
                             registeredEvents.map((event) => (
                               <div key={event.registrationId || event.id} className="bg-slate-800 rounded-lg p-4 border border-slate-700 hover:border-[#FFD700] transition-colors">
-                                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-2">
-                                  <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between mb-2">
+                                  <div className="flex-1">
                                     <h4 className="font-semibold text-white">{event.title}</h4>
                                     <p className="text-sm text-slate-400 mt-1">{event.location}</p>
                                   </div>
@@ -2038,7 +2016,7 @@ const author =
                                     Registered
                                   </span>
                                 </div>
-                                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between text-sm">
+                                <div className="flex items-center justify-between text-sm">
                                   <div className="text-slate-400">
                                     {(() => {
                                       try {
@@ -2066,7 +2044,7 @@ const author =
                           {attendedEvents && attendedEvents.length > 0 ? (
                             attendedEvents.map((event) => (
                               <div key={event.registrationId || event.id} className="bg-slate-800 rounded-lg p-4 border border-slate-700 hover:border-[#FFD700] transition-colors">
-                                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-2">
+                                <div className="flex items-start justify-between mb-2">
                                   <div className="flex-1">
                                     <h4 className="font-semibold text-white">{event.title}</h4>
                                     <p className="text-sm text-slate-400 mt-1">{event.location}</p>
