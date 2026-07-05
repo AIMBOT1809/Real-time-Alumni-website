@@ -345,7 +345,7 @@ useEffect(() => {
       {/* Hero Banner Carousel Section - Full Width */}
       <section 
         id="home" 
-        className="relative bg-slate-900 text-white overflow-hidden w-screen left-1/2 -translate-x-1/2"
+        className="relative bg-slate-900 text-white overflow-hidden w-full max-w-full"
       >
         <div className="relative h-[70vh] md:h-[85vh]">
           {/* Banner Images */}
@@ -396,7 +396,7 @@ useEffect(() => {
                   <img
                     src={collegeLogo}
                     alt="College Logo"
-                    className="h-24 md:h-32 lg:h-40 w-auto object-contain drop-shadow-2xl"
+                    className="h-24 md:h-32 lg:h-40 w-auto max-w-full object-contain drop-shadow-2xl"
                   />
                 </div>
             
@@ -411,16 +411,16 @@ useEffect(() => {
             </p>
             
             {/* Call to Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link
                 to="/register"
-                className="px-8 py-3 bg-yellow-500 text-slate-900 rounded-lg font-semibold hover:bg-yellow-400 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105 transform"
+                className="min-h-[44px] w-full sm:w-auto px-8 py-3 bg-yellow-500 text-slate-900 rounded-lg font-semibold hover:bg-yellow-400 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105 transform text-center"
               >
                 Get Started
               </Link>
               <Link
                 to="/login"
-                className="px-8 py-3 bg-white/10 backdrop-blur-md text-white rounded-lg font-semibold hover:bg-white/20 transition-all duration-300 border-2 border-white/40 shadow-xl hover:shadow-2xl hover:scale-105 transform"
+                className="min-h-[44px] w-full sm:w-auto px-8 py-3 bg-white/10 backdrop-blur-md text-white rounded-lg font-semibold hover:bg-white/20 transition-all duration-300 border-2 border-white/40 shadow-xl hover:shadow-2xl hover:scale-105 transform text-center"
               >
                 Sign In
               </Link>
@@ -462,13 +462,12 @@ useEffect(() => {
         </div>
       </section>
 
-      <div className="mt-[12px] mb-[12px] w-full overflow-hidden" style={{ marginLeft: 'calc(50% - 50vw)', width: '100vw' }}>
-        <div className="mx-auto overflow-hidden rounded-[12px] shadow-[0_6px_18px_rgba(15,23,42,0.10)]" style={{ width: '100%', maxWidth: '100%' }}>
+      <div className="mx-auto mt-3 mb-3 w-full overflow-hidden max-w-full">
+        <div className="mx-auto overflow-hidden rounded-[12px] shadow-[0_6px_18px_rgba(15,23,42,0.10)] w-full">
           <video
             ref={campusVideoRef}
             src="/tkr.mp4"
-            className="block w-full"
-            style={{ display: 'block', height: 'auto', objectFit: 'contain', objectPosition: 'center' }}
+            className="block w-full h-auto object-contain object-center"
             preload="metadata"
             autoPlay
             muted

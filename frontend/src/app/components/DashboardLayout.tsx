@@ -95,7 +95,7 @@ export function DashboardLayout() {
       <header className="sticky top-0 z-50 w-full bg-slate-900 text-white shadow-lg">
 
         {/* Row 1 : Logo  +  Action icons */}
-        <div className="flex items-center justify-between px-4 pt-3 pb-2 sm:px-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 px-4 pt-3 pb-2 sm:px-6">
 
           {/* Logo / Brand */}
           <Link to="/dashboard" className="flex items-center gap-2 font-bold tracking-tight shrink-0">

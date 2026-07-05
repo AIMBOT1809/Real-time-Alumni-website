@@ -121,8 +121,8 @@ useEffect(() => {
   const joinDiscussion = (id: string) => setJoinedIds((current) => current.includes(id) ? current : [...current, id]);
 
   return (
-    <div className="-mx-4 -my-8 min-h-[calc(100vh-4rem)] bg-slate-50">
-      <div className="mx-auto flex max-w-[1440px]">
+    <div className="bg-slate-50 px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto flex w-full max-w-[1440px] flex-col">
 
         <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-10 lg:py-10">
           <div className="mb-7 flex items-start gap-3">
