@@ -144,7 +144,7 @@ extractedText = pdfData.text.toLowerCase();
       documentType: isTKRMemo
         ? "TKR Marks Memo"
         : "TKR Student ID Card",
-      message: "Document accepted successfully.",
+      message: "Validation successful.",
       matchedKeywords: allMatchedKeywords,
       extractedText,
     };

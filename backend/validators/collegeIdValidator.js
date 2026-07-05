@@ -108,6 +108,7 @@ extractedText = pdfData.text.toLowerCase();
   if (isValidTKRIdCard) {
     return {
       success: true,
+      message: "Validation successful.",
       matchedKeywords,
       extractedText
     };
