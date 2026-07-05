@@ -13,15 +13,15 @@ export function Community() {
   );
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+    <div className="w-full px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto flex w-full max-w-7xl flex-col md:flex-row justify-between items-start md:items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">Community Discussion</h1>
           <p className="text-slate-600 dark:text-slate-300 mt-2">Share insights, ask questions, and connect with peers.</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-4">
         {/* Sidebar */}
         <div className="lg:col-span-1 space-y-6">
           <div className="bg-white dark:bg-slate-900/70 p-4 rounded-lg shadow-sm border border-slate-200 dark:border-yellow-400/20">

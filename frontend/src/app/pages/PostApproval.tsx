@@ -342,8 +342,8 @@ await supabase.from("notifications").insert([
       {/* Header */}
       <div className="bg-white border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-4">
               <Link
                 to="/admin"
                 className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
@@ -374,7 +374,7 @@ await supabase.from("notifications").insert([
       {/* Tabs */}
       <div className="bg-white border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex space-x-8">
+          <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setActiveTab('pending')}
               className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors ${
@@ -434,7 +434,7 @@ await supabase.from("notifications").insert([
       </div>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-yellow-500" />

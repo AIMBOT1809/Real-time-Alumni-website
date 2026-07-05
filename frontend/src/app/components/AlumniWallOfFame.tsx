@@ -461,7 +461,7 @@ export function AlumniWallOfFame() {
             onScroll={handleScroll}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
-            className="flex gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-8 -mx-4 px-4 md:mx-0 md:px-0"
+            className="flex gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-8 px-4 md:px-0"
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
             {!loading && alumni.length === 0 && (

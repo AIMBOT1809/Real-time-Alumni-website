@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../../supabaseClient';
 import { Link, useNavigate } from 'react-router';
-import { validateUploadedDocument } from "../documentValidation";
 import { useAuth } from '../context/AuthContext';
 import type { UserProfile } from '../data/types';
 
@@ -73,6 +72,8 @@ export function StudentRegistration({ onBack }: StudentRegistrationProps) {
         e.target.value = "";
         return;
       }
+      // ✅ Document is valid
+alert("Validation Successful");
 
       setIsDocumentVerified(true);
       setVerifiedDocument(file);

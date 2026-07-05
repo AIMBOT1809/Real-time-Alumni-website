@@ -734,12 +734,13 @@ entrepreneurRatio: Math.round((entrepreneurCount / effectiveTotal) * 100),
   }
 
   return (
-    <div className="min-h-screen bg-slate-100">
+    //<div className="min-h-screen bg-slate-100">
       <div className="bg-white border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-slate-900">Admin Dashboard</h1>
-          </div>
+        <div className="w-full px-4 py-6 sm:px-6 lg:px-8">
+          <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 md:flex-row md:flex-wrap md:items-center md:justify-between">
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold text-slate-900">Admin Dashboard</h1>
+            </div>
           <button
             onClick={() => logout?.()}
             className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 transition-colors"
@@ -750,8 +751,8 @@ entrepreneurRatio: Math.round((entrepreneurCount / effectiveTotal) * 100),
         </div>
       </div>
 
-      <div className="bg-slate-50 border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full bg-slate-50 border-b border-slate-200">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 overflow-x-auto pb-2">
           <div className="flex flex-wrap gap-2 justify-start">
             <button
               onClick={() => setActiveTab('home')}
@@ -804,7 +805,7 @@ entrepreneurRatio: Math.round((entrepreneurCount / effectiveTotal) * 100),
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
         {activeTab === 'home' && (
           <div className="space-y-8">
             {homeView === 'overview' ? (
@@ -1562,7 +1563,7 @@ entrepreneurRatio: Math.round((entrepreneurCount / effectiveTotal) * 100),
                   </tbody>
                 </table>
               </div>
-              <div className="bg-slate-50 border-t border-slate-200 px-6 py-3 flex items-center justify-between">
+              <div className="bg-slate-50 border-t border-slate-200 px-6 py-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <span className="text-sm text-slate-600">
                   Showing <span className="font-semibold">{filteredAlumni.length}</span> of <span className="font-semibold">{reportAlumni.length}</span> users
                 </span>

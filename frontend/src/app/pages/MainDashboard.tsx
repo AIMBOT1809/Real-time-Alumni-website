@@ -76,8 +76,8 @@ function CommentItem({
       )}
       
       <div className={`${isReply ? 'bg-slate-700/50' : 'bg-slate-800'} rounded-lg p-3 ${isReply ? 'border-l-2 border-slate-600' : ''} ${comment.id === highlightedCommentId ? 'ring-2 ring-yellow-400 bg-yellow-100' : ''}`}>
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <span className={`${isReply ? 'text-xs' : 'text-sm'} font-medium text-white`}>
                 {comment.user_name || comment.user?.name || 'User'}
@@ -962,7 +962,7 @@ export function MainDashboard() {
         <div className="flex flex-col lg:flex-row gap-6">
 
           {/* Main Content Area */}
-          <main className="flex-1 min-w-0 space-y-6">
+          <main className="flex-1 min-w-0 space-y-6 w-full">
             {activeMenu === 'home' && (
               <>
                 {/* Recent Alumni Highlights */}
@@ -1043,15 +1043,15 @@ const author =
                     return (
                       <article key={post.id} className="bg-slate-900 rounded-lg border border-slate-800 overflow-hidden">
                         {/* Post Header */}
-                        <div className="p-4 flex items-start space-x-3">
+                        <div className="p-4 flex flex-col gap-3 sm:flex-row sm:items-start">
                           <img 
                             src={author.avatar || 'https://ui-avatars.com/api/?name=User&background=FDE68A&color=111827&size=256'} 
                             alt={author.name || 'User'}
                             className="h-12 w-12 rounded-full object-cover"
                           />
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between">
-                              <div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                              <div className="min-w-0">
                                 <h4 className="font-semibold text-white">{author.name || 'Unknown User'}</h4>
                                 <p className="text-sm text-slate-400">
                                   {author.position || 'Alumni'} at {author.company || 'Company'}
@@ -1103,11 +1103,11 @@ const author =
 
                         {/* Post Actions */}
                         <div className="px-4 py-3 border-t border-slate-800">
-                          <div className="flex items-center justify-between text-sm text-slate-400 mb-3">
+                          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-sm text-slate-400 mb-3">
                             <span>{post.likes || 0} likes</span>
                             <span>{post.comments || 0} comments</span>
                           </div>
-                          <div className="flex items-center justify-around border-t border-slate-800 pt-2">
+                          <div className="flex flex-col gap-3 sm:flex-row sm:justify-around border-t border-slate-800 pt-2">
                             <button 
                               onClick={async () => {
                                 const actions = getPostActions(post);
@@ -1658,9 +1658,9 @@ const author =
 
             {activeMenu === 'events' && (
               <div className="space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <h2 className="text-2xl font-bold text-white">Events</h2>
-                  <div className="flex space-x-2">
+                  <div className="flex flex-wrap gap-2">
                     <button 
                       onClick={() => setEventView('upcoming')}
                       className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
@@ -1760,11 +1760,11 @@ const author =
                 <div className="space-y-4">
                   {followedJobs.map((job) => (
                     <div key={job.id} className="glass-card shiny-border rounded-lg border border-slate-200 dark:border-slate-700 p-6 hover:border-[#FFD700] transition-colors bg-white dark:bg-slate-800">
-                      <div className="flex items-start justify-between">
-                         <div className="flex-1">
+                      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                         <div className="flex-1 min-w-0">
                            <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">{job.title}</h3>
                            <p className="text-slate-700 dark:text-slate-300 mb-3">{job.company}</p>
-                           <div className="flex items-center space-x-4 text-sm text-slate-600 dark:text-slate-400 mb-4">
+                           <div className="flex flex-wrap gap-2 text-sm text-slate-600 dark:text-slate-400 mb-4">
                              <span className="px-2 py-1 bg-slate-100 dark:bg-slate-700 rounded">{job.type}</span>
                              <span>{job.location}</span>
                              <span>Posted {(() => {
@@ -1781,12 +1781,12 @@ const author =
                              href={(job as any).link || (job as any).applyLink}
                              target="_blank"
                              rel="noopener noreferrer"
-                             className="px-6 py-2 bg-[#FFD700] text-black rounded-lg font-semibold hover:bg-yellow-600 transition-colors ml-6 inline-block"
+                             className="w-full sm:w-auto px-6 py-2 bg-[#FFD700] text-black rounded-lg font-semibold hover:bg-yellow-600 transition-colors sm:ml-6 inline-block text-center"
                            >
                              Apply
                            </a>
                          ) : (
-                           <button className="px-6 py-2 bg-[#FFD700] text-black rounded-lg font-semibold hover:bg-yellow-600 transition-colors ml-6">
+                           <button className="w-full sm:w-auto px-6 py-2 bg-[#FFD700] text-black rounded-lg font-semibold hover:bg-yellow-600 transition-colors sm:ml-6 text-center">
                              Apply
                            </button>
                          )}
@@ -1840,8 +1840,8 @@ const author =
                         : "border-slate-800 bg-slate-900 hover:border-slate-700"
                     }`}
                   >
-                    <div className="flex items-center justify-between">
-                      <div>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="min-w-0">
                         <h4 className="font-semibold text-white">Following</h4>
                         <p className="text-sm text-slate-400">Alumni you follow</p>
                       </div>
@@ -1861,8 +1861,8 @@ const author =
                             : "border-slate-800 bg-slate-900 hover:border-slate-700"
                         }`}
                       >
-                        <div className="flex items-center justify-between">
-                          <div>
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                          <div className="min-w-0">
                             <h4 className="font-semibold text-white">Registered Events</h4>
                             <p className="text-sm text-slate-400">Events joined</p>
                           </div>
@@ -1880,8 +1880,8 @@ const author =
                             : "border-slate-800 bg-slate-900 hover:border-slate-700"
                         }`}
                       >
-                        <div className="flex items-center justify-between">
-                          <div>
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                          <div className="min-w-0">
                             <h4 className="font-semibold text-white">Attended Events</h4>
                             <p className="text-sm text-slate-400">Events attended</p>
                           </div>
@@ -1904,7 +1904,7 @@ const author =
                     {/* Posts Created Details */}
                     {selectedActivityCard === "postsCreated" && (role === "alumni") && (
                       <div className="bg-slate-900 rounded-lg border border-slate-800 p-6">
-                        <div className="flex items-center justify-between mb-6">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
                           <h3 className="text-xl font-bold text-white">Your Posts</h3>
                           <span className="px-3 py-1 rounded-full text-sm font-semibold bg-slate-800 text-slate-300">
                             {userPosts.length} total
@@ -1914,8 +1914,8 @@ const author =
                           {userPosts.length > 0 ? (
                             userPosts.map((post) => (
                               <div key={post.id} className="bg-slate-800 rounded-lg p-4 border border-slate-700 hover:border-[#FFD700] transition-colors group">
-                                <div className="flex items-start justify-between mb-3">
-                                  <div className="flex-1">
+                                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-3">
+                                  <div className="flex-1 min-w-0">
                                     <h4 className="font-semibold text-white">{post.title || 'Untitled Post'}</h4>
                                     <p className="text-sm text-slate-400 mt-1 line-clamp-2">{post.content?.substring(0, 150) || 'No content'}{post.content && post.content.length > 150 ? '...' : ''}</p>
                                   </div>
@@ -1929,7 +1929,7 @@ const author =
                                     {post.status === 'rejected' && 'Rejected'}
                                   </span>
                                 </div>
-                                <div className="flex items-center justify-between">
+                                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                   <p className="text-xs text-slate-500">
                                     {(() => {
                                       try {
@@ -2029,8 +2029,8 @@ const author =
                           {registeredEvents && registeredEvents.length > 0 ? (
                             registeredEvents.map((event) => (
                               <div key={event.registrationId || event.id} className="bg-slate-800 rounded-lg p-4 border border-slate-700 hover:border-[#FFD700] transition-colors">
-                                <div className="flex items-start justify-between mb-2">
-                                  <div className="flex-1">
+                                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-2">
+                                  <div className="flex-1 min-w-0">
                                     <h4 className="font-semibold text-white">{event.title}</h4>
                                     <p className="text-sm text-slate-400 mt-1">{event.location}</p>
                                   </div>
@@ -2038,7 +2038,7 @@ const author =
                                     Registered
                                   </span>
                                 </div>
-                                <div className="flex items-center justify-between text-sm">
+                                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between text-sm">
                                   <div className="text-slate-400">
                                     {(() => {
                                       try {
@@ -2066,7 +2066,7 @@ const author =
                           {attendedEvents && attendedEvents.length > 0 ? (
                             attendedEvents.map((event) => (
                               <div key={event.registrationId || event.id} className="bg-slate-800 rounded-lg p-4 border border-slate-700 hover:border-[#FFD700] transition-colors">
-                                <div className="flex items-start justify-between mb-2">
+                                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-2">
                                   <div className="flex-1">
                                     <h4 className="font-semibold text-white">{event.title}</h4>
                                     <p className="text-sm text-slate-400 mt-1">{event.location}</p>

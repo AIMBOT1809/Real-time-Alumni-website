@@ -4,36 +4,52 @@ const sharp = require("sharp");
 const fs = require("fs");
 const path = require("path");
 
-const validateAlumniMemo = async (filePath, originalName) => {
+const validateAlumniMemo = async (
+  filePath,
+  originalName
+) => {
   let extractedText = "";
-  const ext = path.extname(originalName).toLowerCase();
+const ext = path.extname(originalName).toLowerCase();
+console.log("Extension:", ext);
+    // PDF VALIDATION
+if (ext === ".pdf") {
 
-  console.log("Extension:", ext);
+  const pdfBuffer =
+    fs.readFileSync(filePath);
+  const parser = new PDFParse({ data: pdfBuffer });
 
-  if (ext === ".pdf") {
-    // For PDFs that contain images instead of text, pdf-parse won't extract the OCR text.
-    // For now, we bypass strict OCR validation for PDF files to allow uploads.
-    return {
-      success: true,
-      documentType: "TKR Document (PDF)",
-      message: "PDF document accepted. Manual verification may be required.",
-      matchedKeywords: [],
-      extractedText: "PDF File"
-    };
-  } 
-  else if (ext === ".jpg" || ext === ".jpeg" || ext === ".png") {
-    const processedPath = `${filePath}-processed.png`;
+const pdfData = await parser.getText();
+
+extractedText = pdfData.text.toLowerCase();
+}
+  // IMAGE
+  else if (
+    ext === ".jpg" ||
+    ext === ".jpeg" ||
+    ext === ".png"
+  ) {
+
+    const processedPath =
+      `${filePath}-processed.png`;
 
     await sharp(filePath)
-      .resize({ width: 1800 })
+
+      .resize({ width: 1200 })
+
       .grayscale()
-      .normalize()
-      .sharpen()
+
       .png()
+
       .toFile(processedPath);
 
-    const result = await Tesseract.recognize(processedPath, "eng");
-    extractedText = result.data.text.toLowerCase();
+    const result =
+      await Tesseract.recognize(
+        processedPath,
+        "eng"
+      );
+
+    extractedText =
+      result.data.text.toLowerCase();
 
     if (fs.existsSync(processedPath)) {
       fs.unlinkSync(processedPath);
@@ -128,7 +144,7 @@ const validateAlumniMemo = async (filePath, originalName) => {
       documentType: isTKRMemo
         ? "TKR Marks Memo"
         : "TKR Student ID Card",
-      message: "Document accepted successfully.",
+      message: "Validation successful.",
       matchedKeywords: allMatchedKeywords,
       extractedText,
     };
