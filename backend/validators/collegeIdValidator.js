@@ -4,37 +4,52 @@ const sharp = require("sharp");
 const fs = require("fs");
 const path = require("path");
 
-const validateCollegeId = async (filePath, originalName) => {
+const validateCollegeId = async (
+  filePath,
+  originalName
+) => {
   let extractedText = "";
-  const ext = path.extname(originalName).toLowerCase();
+const ext = path.extname(originalName).toLowerCase();
+console.log("Extension:", ext);
+    // PDF VALIDATION
+if (ext === ".pdf") {
 
-  console.log("Extension:", ext);
+  const pdfBuffer =
+    fs.readFileSync(filePath);
+  const parser = new PDFParse({ data: pdfBuffer });
 
-  if (ext === ".pdf") {
-    // For PDFs that contain images instead of text, pdf-parse won't extract the OCR text.
-    // For now, we bypass strict OCR validation for PDF files to allow uploads.
-    return {
-      success: true,
-      documentType: "TKR Document (PDF)",
-      message: "PDF document accepted. Manual verification may be required.",
-      matchedKeywords: [],
-      extractedText: "PDF File"
-    };
-  } 
-  else if ([".jpg", ".jpeg", ".png"].includes(ext)) {
-    const processedPath = `${filePath}-processed.png`;
+const pdfData = await parser.getText();
+
+extractedText = pdfData.text.toLowerCase();
+}
+  // IMAGE
+  else if (
+    ext === ".jpg" ||
+    ext === ".jpeg" ||
+    ext === ".png"
+  ) {
+
+    const processedPath =
+      `${filePath}-processed.png`;
 
     await sharp(filePath)
-      .resize({ width: 1600 })
+
+      .resize({ width: 1200 })
+
       .grayscale()
-      .normalize()
-      .sharpen()
+
       .png()
+
       .toFile(processedPath);
 
-    const result = await Tesseract.recognize(processedPath, "eng");
+    const result =
+      await Tesseract.recognize(
+        processedPath,
+        "eng"
+      );
 
-    extractedText = result.data.text.toLowerCase();
+    extractedText =
+      result.data.text.toLowerCase();
 
     if (fs.existsSync(processedPath)) {
       fs.unlinkSync(processedPath);
@@ -43,7 +58,7 @@ const validateCollegeId = async (filePath, originalName) => {
   else {
     return {
       success: false,
-      message: "Only PDF files are allowed.",
+      message: "Only PDF, JPG, JPEG, and PNG files are allowed.",
       matchedKeywords: [],
       extractedText: ""
     };
