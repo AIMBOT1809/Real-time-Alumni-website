@@ -701,28 +701,49 @@ export function MainDashboard() {
 
   // Profile handlers
   const handleSave = async () => {
-  if (!user) return;
+  if (!user) {
+    console.error('[Profile Save] No user logged in');
+    return;
+  }
 
-  const { error } = await supabase
+  console.log('[Profile Save] Starting profile update...');
+  console.log('[Profile Save] Table: alumni_profiles');
+  console.log('[Profile Save] Updating row with user_id:', user.id);
+  console.log('[Profile Save] User email:', user.email);
+
+  const updatePayload = {
+    College_Name: formData.collegeName,
+    Roll_Number: formData.rollNumber,
+    Department: formData.department,
+    Year_of_Joining: formData.yearOfJoining,
+    Passed_Out_Year: formData.passedOutYear,
+    study_year: formData.studyYear,
+    about: formData.about,
+    Skills: skills.join(","),
+    links,
+  };
+
+  console.log('[Profile Save] Update payload:', JSON.stringify(updatePayload, null, 2));
+
+  const { data, error } = await supabase
     .from("alumni_profiles")
-    .update({
-      College_Name: formData.collegeName,
-      Roll_Number: formData.rollNumber,
-      Department: formData.department,
-      Year_of_Joining: formData.yearOfJoining,
-      Passed_Out_Year: formData.passedOutYear,
-      study_year: formData.studyYear,
-      about: formData.about,
-      Skills:skills.join(","),
-      links,
-    })
-    .eq("user_id", user.id);
+    .update(updatePayload)
+    .eq("user_id", user.id)
+    .select();
 
   if (error) {
-  console.error("Supabase Error:", error);
-  alert(error.message);
-  return;
-}
+    console.error('[Profile Save] Supabase update error:', {
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+    });
+    alert('Failed to update profile: ' + error.message);
+    return;
+  }
+
+  console.log('[Profile Save] Update successful!');
+  console.log('[Profile Save] Updated row:', data);
 
   const updatedUser = {
     ...user,

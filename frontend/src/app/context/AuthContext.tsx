@@ -1676,12 +1676,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         likes: Number(r.likes ?? 0),
         comments: Number(r.comments ?? 0),
         shares: Number(r.shares ?? 0),
-        image: r.image ?? r.image_url ?? undefined,
+        image: r.image ?? r.image_url ?? r.file_url ?? undefined,
         attachment_url: r.file_url ?? r.attachment_url ?? undefined,
         attachment_name: r.file_name ?? r.attachment_name ?? undefined,
         attachment_type: r.attachment_type ?? undefined,
         post_details: r.post_details ?? undefined,
       }));
+
+      // Log the fetched admin posts with image URLs for debugging
+      console.log('[AuthContext] Admin posts fetched:', mapped.map((p: any) => ({ id: p.id, title: p.title, image: p.image })));
 
       setAdminPosts(mapped as AdminPost[]);
       console.log('[AuthContext] admin posts loaded, count =', mapped.length);

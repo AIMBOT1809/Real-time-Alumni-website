@@ -60,6 +60,7 @@ export function AdminDashboard() {
     addJob,
     addEvent,
     adminPosts: adminPostsFromContext,
+    fetchAdminPosts,
   } = useAuth();
   const adminPosts = useMemo(
     () => adminPostsFromContext,
@@ -117,6 +118,10 @@ export function AdminDashboard() {
       supabase.removeChannel(channel);
     };
   }, []);
+
+  useEffect(() => {
+    fetchAdminPosts();
+  }, [fetchAdminPosts]);
 
   const [activeTab, setActiveTab] = useState<'home' | 'reports' | 'analytics' | 'admins'>('home');
   const [searchTerm, setSearchTerm] = useState('');
@@ -399,19 +404,67 @@ useEffect(() => {
       return;
     }
 
-    const attachmentUrl = newPostFile ? URL.createObjectURL(newPostFile) : undefined;
+    let fileUrl: string | undefined = undefined;
+
+    // Upload file to Supabase Storage if provided
+    if (newPostFile) {
+      try {
+        const fileExt = newPostFile.name.split('.').pop();
+        const fileName = `admin_posts/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+
+        let { error: uploadError } = await supabase.storage
+          .from('admin_post')
+          .upload(fileName, newPostFile);
+
+        // If bucket not found, try to create it
+        if (uploadError && uploadError.message?.includes('bucket')) {
+          console.log('admin_post bucket not found, attempting to create it...');
+          const { error: createError } = await supabase.storage.createBucket('admin_post', {
+            public: true,
+          });
+          if (createError) {
+            console.error('Failed to create bucket:', createError);
+          } else {
+            const retryResult = await supabase.storage
+              .from('admin_post')
+              .upload(fileName, newPostFile);
+            uploadError = retryResult.error;
+          }
+        }
+
+        if (uploadError) {
+          console.error('Image upload error:', uploadError);
+          alert('Failed to upload image: ' + uploadError.message);
+          return;
+        }
+
+        const { data } = supabase.storage.from('admin_post').getPublicUrl(fileName);
+        fileUrl = data.publicUrl;
+        console.log('[AdminDashboard] Uploaded image URL:', fileUrl);
+      } catch (uploadErr) {
+        console.error('Upload exception:', uploadErr);
+        alert('Failed to upload image');
+        return;
+      }
+    }
+
+    const insertData: any = {
+      title,
+      description,
+      created_by: user.id,
+      created_at: new Date().toISOString(),
+    };
+
+    if (fileUrl) {
+      insertData.file_url = fileUrl;
+      insertData.image_url = fileUrl;
+    }
+
+    console.log('[AdminDashboard] Saving to database:', { title, fileUrl });
 
     const { error } = await supabase
       .from('admin_posts')
-      .insert([
-        {
-          title,
-          description,
-          created_by: user.id,
-          created_at: new Date().toISOString(),
-          file_url: attachmentUrl
-        }
-      ]);
+      .insert([insertData]);
 
     if (error) {
       console.error(error);
@@ -419,6 +472,7 @@ useEffect(() => {
       return;
     }
 
+    console.log('[AdminDashboard] Post created successfully with image URL:', fileUrl);
     alert('Post published successfully');
     setNewPostTitle('');
     setNewPostDescription('');
@@ -1030,11 +1084,13 @@ entrepreneurRatio: Math.round((entrepreneurCount / effectiveTotal) * 100),
                             <p className="mt-4 text-slate-600 whitespace-pre-line">{post.content || getPostDescription(post)}</p>
 
                             {post.image && (
-                              <img
-                                src={post.image}
-                                alt="Post attachment"
-                                className="mt-4 h-56 w-full rounded-3xl object-cover"
-                              />
+                              <div className="mt-4 w-full h-52 rounded-3xl overflow-hidden bg-gray-100 flex items-center justify-center">
+                                <img
+                                  src={post.image}
+                                  alt="Post attachment"
+                                  className="w-full h-full object-contain"
+                                />
+                              </div>
                             )}
 
                             {post.attachment_url && !post.image && (
@@ -1201,11 +1257,13 @@ entrepreneurRatio: Math.round((entrepreneurCount / effectiveTotal) * 100),
                               <p className="mt-4 text-slate-600">{(event as any).description ?? 'Review the event details and attachments below.'}</p>
 
                               {event.image && (
-                                <img
-                                  src={event.image}
-                                  alt={event.title}
-                                  className="mt-4 h-56 w-full rounded-3xl object-cover"
-                                />
+                                <div className="mt-4 h-56 w-full rounded-3xl overflow-hidden bg-gray-100 flex items-center justify-center">
+                                  <img
+                                    src={event.image}
+                                    alt={event.title}
+                                    className="h-full w-full object-contain"
+                                  />
+                                </div>
                               )}
 
                               {(event as any).attachmentUrl && !event.image && (
@@ -1395,12 +1453,16 @@ entrepreneurRatio: Math.round((entrepreneurCount / effectiveTotal) * 100),
 
         <div className="mt-4 flex flex-wrap gap-3">
           {highlight.images.map((image, index) => (
-            <img
+            <div
               key={index}
-              src={image}
-              alt={highlight.title}
-              className="h-32 w-32 rounded-lg object-cover"
-            />
+              className="h-32 w-32 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center"
+            >
+              <img
+                src={image}
+                alt={highlight.title}
+                className="h-full w-full object-contain"
+              />
+            </div>
           ))}
         </div>
       </div>

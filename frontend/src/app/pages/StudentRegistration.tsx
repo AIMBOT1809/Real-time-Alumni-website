@@ -438,7 +438,7 @@ if (
       };
 
       await login(newUser);
-      navigate('/dashboard');
+      navigate('/login');
     } catch (error) {
       alert('Registration failed. Please try again.');
       console.error('Registration error:', error);

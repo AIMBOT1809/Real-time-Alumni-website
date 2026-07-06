@@ -69,12 +69,12 @@ export function DashboardLayout() {
 
   const profileDetails =
     role === 'student'
-      ? [user?.department]
+      ? [user?.department, user?.year, user?.collegeName].filter(Boolean)
       : role === 'alumni'
-      ? [user?.position, user?.company, extendedUser?.jobType || extendedUser?.employmentType]
+      ? [user?.position, user?.company, user?.department, user?.collegeName, user?.year].filter(Boolean)
       : role === 'faculty'
-      ? [user?.department, user?.designation || (user as any)?.facultyType]
-      : [user?.department];
+      ? [user?.department, user?.designation || (user as any)?.facultyType].filter(Boolean)
+      : [user?.department].filter(Boolean);
 
   const handleLogout = () => {
     logout();

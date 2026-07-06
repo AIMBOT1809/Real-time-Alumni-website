@@ -4,6 +4,7 @@ import { motion } from 'motion/react';
 import collegeLogo from '../../assests/college-logo.png';
 import { supabase } from '../../supabaseClient';
 import { AlumniWallOfFame } from '../components/AlumniWallOfFame';
+import { AnnouncementCarousel } from '../components/AnnouncementCarousel';
 
 // Banner images configuration - You can replace these URLs with your own images
 // Local video path: put your video at public/clgvideo.mp4
@@ -63,8 +64,24 @@ type HomeEvent = {
   image: string;
   description?: string;
 };
+type AdminPost = {
+  id: string;
+  title: string;
+  description: string;
+  content?: string;
+  image_url?: string;
+  file_url?: string;
+  attachment_url?: string;
+  attachment_name?: string;
+  image?: string;
+  created_at: string;
+  likes?: number;
+  comments?: number;
+};
 
 export function Home() {
+  const [adminPosts, setAdminPosts] = useState<AdminPost[]>([]);
+  const [loadingAdminPosts, setLoadingAdminPosts] = useState(true);
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const [showHighlights, setShowHighlights] = useState(false);
@@ -263,6 +280,58 @@ useEffect(() => {
       { event: '*', schema: 'public', table: 'events' },
       () => {
         fetchHomeEvents();
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}, []);
+
+const fetchAdminPosts = async () => {
+  setLoadingAdminPosts(true);
+  console.log('[Home] Fetching admin posts...');
+  const { data, error } = await supabase
+    .from('admin_posts')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('[Home] Error fetching admin posts:', error);
+    setLoadingAdminPosts(false);
+    return;
+  }
+
+  const mapped = (data || []).map((r: any) => ({
+    id: String(r.id),
+    title: r.title ?? '',
+    description: r.description ?? '',
+    content: r.content ?? r.description ?? '',
+    image_url: r.image_url ?? r.file_url ?? '',
+    file_url: r.file_url ?? '',
+    attachment_url: r.file_url ?? '',
+    attachment_name: r.file_name ?? '',
+    image: r.image_url ?? r.file_url ?? '',
+    created_at: r.created_at ?? '',
+    likes: r.likes ?? 0,
+    comments: r.comments ?? 0,
+  }));
+
+  setAdminPosts(mapped);
+  setLoadingAdminPosts(false);
+};
+
+useEffect(() => {
+  fetchAdminPosts();
+
+  const channel = supabase
+    .channel('homepage_admin_posts')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'admin_posts' },
+      () => {
+        fetchAdminPosts();
       }
     )
     .subscribe();
@@ -694,6 +763,28 @@ useEffect(() => {
               </div>
             )}
           </div>
+        </div>
+      </section>
+
+      {/* Admin Posts Section - Horizontal Carousel */}
+      <section id="admin-posts" className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold text-slate-900 sm:text-4xl">Announcements</h2>
+            <p className="mt-4 text-lg text-slate-600">Latest updates and announcements from the alumni network</p>
+          </div>
+
+          {loadingAdminPosts ? (
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-10 text-center text-slate-500">
+              Loading announcements...
+            </div>
+          ) : adminPosts.length > 0 ? (
+            <AnnouncementCarousel posts={adminPosts.slice(0, 5)} />
+          ) : (
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center text-slate-500">
+              No announcements yet. Check back later!
+            </div>
+          )}
         </div>
       </section>
 

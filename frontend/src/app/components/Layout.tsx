@@ -14,11 +14,10 @@ export function Layout() {
 
   const navLinks = [
     { name: 'Home', href: '#home' },
-    { name: 'Wall of Fame', href: '#wall-of-fame' },
-    { name: 'About Us', href: '#about' },
+    { name: 'About', href: '#about' },
     { name: 'Events', href: '#events' },
     { name: 'Opportunities', href: '#opportunities' },
-    { name: 'Alumni Highlights', href: '#gallery' },
+    { name: 'Gallery', href: '#gallery' },
     { name: 'Contact', href: '#contact' },
   ];
 

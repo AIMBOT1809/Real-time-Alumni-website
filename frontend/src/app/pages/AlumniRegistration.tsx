@@ -693,7 +693,7 @@ step2Data.forEach((value, key) => {
 localStorage.setItem("allumini_user", JSON.stringify(newUser));
 localStorage.setItem("allumini_role", "alumni");
 
-navigate("/dashboard", { replace: true });
+navigate("/login");
     } catch (error) {
       alert('Registration failed. Please try again.');
       console.error('Registration error:', error);

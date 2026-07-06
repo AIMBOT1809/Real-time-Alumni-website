@@ -523,11 +523,11 @@ await supabase.from("notifications").insert([
 
                     {/* Post Image */}
                     {post.image && (
-                      <div className="mb-4">
+                      <div className="mb-4 flex items-center justify-center bg-gray-100 rounded-lg overflow-hidden">
                         <img
                           src={post.image}
                           alt="Post content"
-                          className="rounded-lg max-h-96 w-full object-cover"
+                          className="max-h-96 w-full object-contain"
                         />
                       </div>
                     )}
