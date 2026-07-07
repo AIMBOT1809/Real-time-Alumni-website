@@ -40,7 +40,6 @@ export function FacultyRegistration({ onBack }: FacultyRegistrationProps) {
     const confirmPassword = formData.get('confirmPassword') as string;
     const id = formData.get('id') as File;
     const photo = formData.get('photo') as File;
-    const collegeName = formData.get('collegeName') as string;
     const department = formData.get('department') as string;
     const facultyId = formData.get('facultyId') as string;
     const officeEmail = formData.get('officeEmail') as string;
@@ -59,8 +58,10 @@ export function FacultyRegistration({ onBack }: FacultyRegistrationProps) {
       return;
     }
 
-    if (!phone || phone.length < 10) {
-      alert('Please enter a valid phone number');
+    // Phone validation - exactly 10 digits only
+    const phoneRegex = /^\d{10}$/;
+    if (!phone || !phoneRegex.test(phone)) {
+      alert('Please enter a valid phone number (exactly 10 digits, numbers only)');
       return;
     }
 
@@ -82,13 +83,8 @@ export function FacultyRegistration({ onBack }: FacultyRegistrationProps) {
       return;
     }
 
-    if (!collegeName) {
-      alert('Please enter your college name');
-      return;
-    }
-
     if (!department) {
-      alert('Please enter your department');
+      alert('Please select your department');
       return;
     }
 
@@ -185,7 +181,6 @@ export function FacultyRegistration({ onBack }: FacultyRegistrationProps) {
             Office_Email: officeEmail || null,
             Phone_Number: phone,
             LinkedIn_Profile_URL: linkedin,
-            College_Name: collegeName,
             Department: department,
             Faculty_ID: facultyId,
             Faculty_Type: finalFacultyType,
@@ -210,12 +205,11 @@ export function FacultyRegistration({ onBack }: FacultyRegistrationProps) {
           : `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=FDE68A&color=111827&size=256`,
         graduationYear: new Date().getFullYear(),
         degree: `${department}`,
-        bio: `Faculty member at ${collegeName}`,
+        bio: `Faculty member`,
         skills: [],
         email: email.trim(),
         phone: phone.trim(),
         linkedin: linkedin ? linkedin.trim() : undefined,
-        collegeName: collegeName.trim(),
         department: department.trim(),
         memo: id ? id.name : undefined,
         facultyId: facultyId.trim(),
@@ -297,18 +291,23 @@ export function FacultyRegistration({ onBack }: FacultyRegistrationProps) {
                     className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
                   />
                 </div>
-                <div>
-                  <label htmlFor="phone" className="block text-sm font-medium text-slate-700 mb-1">
-                    Phone Number *
-                  </label>
-                  <input
-                    id="phone"
-                    name="phone"
-                    type="tel"
-                    required
-                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                  />
-                </div>
+                  <div>
+                    <label htmlFor="phone" className="block text-sm font-medium text-slate-700 mb-1">
+                      Phone Number *
+                    </label>
+                    <input
+                      id="phone"
+                      name="phone"
+                      type="tel"
+                      required
+                      maxLength={10}
+                      onInput={(e) => {
+                        const target = e.target as HTMLInputElement;
+                        target.value = target.value.replace(/\D/g, '').slice(0, 10);
+                      }}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                    />
+                  </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -435,31 +434,17 @@ export function FacultyRegistration({ onBack }: FacultyRegistrationProps) {
                 <h3 className="text-lg font-semibold text-slate-900">Faculty Details</h3>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label htmlFor="facultyId" className="block text-sm font-medium text-slate-700 mb-1">
-                    Faculty ID *
-                  </label>
-                  <input
-                    id="facultyId"
-                    name="facultyId"
-                    type="text"
-                    required
-                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="collegeName" className="block text-sm font-medium text-slate-700 mb-1">
-                    College Name *
-                  </label>
-                  <input
-                    id="collegeName"
-                    name="collegeName"
-                    type="text"
-                    required
-                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                  />
-                </div>
+              <div className="mb-4">
+                <label htmlFor="facultyId" className="block text-sm font-medium text-slate-700 mb-1">
+                  Faculty ID *
+                </label>
+                <input
+                  id="facultyId"
+                  name="facultyId"
+                  type="text"
+                  required
+                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -467,13 +452,22 @@ export function FacultyRegistration({ onBack }: FacultyRegistrationProps) {
                   <label htmlFor="department" className="block text-sm font-medium text-slate-700 mb-1">
                     Department *
                   </label>
-                  <input
+                  <select
                     id="department"
                     name="department"
-                    type="text"
                     required
                     className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                  />
+                  >
+                    <option value="">Select Department</option>
+                    <option value="CSE">CSE</option>
+                    <option value="CSD">CSD</option>
+                    <option value="CSM">CSM</option>
+                    <option value="ECE">ECE</option>
+                    <option value="EEE">EEE</option>
+                    <option value="IT">IT</option>
+                    <option value="MECH">MECH</option>
+                    <option value="CIVIL">CIVIL</option>
+                  </select>
                 </div>
                 <div>
                   <label htmlFor="facultyType" className="block text-sm font-medium text-slate-700 mb-1">

@@ -101,7 +101,6 @@ alert("Validation Successful");
     const confirmPassword = formData.get('confirmPassword') as string;
     const idproof = formData.get('idproof') as File;
     const photo = formData.get('photo') as File;
-    const collegeName = formData.get('collegeName') as string;
     const department = formData.get('department') as string;
     const yearOfJoining = formData.get('yearOfJoining') as string;
     const passedOutYear = formData.get('passedOutYear') as string;
@@ -119,8 +118,10 @@ alert("Validation Successful");
       return;
     }
 
-    if (!phone || phone.length < 10) {
-      alert('Please enter a valid phone number');
+    // Phone validation - exactly 10 digits only
+    const phoneRegex = /^\d{10}$/;
+    if (!phone || !phoneRegex.test(phone)) {
+      alert('Please enter a valid phone number (exactly 10 digits, numbers only)');
       return;
     }
 
@@ -176,13 +177,8 @@ if (
       return;
     }
 
-    if (!collegeName) {
-      alert('Please enter your college name');
-      return;
-    }
-
     if (!department) {
-      alert('Please enter your department');
+      alert('Please select your department');
       return;
     }
 
@@ -234,7 +230,6 @@ if (
       confirmPassword,
       idproof,
       photo,
-      collegeName,
       department,
       yearOfJoining,
       passedOutYear,
@@ -310,7 +305,6 @@ if (
       password,
       idproof,
       photo,
-      collegeName,
       department,
       yearOfJoining,
       passedOutYear,
@@ -391,7 +385,6 @@ if (
             Email_Address: email,
             Phone_Number: phone,
             LinkedIn_Profile_URL: linkedin,
-            College_Name: collegeName,
             Department: department,
             Year_of_Joining: yearOfJoining,
             Passed_Out_Year: passedOutYear,
@@ -420,13 +413,12 @@ if (
           ? URL.createObjectURL(photo)
           : `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=FDE68A&color=111827&size=256`,
         graduationYear: parseInt(passedOutYear),
-        degree: `${department} - ${collegeName}`,
-        bio: `Student at ${collegeName}`,
+        degree: department,
+        bio: `Student`,
         skills: [],
         email: email.trim(),
         phone: phone.trim(),
         linkedin: linkedin ? linkedin.trim() : undefined,
-        collegeName: collegeName.trim(),
         department: department.trim(),
         rollNumber: rollNumber.trim(),
         idproof: idproof ? idproof.name : undefined,
@@ -536,19 +528,24 @@ if (
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
-                      Phone Number *
-                    </label>
-                    <input
-                      type="tel"
-                      name="phone"
-                      required
-                      className="w-full px-3 py-2 border border-slate-300 rounded-md
-                      focus:outline-none focus:ring-2 focus:ring-yellow-500
-                      focus:border-yellow-500 dark:bg-slate-700 dark:text-white dark:border-slate-500 dark:placeholder:text-slate-400"
-                    />
-                  </div>
+                   <div>
+                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
+                       Phone Number *
+                     </label>
+                     <input
+                       type="tel"
+                       name="phone"
+                       required
+                       maxLength={10}
+                       onInput={(e) => {
+                         const target = e.target as HTMLInputElement;
+                         target.value = target.value.replace(/\D/g, '').slice(0, 10);
+                       }}
+                       className="w-full px-3 py-2 border border-slate-300 rounded-md
+                       focus:outline-none focus:ring-2 focus:ring-yellow-500
+                       focus:border-yellow-500 dark:bg-slate-700 dark:text-white dark:border-slate-500 dark:placeholder:text-slate-400"
+                     />
+                   </div>
                 </div>
 
                 <div className="mb-4">
@@ -640,18 +637,6 @@ if (
 
                 <div className="mb-4">
                   <label className="block text-sm font-medium mb-1 dark:text-slate-200">
-                    College Name *
-                  </label>
-                  <input
-                    name="collegeName"
-                    type="text"
-                    required
-                    className="w-full px-3 py-2 border rounded-md dark:bg-slate-700 dark:text-white dark:border-slate-500 dark:placeholder:text-slate-400"
-                  />
-                </div>
-
-                <div className="mb-4">
-                  <label className="block text-sm font-medium mb-1 dark:text-slate-200">
                     Roll Number *
                   </label>
                   <input
@@ -666,12 +651,21 @@ if (
                   <label className="block text-sm font-medium mb-1 dark:text-slate-200">
                     Department *
                   </label>
-                  <input
+                  <select
                     name="department"
-                    type="text"
                     required
                     className="w-full px-3 py-2 border rounded-md dark:bg-slate-700 dark:text-white dark:border-slate-500 dark:placeholder:text-slate-400"
-                  />
+                  >
+                    <option value="">Select Department</option>
+                    <option value="CSE">CSE</option>
+                    <option value="CSD">CSD</option>
+                    <option value="CSM">CSM</option>
+                    <option value="ECE">ECE</option>
+                    <option value="EEE">EEE</option>
+                    <option value="IT">IT</option>
+                    <option value="MECH">MECH</option>
+                    <option value="CIVIL">CIVIL</option>
+                  </select>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">

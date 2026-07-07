@@ -82,7 +82,6 @@ alert("Validation Successful");
     const confirmPassword = formData.get('confirmPassword') as string;
     const memo = formData.get('memo') as File;
     const linkedin = formData.get('linkedin') as string;
-    const collegeName = formData.get('collegeName') as string;
     const department = formData.get('department') as string;
     const yearOfJoining = formData.get('yearOfJoining') as string;
     const passedOutYear = formData.get('passedOutYear') as string;
@@ -98,8 +97,10 @@ alert("Validation Successful");
       return false;
     }
 
-    if (!phone || phone.length < 10) {
-      alert('Please enter a valid phone number');
+    // Phone validation - exactly 10 digits only
+    const phoneRegex = /^\d{10}$/;
+    if (!phone || !phoneRegex.test(phone)) {
+      alert('Please enter a valid phone number (exactly 10 digits, numbers only)');
       return false;
     }
 
@@ -154,13 +155,8 @@ if (
       return false;
     }
 
-    if (!collegeName) {
-      alert('Please enter your college name');
-      return false;
-    }
-
     if (!department) {
-      alert('Please enter your department');
+      alert('Please select your department');
       return false;
     }
 
@@ -256,7 +252,6 @@ step2Data.forEach((value, key) => {
     const confirmPassword = formData.get('confirmPassword') as string;
     const memo = formData.get('memo') as File;
     const photo = formData.get('photo') as File;
-    const collegeName = formData.get('collegeName') as string;
     const department = formData.get('department') as string;
     const yearOfJoining = formData.get('yearOfJoining') as string;
     const passedOutYear = formData.get('passedOutYear') as string;
@@ -550,7 +545,6 @@ step2Data.forEach((value, key) => {
             Email_Address: email,
             Phone_Number: phone,
             LinkedIn_Profile_URL: linkedin,
-            College_Name: collegeName,
             Department: department,
             Year_of_Joining: yearOfJoining,
             passed_out_year: passedOutYear,
@@ -630,12 +624,12 @@ step2Data.forEach((value, key) => {
         graduationYear: parseInt(passedOutYear),
         degree:
           currentStatus === 'working-professional'
-            ? `${department} - ${collegeName}`
+            ? department
             : currentStatus === 'higher-education'
             ? `${course} at ${university}`
             : currentStatus === 'career-aspirant'
             ? skills
-            : `${department} - ${collegeName}`,
+            : department,
         company:
           currentStatus === 'working-professional'
             ? organization
@@ -652,10 +646,6 @@ step2Data.forEach((value, key) => {
         email: email.trim(),
         phone: phone.trim(),
         linkedin: linkedin ? linkedin.trim() : undefined,
-        collegeName:
-          currentStatus === 'higher-education'
-            ? university.trim()
-            : collegeName.trim(),
         department:
           currentStatus === 'higher-education'
             ? branch.trim()
@@ -775,6 +765,11 @@ navigate("/login");
                         name="phone"
                         type="tel"
                         required
+                        maxLength={10}
+                        onInput={(e) => {
+                          const target = e.target as HTMLInputElement;
+                          target.value = target.value.replace(/\D/g, '').slice(0, 10);
+                        }}
                         className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
                       />
                     </div>
@@ -895,31 +890,26 @@ navigate("/login");
                     <h3 className="text-lg font-semibold text-slate-900">Academic Details</h3>
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div>
-                      <label htmlFor="collegeName" className="block text-sm font-medium text-slate-700 mb-1">
-                        College Name *
-                      </label>
-                      <input
-                        id="collegeName"
-                        name="collegeName"
-                        type="text"
-                        required
-                        className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="department" className="block text-sm font-medium text-slate-700 mb-1">
-                        Department *
-                      </label>
-                      <input
-                        id="department"
-                        name="department"
-                        type="text"
-                        required
-                        className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                      />
-                    </div>
+                  <div className="mb-4">
+                    <label htmlFor="department" className="block text-sm font-medium text-slate-700 mb-1">
+                      Department *
+                    </label>
+                    <select
+                      id="department"
+                      name="department"
+                      required
+                      className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                    >
+                      <option value="">Select Department</option>
+                      <option value="CSE">CSE</option>
+                      <option value="CSD">CSD</option>
+                      <option value="CSM">CSM</option>
+                      <option value="ECE">ECE</option>
+                      <option value="EEE">EEE</option>
+                      <option value="IT">IT</option>
+                      <option value="MECH">MECH</option>
+                      <option value="CIVIL">CIVIL</option>
+                    </select>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
