@@ -6,7 +6,7 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 const supabase = createClient(supabaseUrl, supabaseKey)
 
 async function test() {
-  const { data, error } = await supabase.from('alumni_profiles').select('*').limit(1)
+  const { data, error } = await supabase.from('alumni_profiles').select('*').limit(1).
   console.log('Alumni Data:', data)
   console.log('Alumni Error:', error)
 
