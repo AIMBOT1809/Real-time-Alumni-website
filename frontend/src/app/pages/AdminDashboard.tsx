@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { PieChart, Pie, Cell, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../../supabaseClient';
 import {
@@ -62,6 +62,12 @@ export function AdminDashboard() {
     adminPosts: adminPostsFromContext,
     fetchAdminPosts,
   } = useAuth();
+  const navigate = useNavigate();
+
+const handleLogout = async () => {
+  await logout?.();
+  navigate('/login');
+};
   const adminPosts = useMemo(
     () => adminPostsFromContext,
     [adminPostsFromContext],
@@ -796,7 +802,7 @@ entrepreneurRatio: Math.round((entrepreneurCount / effectiveTotal) * 100),
               <h1 className="text-3xl md:text-4xl font-bold text-slate-900">Admin Dashboard</h1>
             </div>
           <button
-            onClick={() => logout?.()}
+            onClick={handleLogout}
             className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 transition-colors"
           >
             <LogOut className="h-4 w-4" />
