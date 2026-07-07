@@ -115,14 +115,19 @@ export function MyContributions() {
         
         showGlobalToast('Post updated successfully and sent for admin approval.', 'success');
       } else {
-        // Update Supabase post
-        const { error } = await supabase.from('posts').update({ title: editing.title.trim(), content: editing.content.trim() }).eq('id', editing.id).eq('alumni_id', user?.id);
+        // Update Supabase post and reset status to pending for re-approval
+        const { error } = await supabase.from('posts').update({ 
+          title: editing.title.trim(), 
+          content: editing.content.trim(),
+          status: 'pending',
+          rejection_reason: null,
+        }).eq('id', editing.id).eq('alumni_id', user?.id);
         if (error) {
           showGlobalToast('Something went wrong. Please try again.', 'error');
           return;
         }
-        setContributions((current) => current.map((item) => item.id === editing.id ? editing : item));
-        showGlobalToast('Post updated successfully.', 'success');
+        setContributions((current) => current.map((item) => item.id === editing.id ? { ...editing, status: 'pending' as ContributionStatus } : item));
+        showGlobalToast('Post updated successfully and sent for admin approval.', 'success');
       }
       
       setEditing(null);

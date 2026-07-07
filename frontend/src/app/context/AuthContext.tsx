@@ -1558,17 +1558,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       // If editing an approved/rejected post (and not admin), reset status to pending
       const isStatusReset = (targetPost.status === 'approved' || targetPost.status === 'rejected') && user.role !== 'admin';
+      
+      // Prepare updates for Supabase (use snake_case for DB columns)
+      const supabaseUpdates = isStatusReset
+        ? { ...updates, status: 'pending' as const, rejection_reason: null }
+        : updates;
+      
+      // Prepare updates for localStorage (use camelCase)
       const finalUpdates = isStatusReset
         ? { ...updates, status: 'pending' as const, rejectionReason: undefined, reviewedBy: undefined, reviewedAt: undefined }
         : updates;
 
       // Try Supabase update first
-      const { error } = await supabase.from('posts').update(finalUpdates).eq('id', postId);
+      const { error } = await supabase.from('posts').update(supabaseUpdates).eq('id', postId);
       if (!error) {
         setPosts(prev => prev.map(p => p.id === postId ? { ...p, ...finalUpdates } : p));
       } else if (error.message && /status.*does not exist/i.test(error.message)) {
-        // Legacy table without status column
-        const { status: _status, ...legacyUpdates } = finalUpdates as any;
+        // Legacy table without status column - try without status fields
+        const { status: _status, rejection_reason: _rr, ...legacyUpdates } = supabaseUpdates as any;
         const { error: legacyError } = await supabase.from('posts').update(legacyUpdates).eq('id', postId);
         if (!legacyError) {
           setPosts(prev => prev.map(p => p.id === postId ? { ...p, ...legacyUpdates } : p));
