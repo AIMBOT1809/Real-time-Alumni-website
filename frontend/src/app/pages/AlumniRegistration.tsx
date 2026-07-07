@@ -195,6 +195,11 @@ if (
       return false;
     }
 
+    if (graduationYear > currentYear) {
+      alert('You are not eligible to register as Alumni. Please register as a Student.');
+      return false;
+    }
+
     if (graduationYear <= joiningYear) {
       alert('Passed out year must be after year of joining');
       return false;
