@@ -432,38 +432,59 @@ export function Layout() {
             </p>
           </div>
           
-          <div>
-            <h3 className="text-white font-semibold mb-4">Platform</h3>
-            <ul className="space-y-2 text-sm">
-              <li><Link to="/network" className="hover:text-yellow-400 transition-colors">Alumni Network</Link></li>
-              <li><Link to="/opportunities" className="hover:text-yellow-400 transition-colors">Jobs & Internships</Link></li>
-              <li><Link to="/events" className="hover:text-yellow-400 transition-colors">Events</Link></li>
-              <li><Link to="/mentorship" className="hover:text-yellow-400 transition-colors">Find a Mentor</Link></li>
-            </ul>
-          </div>
+           <div>
+             <h3 className="text-white font-semibold mb-4">Platform</h3>
+             <ul className="space-y-2 text-sm">
+               <li className="text-slate-400">Alumni Network</li>
+               <li className="text-slate-400">Jobs & Internships</li>
+               <li className="text-slate-400">Events</li>
+               <li className="text-slate-400">Find a Mentor</li>
+             </ul>
+           </div>
 
-          <div>
-            <h3 className="text-white font-semibold mb-4">Community</h3>
-            <ul className="space-y-2 text-sm">
-              <li><Link to="/guidelines" className="hover:text-yellow-400 transition-colors">Community Guidelines</Link></li>
-              <li><Link to="/success-stories" className="hover:text-yellow-400 transition-colors">Success Stories</Link></li>
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="text-white font-semibold mb-4">Subscribe</h3>
-            <p className="text-sm mb-4">Get the latest updates and opportunities.</p>
-            <div className="flex">
-              <input 
-                type="email" 
-                placeholder="Email address" 
-                className="bg-slate-800 text-white px-3 py-2 rounded-l w-full focus:outline-none focus:ring-1 focus:ring-yellow-500"
-              />
-              <button className="bg-yellow-500 text-slate-900 px-4 py-2 rounded-r font-medium hover:bg-yellow-400 transition-colors">
-                Join
-              </button>
-            </div>
-          </div>
+           <div>
+             <h3 className="text-white font-semibold mb-4">Community</h3>
+             <ul className="space-y-2 text-sm">
+               <li className="text-slate-400">Community Guidelines</li>
+               <li className="text-slate-400">Success Stories</li>
+             </ul>
+           </div>
+           <div>
+             <h3 className="text-white font-semibold mb-4">Connect With Us</h3>
+             <ul className="space-y-2 text-sm">
+               <li>
+                 <a 
+                   href="https://www.instagram.com/tkrcet_alumniconnect" 
+                   target="_blank" 
+                   rel="noopener noreferrer"
+                   className="text-slate-400 hover:text-yellow-400 transition-colors"
+                 >
+                   Instagram
+                 </a>
+                 <div className="text-xs text-slate-500 mt-1">@tkrcet_alumniconnect</div>
+               </li>
+               <li>
+                 <a 
+                   href="https://tkrcet.ac.in" 
+                   target="_blank" 
+                   rel="noopener noreferrer"
+                   className="text-slate-400 hover:text-yellow-400 transition-colors"
+                 >
+                   College Portal
+                 </a>
+               </li>
+               <li>
+                 <a 
+                   href="https://tkrcet.ac.in/ContactUs/Index" 
+                   target="_blank" 
+                   rel="noopener noreferrer"
+                   className="text-slate-400 hover:text-yellow-400 transition-colors"
+                 >
+                   Contact Us
+                 </a>
+               </li>
+             </ul>
+           </div>
         </div>
         <div className="container mx-auto px-4 mt-8 pt-8 border-t border-slate-800 text-center text-xs">
           &copy; {new Date().getFullYear()} Alumni University Network. All rights reserved.
