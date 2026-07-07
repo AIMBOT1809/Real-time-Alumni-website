@@ -789,7 +789,7 @@ entrepreneurRatio: Math.round((entrepreneurCount / effectiveTotal) * 100),
 
   return (
     //<div className="min-h-screen bg-slate-100">
-      <div className="bg-white border-b border-slate-200">
+      <div className="sticky top-0 z-50 bg-white border-b border-slate-200 shadow-sm">
         <div className="w-full px-4 py-6 sm:px-6 lg:px-8">
           <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 md:flex-row md:flex-wrap md:items-center md:justify-between">
             <div>
@@ -805,7 +805,7 @@ entrepreneurRatio: Math.round((entrepreneurCount / effectiveTotal) * 100),
         </div>
       </div>
 
-      <div className="w-full bg-slate-50 border-b border-slate-200">
+      <div className="sticky top-[88px] z-40 w-full bg-slate-50 border-b border-slate-200 shadow-sm">
         <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 overflow-x-auto pb-2">
           <div className="flex flex-wrap gap-2 justify-start">
             <button
