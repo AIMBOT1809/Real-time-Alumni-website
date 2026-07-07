@@ -259,6 +259,66 @@
   }
 }
 
+/* ===== Dark Theme Form Input Styles ===== */
+/* Ensure text inputs are clearly visible in dark mode */
+.dark input[type="text"],
+.dark input[type="email"],
+.dark input[type="password"],
+.dark input[type="tel"],
+.dark input[type="url"],
+.dark input[type="number"],
+.dark textarea {
+  color: #ffffff !important;
+}
+
+/* Ensure select dropdowns show selected value in white in dark mode */
+.dark select {
+  color: #ffffff !important;
+}
+
+/* Ensure file input text is visible in dark mode */
+.dark input[type="file"] {
+  color: #ffffff !important;
+}
+
+/* Ensure file input filename text is visible in dark mode (WebKit/Blink) */
+.dark input[type="file"]::-webkit-file-upload-button {
+  background-color: #f3f4f6 !important;
+  color: #030213 !important;
+}
+
+/* Ensure file input filename text is visible in dark mode (Firefox) */
+.dark input[type="file"]::file-selector-button,
+.dark input[type="file"]::-moz-file-upload {
+  background-color: #f3f4f6 !important;
+  color: #030213 !important;
+}
+
+/* Ensure placeholder text is light gray in dark mode */
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #9ca3af !important;
+}
+
+/* Ensure cursor is visible in dark mode inputs */
+.dark input,
+.dark select,
+.dark textarea {
+  caret-color: #fde047 !important;
+}
+
+/* Style for select options in dark mode (for dropdown) */
+.dark option {
+  background-color: #1e293b !important;
+  color: #ffffff !important;
+}
+
+/* Ensure select dropdown styling in dark mode */
+.dark select option {
+  background-color: #1e293b !important;
+  color: #ffffff !important;
+}
+
 /* ===== Theme System: CSS Variables ===== */
 :root {
   --page-bg: linear-gradient(135deg, #f8fafc 0%, #eff6ff 45%, #fefce8 100%);
