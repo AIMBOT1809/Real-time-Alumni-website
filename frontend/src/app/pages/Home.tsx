@@ -443,7 +443,7 @@ useEffect(() => {
       {/* Hero Banner Carousel Section - Full Width */}
       <section 
         id="home" 
-        className="relative bg-slate-900 text-white overflow-hidden w-full max-w-full"
+        className="relative bg-slate-900 text-white overflow-hidden w-full max-w-full scroll-mt-20"
       >
         <div className="relative h-[70vh] md:h-[85vh]">
           {/* Banner Images */}
@@ -575,11 +575,13 @@ useEffect(() => {
         </div>
       </div>
 
-      <AlumniWallOfFame />
+      <section id="wall-of-fame" className="scroll-mt-20">
+        <AlumniWallOfFame />
+      </section>
 
       {/* Statistics Circles Section - Small circles below banner */}
       {/* Statistics Section - Modern Cards */}
-<section className="relative overflow-hidden py-16 px-4 sm:px-6 lg:px-8 bg-slate-950">
+<section className="relative overflow-hidden py-16 px-4 sm:px-6 lg:px-8 bg-slate-950 scroll-mt-20">
   {/* Background glow */}
   <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.25),transparent_35%),radial-gradient(circle_at_top_right,rgba(245,158,11,0.22),transparent_35%)]"></div>
 
@@ -698,7 +700,7 @@ useEffect(() => {
   </div>
 </section>
       {/* About Us Section */}
-      <section id="about" className="py-20 bg-white">
+      <section id="about" className="py-20 bg-white scroll-mt-20">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-slate-900 sm:text-4xl">About Us</h2>
@@ -725,7 +727,7 @@ useEffect(() => {
       </section>
 
       {/* Events Section */}
-      <section id="events" className="py-20 bg-slate-50">
+      <section id="events" className="py-20 bg-slate-50 scroll-mt-20">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-slate-900 sm:text-4xl">Upcoming Events</h2>
@@ -767,7 +769,7 @@ useEffect(() => {
       </section>
 
       {/* Admin Posts Section - Horizontal Carousel */}
-      <section id="admin-posts" className="py-20 bg-white">
+      <section id="announcements" className="py-20 bg-white scroll-mt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-slate-900 sm:text-4xl">Announcements</h2>
@@ -789,7 +791,7 @@ useEffect(() => {
       </section>
 
       {/* Opportunities Section */}
-      <section id="opportunities" className="py-20 bg-white">
+      <section id="opportunities" className="py-20 bg-white scroll-mt-20">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-slate-900 sm:text-4xl">Career Opportunities</h2>
@@ -861,7 +863,7 @@ useEffect(() => {
       </section>
 
       {/* Alumni Highlights Section */}
-      <section id="gallery" className="py-20 bg-white">
+      <section id="alumni-highlights" className="py-20 bg-white scroll-mt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Section Header */}
           <div className="flex items-center justify-between mb-12">
@@ -995,7 +997,7 @@ useEffect(() => {
       </section>
 
       {/* Contact Section */}
-      <section id="contact" className="py-20 bg-white">
+      <section id="contact" className="py-20 bg-white scroll-mt-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-slate-900 sm:text-4xl">Send a Query</h2>

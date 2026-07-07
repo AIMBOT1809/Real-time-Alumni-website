@@ -14,10 +14,12 @@ export function Layout() {
 
   const navLinks = [
     { name: 'Home', href: '#home' },
+    { name: 'Alumni Wall of Fame', href: '#wall-of-fame' },
     { name: 'About', href: '#about' },
     { name: 'Events', href: '#events' },
+    { name: 'Announcements', href: '#announcements' },
     { name: 'Opportunities', href: '#opportunities' },
-    { name: 'Gallery', href: '#gallery' },
+    { name: 'Alumni Highlights', href: '#alumni-highlights' },
     { name: 'Contact', href: '#contact' },
   ];
 
@@ -30,13 +32,14 @@ export function Layout() {
     const targetElement = document.getElementById(targetId);
     
     if (targetElement) {
-      const headerOffset = 80;
-      const elementPosition = targetElement.getBoundingClientRect().top;
-      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: 'smooth'
+      // Update URL hash without triggering route change
+      window.history.pushState(null, '', href);
+      
+      // Use scrollIntoView with smooth behavior
+      // The scroll-mt-20 CSS class on sections handles the header offset
+      targetElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
       });
       
       // Close mobile menu if open
@@ -130,7 +133,7 @@ export function Layout() {
           </Link>
 
           {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center space-x-1">
+          <nav className="hidden md:flex items-center space-x-1" aria-label="Main navigation">
             {navLinks.map((link) => {
               const sectionId = link.href.replace('#', '');
               const isActive = activeSection === sectionId;
@@ -141,11 +144,12 @@ export function Layout() {
                   href={link.href}
                   onClick={(e) => scrollToSection(e, link.href)}
                   className={clsx(
-                    'nav-hover px-4 py-2 rounded-xl text-slate-700 dark:text-slate-300 hover:text-yellow-600 dark:hover:text-yellow-300 hover:bg-yellow-50/80 dark:hover:bg-yellow-400/10 font-medium transition-all duration-300',
+                    'nav-hover px-4 py-2 rounded-xl text-slate-700 dark:text-slate-300 hover:text-yellow-600 dark:hover:text-yellow-300 hover:bg-yellow-50/80 dark:hover:bg-yellow-400/10 font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2',
                     isActive
                       ? 'bg-slate-900 dark:bg-yellow-400 text-white dark:text-slate-950 border-b-2 border-yellow-400 font-semibold shadow-sm'
                       : ''
                   )}
+                  aria-current={isActive ? 'page' : undefined}
                 >
                   {link.name}
                   {isActive && (
@@ -208,7 +212,13 @@ export function Layout() {
           </div>
 
           {/* Mobile Menu Button */}
-          <button onClick={toggleMenu} className="md:hidden text-slate-900 dark:text-slate-100 focus:outline-none">
+          <button 
+            onClick={toggleMenu} 
+            className="md:hidden text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 rounded-lg p-2"
+            aria-label="Toggle navigation menu"
+            aria-expanded={isMobileMenuOpen}
+            aria-controls="mobile-menu"
+          >
             {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
@@ -217,12 +227,13 @@ export function Layout() {
         <AnimatePresence>
           {isMobileMenuOpen && (
             <motion.div
+              id="mobile-menu"
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               className="md:hidden bg-slate-800 border-t border-slate-700 overflow-hidden"
             >
-               <nav className="flex flex-col p-4 space-y-2">
+               <nav className="flex flex-col p-4 space-y-2" aria-label="Mobile navigation">
                  {navLinks.map((link) => {
                    const sectionId = link.href.replace('#', '');
                    const isActive = activeSection === sectionId;
@@ -236,11 +247,12 @@ export function Layout() {
                          setIsMobileMenuOpen(false);
                        }}
                    className={clsx(
-                     'nav-hover text-base font-medium transition-all duration-200 block py-3 px-4 rounded-lg',
+                     'nav-hover text-base font-medium transition-all duration-200 block py-3 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2',
                      isActive
                        ? 'bg-slate-900 dark:bg-yellow-400 text-white dark:text-slate-950 border-l-4 border-yellow-400 font-semibold shadow-sm'
                        : 'text-slate-200 dark:text-slate-300 hover:text-white dark:hover:text-yellow-300 font-medium transition-all duration-300'
                    )}
+                   aria-current={isActive ? 'page' : undefined}
                      >
                        {link.name}
                      </a>
