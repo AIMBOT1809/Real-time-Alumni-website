@@ -54,10 +54,14 @@ export const router = createBrowserRouter([
       { path: "admin/post-approval", Component: PostApproval },
       { path: "login", Component: Login },
       { path: "register", Component: Register },
-      { path: "chat", Component: Chat },
       { path: "notifications", Component: Notifications },
       { path: "reset-password", Component : ResetPassword},
     ],
+  },
+  // Standalone Chat page without Layout
+  {
+    path: "/chat",
+    Component: Chat,
   },
   {
     Component: DashboardLayout,

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router';
 import { Search, Briefcase, GraduationCap, ChevronRight, Award, Upload, MapPin } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
@@ -228,6 +229,78 @@ export function AlumniNetwork() {
 }
 
 function AlumniGrid({ alumniList }: { alumniList: any[] }) {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const handleConnect = async (alumni: any) => {
+    console.log('[AlumniGrid] Connect clicked for:', alumni.First_Name, alumni.Last_name);
+    
+    if (!user?.id) {
+      console.error('[AlumniGrid] No user ID - user not logged in');
+      alert('Please log in to start a conversation');
+      return;
+    }
+
+    console.log('[AlumniGrid] Current User ID:', user.id);
+    console.log('[AlumniGrid] Target Alumni user_id:', alumni.user_id);
+
+    if (alumni.user_id === user.id) {
+      console.error('[AlumniGrid] User trying to message self:', user.id);
+      alert('You cannot start a conversation with yourself');
+      return;
+    }
+
+    try {
+      console.log('[AlumniGrid] Starting API call to POST /api/conversations');
+      console.log('[AlumniGrid] Request body:', { otherUserId: alumni.user_id });
+      
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      console.log('[AlumniGrid] Using API URL:', API_URL);
+      
+      // Call backend to create/find conversation
+      const response = await fetch(`${API_URL}/api/conversations`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': user.id,
+        },
+        body: JSON.stringify({ otherUserId: alumni.user_id }),
+      });
+
+      console.log('[AlumniGrid] API Response status:', response.status, response.statusText);
+
+      if (!response.ok) {
+        // Handle non-JSON responses (404, 500, etc)
+        const contentType = response.headers.get('content-type');
+        let errorData: any;
+        
+        if (contentType && contentType.includes('application/json')) {
+          errorData = await response.json();
+        } else {
+          const text = await response.text();
+          console.error('[AlumniGrid] HTTP Error - Response text:', text);
+          errorData = { error: `HTTP ${response.status}: ${text || response.statusText}` };
+        }
+        
+        console.error('[AlumniGrid] API Error Response:', errorData);
+        alert(`Failed to start conversation: ${errorData.error}`);
+        return;
+      }
+
+      const conversation = await response.json();
+      console.log('[AlumniGrid] API Success - Conversation ID:', conversation.id);
+      console.log('[AlumniGrid] Full conversation object:', conversation);
+      
+      console.log('[AlumniGrid] Navigating to Chat with conversation ID:', conversation.id);
+      // Navigate to Chat page with conversation selected
+      navigate('/chat', { state: { conversationId: conversation.id } });
+    } catch (error) {
+      console.error('[AlumniGrid] Exception caught:', error);
+      console.error('[AlumniGrid] Error message:', error instanceof Error ? error.message : String(error));
+      console.error('[AlumniGrid] Error stack:', error instanceof Error ? error.stack : 'N/A');
+      alert(`Failed to start conversation: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  };
   if (alumniList.length === 0) {
     return (
       <div className="text-center py-12 glass-card rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700">
@@ -307,7 +380,7 @@ function AlumniGrid({ alumniList }: { alumniList: any[] }) {
             
             <div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-700">
               <button
-                onClick={() => alert(`Connect request sent to ${a.First_Name}`)}
+                onClick={() => handleConnect(a)}
                 className="w-full py-2.5 bg-slate-900 text-white rounded-xl text-sm font-semibold hover:bg-slate-800 transition-colors shadow-sm"
               >
                 Connect
