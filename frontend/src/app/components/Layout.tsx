@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { NavLink, Link, Outlet, useLocation } from 'react-router';
+import { Link, Outlet, useLocation } from 'react-router';
 import { Menu, X, GraduationCap, User, Bell, Search, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { clsx } from 'clsx';
@@ -46,34 +46,140 @@ export function Layout() {
       if (isMobileMenuOpen) {
         setIsMobileMenuOpen(false);
       }
+      
+      // The scroll event handler will update the active section
+      // No need to set active state here - let the scroll observer handle it
     }
   };
 
-  // Track active section on scroll
+  // Track active section on scroll using IntersectionObserver
   useEffect(() => {
-    const handleScroll = () => {
-      const sections = navLinks.map(link => link.href.replace('#', ''));
-      const scrollPosition = window.scrollY + 100;
+    // Only run on landing page
+    if (location.pathname !== '/') return;
 
-      for (const sectionId of sections.reverse()) {
+    const sectionIds = navLinks.map(link => link.href.replace('#', ''));
+    
+    // Get header height for offset calculation (with fallback)
+    const getHeaderHeight = () => {
+      const header = document.querySelector('header');
+      return header ? header.offsetHeight : 80;
+    };
+
+    // Use IntersectionObserver to know which sections are visible
+    // Then calculate which section's center is closest to viewport center
+    const scrollObserver = new IntersectionObserver(
+      (entries) => {
+        // Get all currently visible sections
+        const visibleSections = entries
+          .filter(entry => entry.isIntersecting)
+          .map(entry => entry.target as HTMLElement);
+        
+        if (visibleSections.length === 0) {
+          // No sections visible - check if we should clear active or keep last
+          return;
+        }
+        
+        // Calculate viewport center
+        const viewportCenter = window.innerHeight / 2;
+        
+        // Find the section whose center is closest to viewport center
+        let closestSection: string | null = null;
+        let minDistance = Infinity;
+        
+        visibleSections.forEach(section => {
+          const rect = section.getBoundingClientRect();
+          const sectionCenter = rect.top + rect.height / 2;
+          const distance = Math.abs(sectionCenter - viewportCenter);
+          
+          if (distance < minDistance) {
+            minDistance = distance;
+            closestSection = section.id;
+          }
+        });
+        
+        // Only update if we found a closest section
+        if (closestSection) {
+          setActiveSection(closestSection);
+        }
+      },
+      {
+        root: null,
+        threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+      }
+    );
+
+    // Observe all sections
+    sectionIds.forEach((sectionId) => {
+      const section = document.getElementById(sectionId);
+      if (section) {
+        scrollObserver.observe(section);
+      }
+    });
+
+    // Function to find and set the closest section to viewport center
+    const updateActiveSection = () => {
+      const viewportCenter = window.innerHeight / 2;
+      let closestSection: string | null = null;
+      let minDistance = Infinity;
+      
+      sectionIds.forEach(sectionId => {
         const section = document.getElementById(sectionId);
         if (section) {
-          const sectionTop = section.offsetTop;
-          const sectionHeight = section.offsetHeight;
-          
-          if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
-            setActiveSection(sectionId);
-            break;
+          const rect = section.getBoundingClientRect();
+          // Only consider sections that are at least partially visible
+          if (rect.bottom > 0 && rect.top < window.innerHeight) {
+            const sectionCenter = rect.top + rect.height / 2;
+            const distance = Math.abs(sectionCenter - viewportCenter);
+            
+            if (distance < minDistance) {
+              minDistance = distance;
+              closestSection = sectionId;
+            }
           }
         }
+      });
+      
+      if (closestSection) {
+        setActiveSection(closestSection);
       }
     };
 
-    window.addEventListener('scroll', handleScroll);
-    handleScroll(); // Initial check
+    // Initial check for active section on mount - use same center-based logic
+    const initialCheck = () => {
+      updateActiveSection();
+    };
+    
+    // Run initial check after a short delay to ensure DOM is ready
+    const timer = setTimeout(initialCheck, 100);
 
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [navLinks]);
+    // Handle scroll events to update active section continuously
+    let ticking = false;
+    const handleScroll = () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(() => {
+          updateActiveSection();
+          ticking = false;
+        });
+      }
+    };
+    
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    // Handle resize events to recalculate header height
+    const handleResize = () => {
+      updateActiveSection();
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('scroll', handleScroll);
+      scrollObserver.disconnect();
+    };
+  }, [navLinks, location.pathname]);
 
   // Hide layout components on dashboard
   const isDashboard =
@@ -143,8 +249,9 @@ export function Layout() {
                   key={link.name}
                   href={link.href}
                   onClick={(e) => scrollToSection(e, link.href)}
+                  onMouseDown={(e) => e.currentTarget.blur()}
                   className={clsx(
-                    'nav-hover px-4 py-2 rounded-xl text-slate-700 dark:text-slate-300 hover:text-yellow-600 dark:hover:text-yellow-300 hover:bg-yellow-50/80 dark:hover:bg-yellow-400/10 font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2',
+                    'nav-link-focus px-4 py-2 rounded-xl text-slate-700 dark:text-slate-300 hover:text-yellow-600 dark:hover:text-yellow-300 hover:bg-yellow-50/80 dark:hover:bg-yellow-400/10 font-medium transition-all duration-300',
                     isActive
                       ? 'bg-slate-900 dark:bg-yellow-400 text-white dark:text-slate-950 border-b-2 border-yellow-400 font-semibold shadow-sm'
                       : ''
@@ -246,13 +353,14 @@ export function Layout() {
                          scrollToSection(e, link.href);
                          setIsMobileMenuOpen(false);
                        }}
-                   className={clsx(
-                     'nav-hover text-base font-medium transition-all duration-200 block py-3 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2',
-                     isActive
-                       ? 'bg-slate-900 dark:bg-yellow-400 text-white dark:text-slate-950 border-l-4 border-yellow-400 font-semibold shadow-sm'
-                       : 'text-slate-200 dark:text-slate-300 hover:text-white dark:hover:text-yellow-300 font-medium transition-all duration-300'
-                   )}
-                   aria-current={isActive ? 'page' : undefined}
+                       onMouseDown={(e) => e.currentTarget.blur()}
+                    className={clsx(
+                      'nav-link-focus text-base font-medium transition-all duration-200 block py-3 px-4 rounded-lg',
+                      isActive
+                        ? 'bg-slate-900 dark:bg-yellow-400 text-white dark:text-slate-950 border-l-4 border-yellow-400 font-semibold shadow-sm'
+                        : 'text-slate-200 dark:text-slate-300 hover:text-white dark:hover:text-yellow-300 font-medium transition-all duration-300'
+                    )}
+                    aria-current={isActive ? 'page' : undefined}
                      >
                        {link.name}
                      </a>

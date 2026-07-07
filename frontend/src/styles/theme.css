@@ -396,6 +396,30 @@
   color: #eab308;
 }
 
+/* Navigation links - prevent focus-based active styling */
+.nav-link-focus {
+  outline: none;
+}
+
+.nav-link-focus:focus,
+.nav-link-focus:focus-visible,
+.nav-link-focus:focus-within {
+  outline: none;
+  box-shadow: none;
+}
+
+/* Prevent any focus ring on navigation links */
+nav a:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Remove focus styles from all anchor tags in navigation */
+nav a:focus:not(.active) {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
 .sidebar-hover {
   transition: all 0.3s ease;
 }
