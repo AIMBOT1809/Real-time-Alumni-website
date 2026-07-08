@@ -1,15 +1,47 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
+// @ts-ignore
 import { Search, Briefcase, GraduationCap, ChevronRight, Award, Upload, MapPin } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../../supabaseClient';
 
+// Standard branch codes used across the platform
+const VALID_DEPARTMENTS = ['CSE', 'CSD', 'CSM', 'ECE', 'EEE', 'IT', 'MECH', 'CIVIL'];
+
+// Normalize any department string to standard branch code
+function normalizeDept(raw: string | null | undefined): string {
+  if (!raw) return '';
+  const val = raw.trim().toUpperCase();
+  if (VALID_DEPARTMENTS.includes(val)) return val;
+  const map: Record<string, string> = {
+    'COMPUTER SCIENCE': 'CSE',
+    'COMPUTER SCIENCE AND ENGINEERING': 'CSE',
+    'COMPUTER SCIENCE (DATA SCIENCE)': 'CSD',
+    'COMPUTER SCIENCE AND MATHEMATICS': 'CSM',
+    'ELECTRONICS AND COMMUNICATION': 'ECE',
+    'ELECTRONICS AND COMMUNICATION ENGINEERING': 'ECE',
+    'ELECTRICAL AND ELECTRONICS': 'EEE',
+    'ELECTRICAL AND ELECTRONICS ENGINEERING': 'EEE',
+    'INFORMATION TECHNOLOGY': 'IT',
+    'MECHANICAL': 'MECH',
+    'MECHANICAL ENGINEERING': 'MECH',
+    'CIVIL ENGINEERING': 'CIVIL',
+  };
+  return map[val] || val;
+}
+
+// Get passout year — handles both column casings (Passed_Out_Year & passed_out_year)
+function getPassedOutYear(a: any): number | null {
+  const val = a.Passed_Out_Year ?? a.passed_out_year ?? a.PassedOutYear ?? a.passedOutYear ?? null;
+  return val ? Number(val) : null;
+}
+
 export function AlumniNetwork() {
-  const { user, role } = useAuth();
+  const { role } = useAuth();
   const [alumni, setAlumni] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   // Drill-down states
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
   const [selectedDepartment, setSelectedDepartment] = useState<string | null>(null);
@@ -22,15 +54,11 @@ export function AlumniNetwork() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'alumni_profiles' },
-        () => {
-          fetchAlumni();
-        }
+        () => { fetchAlumni(); }
       )
       .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
   const fetchAlumni = async () => {
@@ -39,48 +67,51 @@ export function AlumniNetwork() {
       .select('*')
       .order('First_Name', { ascending: true });
 
-    if (error) {
-      console.error('Error fetching alumni:', error);
-      return;
-    }
-
+    if (error) { console.error('Error fetching alumni:', error); return; }
     if (data) setAlumni(data);
   };
 
   const isSearching = searchTerm.trim().length > 0;
 
-  // Filter for search
+  // Search — normalize dept for matching
   const searchResults = alumni.filter(a => {
     const term = searchTerm.toLowerCase();
     const fullName = `${a.First_Name || ''} ${a.Last_name || ''}`.toLowerCase();
+    const dept = normalizeDept(a.Department).toLowerCase();
     return (
       fullName.includes(term) ||
       (a.Organization_Name && a.Organization_Name.toLowerCase().includes(term)) ||
-      (a.Department && a.Department.toLowerCase().includes(term)) ||
+      dept.includes(term) ||
       (a.achievement && a.achievement.toLowerCase().includes(term)) ||
       (a.career_status && a.career_status.toLowerCase().includes(term))
     );
   });
 
-  // Extract unique years
+  // Unique years — use normalized year getter
   const availableYears = Array.from(
-    new Set(alumni.map(a => a.Passed_Out_Year).filter(Boolean))
-  ).sort((a, b) => b - a); // newest first
+    new Set(alumni.map(a => getPassedOutYear(a)).filter((y): y is number => y !== null))
+  ).sort((a, b) => b - a);
 
-  // Extract unique departments for selected year
-  const availableDepartments = selectedYear
-    ? Array.from(
-        new Set(alumni.filter(a => a.Passed_Out_Year === selectedYear).map(a => a.Department).filter(Boolean))
-      ).sort()
+  // Always show all 8 branches for selected year with counts (0 if none)
+  const departmentsForYear = selectedYear
+    ? VALID_DEPARTMENTS.map(dept => ({
+        code: dept,
+        count: alumni.filter(
+          a => getPassedOutYear(a) === selectedYear && normalizeDept(a.Department) === dept
+        ).length,
+      }))
     : [];
 
-  // Alumni for selected year and department
+  // Alumni for selected year + department — normalized matching
   const filteredDirectory = selectedYear && selectedDepartment
-    ? alumni.filter(a => a.Passed_Out_Year === selectedYear && a.Department === selectedDepartment)
+    ? alumni.filter(a =>
+        getPassedOutYear(a) === selectedYear &&
+        normalizeDept(a.Department) === selectedDepartment
+      )
     : [];
 
   const handleUploadClick = () => {
-    alert("Admin Feature: Bulk Upload Alumni List functionality will open here.");
+    alert('Admin Feature: Bulk Upload Alumni List functionality will open here.');
   };
 
   return (
@@ -101,7 +132,7 @@ export function AlumniNetwork() {
             </button>
           )}
         </div>
-        
+
         <div className="glass-card shiny-border p-4">
           <div className="relative">
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 dark:text-slate-500 h-5 w-5" />
@@ -123,19 +154,19 @@ export function AlumniNetwork() {
         </div>
       ) : (
         <div className="space-y-8">
-          {/* Breadcrumbs Navigation */}
+          {/* Breadcrumb navigation */}
           <nav className="flex items-center space-x-2 text-sm font-semibold">
-            <button 
+            <button
               onClick={() => { setSelectedYear(null); setSelectedDepartment(null); }}
-                className={`transition-colors ${selectedYear ? 'text-blue-600 hover:underline' : 'text-slate-700 dark:text-slate-300'}`}
-              >
-                Graduation Year
+              className={`transition-colors ${selectedYear ? 'text-blue-600 hover:underline' : 'text-slate-700 dark:text-slate-300'}`}
+            >
+              Graduation Year
             </button>
-            
+
             {selectedYear && (
               <>
                 <ChevronRight className="h-4 w-4 text-slate-400" />
-                <button 
+                <button
                   onClick={() => setSelectedDepartment(null)}
                   className={`transition-colors ${selectedDepartment ? 'text-blue-600 hover:underline' : 'text-slate-900 dark:text-slate-100'}`}
                 >
@@ -147,12 +178,13 @@ export function AlumniNetwork() {
             {selectedDepartment && (
               <>
                 <ChevronRight className="h-4 w-4 text-slate-400" />
-                <span className="text-slate-900 dark:text-slate-100">{selectedDepartment}</span>
+                <span className="text-slate-900 dark:text-slate-100 uppercase">{selectedDepartment}</span>
               </>
             )}
           </nav>
 
           <AnimatePresence mode="wait">
+            {/* Step 1 — Year cards */}
             {!selectedYear && (
               <motion.div
                 key="years"
@@ -170,39 +202,65 @@ export function AlumniNetwork() {
                     <GraduationCap className="h-8 w-8 text-yellow-600 dark:text-yellow-400 mb-3 group-hover:scale-110 transition-transform" />
                     <span className="text-xl font-bold text-slate-900 dark:text-slate-100">Class of {year}</span>
                     <span className="text-sm text-slate-600 dark:text-slate-300 mt-1">
-                      {alumni.filter(a => a.Passed_Out_Year === year).length} Alumni
+                      {alumni.filter(a => getPassedOutYear(a) === year).length} Alumni
                     </span>
                   </button>
                 ))}
               </motion.div>
             )}
 
+            {/* Step 2 — All 8 department cards (always shown, 0 count allowed) */}
             {selectedYear && !selectedDepartment && (
               <motion.div
                 key="departments"
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+                className="space-y-4"
               >
-                {availableDepartments.map(dept => (
-                  <button
-                    key={dept}
-                    onClick={() => setSelectedDepartment(dept)}
-                    className="flex items-center justify-between p-6 glass-card shiny-border rounded-2xl hover:-translate-y-1 transition-all duration-300 group text-left"
-                  >
-                    <div>
-                      <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 group-hover:text-blue-600 transition-colors">{dept}</h3>
-                      <span className="text-sm text-slate-600 dark:text-slate-300 mt-1 block">
-                        {alumni.filter(a => a.Passed_Out_Year === selectedYear && a.Department === dept).length} Members
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  All branches for{' '}
+                  <span className="font-semibold text-slate-900 dark:text-slate-100">Class of {selectedYear}</span>.
+                  Click any branch to view alumni.
+                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  {departmentsForYear.map(({ code, count }) => (
+                    <button
+                      key={code}
+                      onClick={() => setSelectedDepartment(code)}
+                      className={`flex flex-col items-center justify-center gap-2 p-5 rounded-2xl border-2 transition-all duration-200 group cursor-pointer
+                        ${count > 0
+                          ? 'glass-card shiny-border hover:-translate-y-1 hover:border-yellow-400'
+                          : 'bg-slate-50 dark:bg-slate-800/30 border-dashed border-slate-200 dark:border-slate-700 hover:-translate-y-1 hover:border-slate-400 dark:hover:border-slate-500'
+                        }`}
+                    >
+                      <span className={`text-2xl font-black tracking-tight transition-colors
+                        ${count > 0
+                          ? 'text-slate-900 dark:text-slate-100 group-hover:text-yellow-600 dark:group-hover:text-yellow-400'
+                          : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-400'
+                        }`}>
+                        {code}
                       </span>
-                    </div>
-                    <ChevronRight className="h-5 w-5 text-slate-300 group-hover:text-blue-500 transform group-hover:translate-x-1 transition-all" />
-                  </button>
-                ))}
+                      <span className={`text-xs font-semibold rounded-full px-2.5 py-0.5
+                        ${count > 0
+                          ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
+                          : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'
+                        }`}>
+                        {count} Alumni
+                      </span>
+                      <ChevronRight className={`h-4 w-4 transition-all group-hover:translate-x-0.5
+                        ${count > 0
+                          ? 'text-slate-300 group-hover:text-yellow-500'
+                          : 'text-slate-200 dark:text-slate-600 group-hover:text-slate-400'
+                        }`}
+                      />
+                    </button>
+                  ))}
+                </div>
               </motion.div>
             )}
 
+            {/* Step 3 — Alumni grid for selected year + dept */}
             {selectedYear && selectedDepartment && (
               <motion.div
                 key="alumni"
@@ -210,9 +268,9 @@ export function AlumniNetwork() {
                 animate={{ opacity: 1, y: 0 }}
                 className="space-y-6"
               >
-                <div className="flex items-center justify-between border-b border-slate-200 pb-4">
-                  <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-                    {selectedDepartment} - Class of {selectedYear}
+                <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-4">
+                  <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 uppercase">
+                    {selectedDepartment} — Class of {selectedYear}
                   </h2>
                   <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-full text-sm font-semibold">
                     {filteredDirectory.length} Alumni
@@ -233,78 +291,39 @@ function AlumniGrid({ alumniList }: { alumniList: any[] }) {
   const { user } = useAuth();
 
   const handleConnect = async (alumni: any) => {
-    console.log('[AlumniGrid] Connect clicked for:', alumni.First_Name, alumni.Last_name);
-    
-    if (!user?.id) {
-      console.error('[AlumniGrid] No user ID - user not logged in');
-      alert('Please log in to start a conversation');
-      return;
-    }
-
-    console.log('[AlumniGrid] Current User ID:', user.id);
-    console.log('[AlumniGrid] Target Alumni user_id:', alumni.user_id);
-
-    if (alumni.user_id === user.id) {
-      console.error('[AlumniGrid] User trying to message self:', user.id);
-      alert('You cannot start a conversation with yourself');
-      return;
-    }
+    if (!user?.id) { alert('Please log in to start a conversation'); return; }
+    if (alumni.user_id === user.id) { alert('You cannot start a conversation with yourself'); return; }
 
     try {
-      console.log('[AlumniGrid] Starting API call to POST /api/conversations');
-      console.log('[AlumniGrid] Request body:', { otherUserId: alumni.user_id });
-      
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      console.log('[AlumniGrid] Using API URL:', API_URL);
-      
-      // Call backend to create/find conversation
       const response = await fetch(`${API_URL}/api/conversations`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-user-id': user.id,
-        },
+        headers: { 'Content-Type': 'application/json', 'x-user-id': user.id },
         body: JSON.stringify({ otherUserId: alumni.user_id }),
       });
 
-      console.log('[AlumniGrid] API Response status:', response.status, response.statusText);
-
       if (!response.ok) {
-        // Handle non-JSON responses (404, 500, etc)
         const contentType = response.headers.get('content-type');
-        let errorData: any;
-        
-        if (contentType && contentType.includes('application/json')) {
-          errorData = await response.json();
-        } else {
-          const text = await response.text();
-          console.error('[AlumniGrid] HTTP Error - Response text:', text);
-          errorData = { error: `HTTP ${response.status}: ${text || response.statusText}` };
-        }
-        
-        console.error('[AlumniGrid] API Error Response:', errorData);
+        const errorData = contentType?.includes('application/json')
+          ? await response.json()
+          : { error: `HTTP ${response.status}: ${response.statusText}` };
         alert(`Failed to start conversation: ${errorData.error}`);
         return;
       }
 
       const conversation = await response.json();
-      console.log('[AlumniGrid] API Success - Conversation ID:', conversation.id);
-      console.log('[AlumniGrid] Full conversation object:', conversation);
-      
-      console.log('[AlumniGrid] Navigating to Chat with conversation ID:', conversation.id);
-      // Navigate to Chat page with conversation selected
       navigate('/chat', { state: { conversationId: conversation.id } });
     } catch (error) {
-      console.error('[AlumniGrid] Exception caught:', error);
-      console.error('[AlumniGrid] Error message:', error instanceof Error ? error.message : String(error));
-      console.error('[AlumniGrid] Error stack:', error instanceof Error ? error.stack : 'N/A');
       alert(`Failed to start conversation: ${error instanceof Error ? error.message : String(error)}`);
     }
   };
+
   if (alumniList.length === 0) {
     return (
-      <div className="text-center py-12 glass-card rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700">
-        <p className="text-slate-500 dark:text-slate-400 font-medium">No alumni found in this section.</p>
+      <div className="text-center py-16 glass-card rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700">
+        <GraduationCap className="h-12 w-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+        <p className="text-slate-500 dark:text-slate-400 font-semibold text-lg">0 Alumni</p>
+        <p className="text-slate-400 dark:text-slate-500 text-sm mt-1">No alumni registered in this department yet.</p>
       </div>
     );
   }
@@ -327,40 +346,43 @@ function AlumniGrid({ alumniList }: { alumniList: any[] }) {
                 alt={`${a.First_Name} ${a.Last_name}`}
                 className="w-20 h-20 rounded-full border-4 border-white dark:border-slate-800 object-cover shadow-sm bg-white dark:bg-slate-800"
               />
-              {a.role && (
+              {a.Current_Status && (
                 <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-yellow-100 text-yellow-800">
-                  {a.role}
+                  {a.Current_Status}
                 </span>
               )}
             </div>
-            
+
             <div className="mb-4">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 uppercase">
                 {a.First_Name} {a.Last_name}
               </h3>
-              
+
               {a.career_status && a.Organization_Name ? (
                 <p className="text-slate-600 dark:text-slate-300 text-sm flex items-center mt-1.5 font-medium">
-                  <Briefcase className="h-4 w-4 mr-1.5 text-slate-400 dark:text-slate-500" /> 
+                  <Briefcase className="h-4 w-4 mr-1.5 text-slate-400 dark:text-slate-500" />
                   {a.career_status} at {a.Organization_Name}
                 </p>
-              ) : a.career_status || a.Organization_Name ? (
+              ) : (a.career_status || a.Organization_Name) ? (
                 <p className="text-slate-600 dark:text-slate-300 text-sm flex items-center mt-1.5 font-medium">
-                  <Briefcase className="h-4 w-4 mr-1.5 text-slate-400 dark:text-slate-500" /> 
+                  <Briefcase className="h-4 w-4 mr-1.5 text-slate-400 dark:text-slate-500" />
                   {a.career_status || a.Organization_Name}
                 </p>
               ) : null}
-              
-              {(a.Passed_Out_Year || a.Department) && (
+
+              {(a.Passed_Out_Year || a.passed_out_year || a.Department) && (
                 <p className="text-slate-500 dark:text-slate-400 text-sm flex items-start mt-1.5">
                   <GraduationCap className="h-4 w-4 mr-1.5 text-slate-400 dark:text-slate-500 shrink-0 mt-0.5" />
-                  <span>{a.Department} {a.Passed_Out_Year ? `(${a.Passed_Out_Year})` : ''}</span>
+                  <span className="uppercase">
+                    {normalizeDept(a.Department)}
+                    {(a.Passed_Out_Year || a.passed_out_year) ? ` (${a.Passed_Out_Year || a.passed_out_year})` : ''}
+                  </span>
                 </p>
               )}
-              
+
               {(a.Country || a.City) && (
                 <p className="text-slate-500 dark:text-slate-400 text-sm flex items-center mt-1.5">
-                  <MapPin className="h-4 w-4 mr-1.5 text-slate-400 dark:text-slate-500" /> 
+                  <MapPin className="h-4 w-4 mr-1.5 text-slate-400 dark:text-slate-500" />
                   {[a.City, a.Country].filter(Boolean).join(', ')}
                 </p>
               )}
@@ -377,7 +399,7 @@ function AlumniGrid({ alumniList }: { alumniList: any[] }) {
                 </p>
               </div>
             )}
-            
+
             <div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-700">
               <button
                 onClick={() => handleConnect(a)}

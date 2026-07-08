@@ -19,9 +19,10 @@ const contributionCategories = [
   { id: 'event', label: 'My Events' },
   { id: 'business', label: 'My Business Posts' },
   { id: 'general', label: 'My General Posts' },
+  { id: 'higher-education', label: 'Higher Education' },
 ] as const;
 
-const normalizeType = (type?: string) => type === 'opportunity' ? 'job' : type === 'community' ? 'general' : type || 'general';
+const normalizeType = (type?: string) => type === 'opportunity' ? 'job' : type === 'community' ? 'general' : type === 'higher-education' ? 'higher-education' : type || 'general';
 const typeLabel = (type: string) => contributionCategories.find((category) => category.id === normalizeType(type))?.label.replace(/^My /, '').replace(/ Posts$| Sessions$/, '') || 'General';
 const statusStyle: Record<ContributionStatus, string> = { pending: 'bg-amber-100 dark:bg-amber-400/20 text-amber-800 dark:text-amber-300', approved: 'bg-emerald-100 dark:bg-emerald-400/20 text-emerald-800 dark:text-emerald-300', rejected: 'bg-rose-100 dark:bg-rose-400/20 text-rose-800 dark:text-rose-300' };
 
@@ -183,7 +184,17 @@ export function MyContributions() {
 
       <section className="mt-6 rounded-2xl border border-slate-200 dark:border-yellow-400/20 bg-white dark:bg-slate-900/70 p-3 shadow-sm">
         <label className="relative block"><span className="sr-only">Search contributions</span><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search your contributions" className="w-full rounded-xl border border-slate-200 dark:border-yellow-400/20 bg-white/70 dark:bg-slate-900/70 py-2.5 pl-9 pr-3 text-sm outline-none text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-yellow-500 focus:ring-2 focus:ring-yellow-500/20" /></label>
-        <div className="mt-3 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{contributionCategories.map((category) => { const count = category.id === 'all' ? contributions.length : contributions.filter((item) => normalizeType(item.type) === category.id).length; return <button key={category.id} onClick={() => setActiveCategory(category.id)} className={`shrink-0 rounded-full px-3.5 py-2 text-sm font-semibold transition ${activeCategory === category.id ? 'bg-slate-900 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-yellow-100 dark:hover:bg-yellow-400/10 hover:text-slate-950 dark:hover:text-yellow-300'}`}>{category.label}<span className={`ml-2 rounded-full px-1.5 py-0.5 text-xs ${activeCategory === category.id ? 'bg-white/15' : 'bg-white dark:bg-slate-700'}`}>{count}</span></button>; })}</div>
+        <div className="mt-3 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {(role === 'faculty' ? contributionCategories.filter(c => ['all', 'general', 'higher-education', 'mentorship', 'event'].includes(c.id)) : contributionCategories).map((category) => {
+            const count = category.id === 'all' ? contributions.length : contributions.filter((item) => normalizeType(item.type) === category.id).length;
+            return (
+              <button key={category.id} onClick={() => setActiveCategory(category.id)} className={`shrink-0 rounded-full px-3.5 py-2 text-sm font-semibold transition ${activeCategory === category.id ? 'bg-slate-900 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-yellow-100 dark:hover:bg-yellow-400/10 hover:text-slate-950 dark:hover:text-yellow-300'}`}>
+                {category.label}
+                <span className={`ml-2 rounded-full px-1.5 py-0.5 text-xs ${activeCategory === category.id ? 'bg-white/15' : 'bg-white dark:bg-slate-700'}`}>{count}</span>
+              </button>
+            );
+          })}
+        </div>
       </section>
 
       {loading ? <div className="flex items-center justify-center py-20 text-slate-500 dark:text-slate-400"><Loader2 className="mr-2 h-5 w-5 animate-spin" />Loading contributions…</div> : (
