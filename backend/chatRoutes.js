@@ -240,6 +240,145 @@ router.get('/conversations', async (req, res) => {
   }
 });
 
+// POST /api/conversations — Create a new conversation with another user
+router.post('/conversations', async (req, res) => {
+  try {
+    if (!supabase) return res.status(503).json({ error: "Database not configured" });
+    
+    const { otherUserId } = req.body;
+    const currentUserId = req.userId;
+    
+    console.log('[POST /conversations] Current User ID:', currentUserId);
+    console.log('[POST /conversations] Other User ID (otherUserId):', otherUserId);
+    
+    if (!otherUserId) {
+      console.error('[POST /conversations] Missing otherUserId in request body');
+      return res.status(400).json({ error: 'otherUserId is required' });
+    }
+    if (otherUserId === currentUserId) {
+      console.error('[POST /conversations] User trying to message self:', currentUserId);
+      return res.status(400).json({ error: 'Cannot create conversation with yourself' });
+    }
+
+    // Check if conversation already exists
+    console.log('[POST /conversations] Checking for existing conversations for user:', currentUserId);
+    const { data: existingConvo, error: existingErr } = await supabase
+      .from('conversation_participants')
+      .select('conversation_id')
+      .eq('user_id', currentUserId);
+
+    if (existingErr) {
+      console.error('[POST /conversations] Error fetching existing conversations:', existingErr);
+    } else {
+      console.log('[POST /conversations] Found existing conversations:', existingConvo?.length || 0);
+    }
+
+    if (!existingErr && existingConvo && existingConvo.length > 0) {
+      const convoIds = existingConvo.map(p => p.conversation_id);
+      console.log('[POST /conversations] Checking if other user is in any of these conversations:', convoIds);
+      
+      // Check if other user is in any of these conversations
+      const { data: sharedConvo, error: sharedErr } = await supabase
+        .from('conversation_participants')
+        .select('conversation_id')
+        .eq('user_id', otherUserId)
+        .in('conversation_id', convoIds)
+        .limit(1);
+
+      if (sharedErr) {
+        console.error('[POST /conversations] Error checking shared conversations:', sharedErr);
+      } else {
+        console.log('[POST /conversations] Found shared conversations:', sharedConvo?.length || 0);
+      }
+
+      if (sharedConvo && sharedConvo.length > 0) {
+        // Conversation already exists
+        const convoId = sharedConvo[0].conversation_id;
+        console.log('[POST /conversations] Conversation already exists with ID:', convoId);
+        
+        const { data: convo, error: convoErr } = await supabase
+          .from('conversations')
+          .select('*')
+          .eq('id', convoId)
+          .single();
+
+        if (convoErr) {
+          console.error('[POST /conversations] Error fetching existing conversation:', convoErr);
+          return res.status(500).json({ error: convoErr.message });
+        }
+        
+        console.log('[POST /conversations] Returning existing conversation:', convo);
+        return res.status(200).json(convo);
+      }
+    }
+
+    // Create new conversation
+    console.log('[POST /conversations] Creating new conversation');
+    const { data: convo, error: convoErr } = await supabase
+      .from('conversations')
+      .insert({})
+      .select()
+      .single();
+
+    if (convoErr) {
+      console.error('[POST /conversations] Error inserting conversation:', convoErr);
+      console.error('[POST /conversations] Error details:', {
+        code: convoErr.code,
+        message: convoErr.message,
+        details: convoErr.details,
+      });
+      return res.status(500).json({ error: convoErr.message });
+    }
+
+    console.log('[POST /conversations] New conversation created with ID:', convo.id);
+
+    // Add both participants
+    console.log('[POST /conversations] Adding participants - User 1:', currentUserId, 'User 2:', otherUserId);
+    const { data: partData, error: partErr } = await supabase
+      .from('conversation_participants')
+      .insert([
+        { conversation_id: convo.id, user_id: currentUserId },
+        { conversation_id: convo.id, user_id: otherUserId },
+      ])
+      .select();
+
+    if (partErr) {
+      console.error('[POST /conversations] Error inserting participants:', partErr);
+      console.error('[POST /conversations] Error details:', {
+        code: partErr.code,
+        message: partErr.message,
+        details: partErr.details,
+      });
+      return res.status(500).json({ error: partErr.message });
+    }
+
+    console.log('[POST /conversations] Participants added successfully:', partData);
+
+    // Emit socket event if io is available
+    if (req.app.get('io')) {
+      console.log('[POST /conversations] Emitting socket events');
+      req.app.get('io').to(`user:${otherUserId}`).emit('conversation_started', {
+        conversation: convo,
+        startedBy: currentUserId,
+      });
+      req.app.get('io').to(`user:${currentUserId}`).emit('conversation_started', {
+        conversation: convo,
+        startedWith: otherUserId,
+      });
+    } else {
+      console.warn('[POST /conversations] Socket.io not available for events');
+    }
+
+    console.log('[POST /conversations] Returning created conversation:', convo);
+    return res.status(201).json(convo);
+  } catch (err) {
+    console.error('[POST /conversations] Uncaught exception:', err);
+    console.error('[POST /conversations] Exception message:', err.message);
+    console.error('[POST /conversations] Exception stack:', err.stack);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/conversations/:id/messages — Paginated message history
 router.get('/conversations/:id/messages', async (req, res) => {
   try {
