@@ -145,6 +145,8 @@ const handleLogout = async () => {
   const [editingAdminId, setEditingAdminId] = useState<string | null>(null);
   const [editedAdminEmail, setEditedAdminEmail] = useState('');
   const [editedAdminPassword, setEditedAdminPassword] = useState('');
+  const [showCreatePostForm, setShowCreatePostForm] = useState(false);
+  const [showCreateEventForm, setShowCreateEventForm] = useState(false);
   const [newPostTitle, setNewPostTitle] = useState('');
   const [newPostDescription, setNewPostDescription] = useState('');
   const [newPostFile, setNewPostFile] = useState<File | null>(null);
@@ -483,6 +485,8 @@ useEffect(() => {
     setNewPostTitle('');
     setNewPostDescription('');
     setNewPostFile(null);
+    setShowCreatePostForm(false);
+    fetchAdminPosts();
   };
 
   const handleSubmitCreateEvent = async () => {
@@ -571,9 +575,15 @@ useEffect(() => {
     alert('Event published successfully');
     setNewEventTitle('');
     setNewEventDescription('');
+    setNewEventDate(new Date().toISOString().split('T')[0]);
+    setNewEventTime('17:00');
+    setNewEventLocation('Online');
+    setNewEventType('Webinar');
     setNewEventFile(null);
     setNewEventLink('');
     setNewRegistrationLink('');
+    setShowCreateEventForm(false);
+    await fetchAdminEvents();
   };
   const handleSubmitCreateHighlight = async () => {
   if (!user || role !== 'admin') return;
@@ -1014,15 +1024,16 @@ entrepreneurRatio: Math.round((entrepreneurCount / effectiveTotal) * 100),
                         </div>
                         <button
                           type="button"
-                          onClick={() => setHomeView('posts')}
+                          onClick={() => setShowCreatePostForm(prev => !prev)}
                           className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800 transition-colors"
                         >
                           <Plus className="h-4 w-4" />
-                          Create Post
+                          {showCreatePostForm ? 'Hide Create Post' : 'Create Post'}
                         </button>
                       </div>
 
-                      <div className="mt-6 grid gap-4">
+                      {showCreatePostForm && (
+                      <div className="mt-6 grid gap-4 border-t border-slate-200 pt-6">
                         <div className="grid gap-3 md:grid-cols-[1fr_1.5fr] items-end">
                           <div>
                             <label className="block text-sm font-medium text-slate-700">Title</label>
@@ -1054,7 +1065,14 @@ entrepreneurRatio: Math.round((entrepreneurCount / effectiveTotal) * 100),
                           />
                         </div>
 
-                        <div className="flex justify-end">
+                        <div className="flex justify-end gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setShowCreatePostForm(false)}
+                            className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-200 transition-colors"
+                          >
+                            Cancel
+                          </button>
                           <button
                             type="button"
                             onClick={handleSubmitCreatePost}
@@ -1065,6 +1083,7 @@ entrepreneurRatio: Math.round((entrepreneurCount / effectiveTotal) * 100),
                           </button>
                         </div>
                       </div>
+                      )}
                     </div>
 
                     <div className="space-y-4">
@@ -1132,117 +1151,128 @@ entrepreneurRatio: Math.round((entrepreneurCount / effectiveTotal) * 100),
                         </div>
                         <button
                           type="button"
-                          onClick={() => setHomeView('events')}
+                          onClick={() => setShowCreateEventForm(prev => !prev)}
                           className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800 transition-colors"
                         >
                           <Plus className="h-4 w-4" />
-                          Create Event
+                          {showCreateEventForm ? 'Hide Create Event' : 'Create Event'}
                         </button>
                       </div>
 
-                      <div className="mt-6 grid gap-3 lg:grid-cols-2">
-                        <div>
-                          <label className="block text-sm font-medium text-slate-700">Event title</label>
-                          <input
-                            value={newEventTitle}
-                            onChange={(e) => setNewEventTitle(e.target.value)}
-                            className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/20"
-                            placeholder="Enter event title"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-slate-700">Date</label>
-                          <input
-                            type="date"
-                            value={newEventDate}
-                            onChange={(e) => setNewEventDate(e.target.value)}
-                            className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/20"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-slate-700">Time</label>
-                          <input
-                            type="time"
-                            value={newEventTime}
-                            onChange={(e) => setNewEventTime(e.target.value)}
-                            className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/20"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-slate-700">Location</label>
-                          <input
-                            value={newEventLocation}
-                            onChange={(e) => setNewEventLocation(e.target.value)}
-                            className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/20"
-                            placeholder="Online or on-site location"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-slate-700">Type</label>
-                          <select
-                            value={newEventType}
-                            onChange={(e) => setNewEventType(e.target.value as 'Networking' | 'Workshop' | 'Webinar')}
-                            className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/20"
-                          >
-                            <option value="Networking">Networking</option>
-                            <option value="Workshop">Workshop</option>
-                            <option value="Webinar">Webinar</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-slate-700">Upload image or file</label>
-                          <input
-                            type="file"
-                            onChange={(e) => setNewEventFile(e.target.files?.[0] || null)}
-                            className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-700 focus:outline-none"
-                          />
-                        </div>
-                      </div>
+                      {showCreateEventForm && (
+                        <div className="mt-6 grid gap-4 border-t border-slate-200 pt-6">
+                          <div className="mt-6 grid gap-3 lg:grid-cols-2">
+                            <div>
+                              <label className="block text-sm font-medium text-slate-700">Event title</label>
+                              <input
+                                value={newEventTitle}
+                                onChange={(e) => setNewEventTitle(e.target.value)}
+                                className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/20"
+                                placeholder="Enter event title"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-700">Date</label>
+                              <input
+                                type="date"
+                                value={newEventDate}
+                                onChange={(e) => setNewEventDate(e.target.value)}
+                                className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/20"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-700">Time</label>
+                              <input
+                                type="time"
+                                value={newEventTime}
+                                onChange={(e) => setNewEventTime(e.target.value)}
+                                className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/20"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-700">Location</label>
+                              <input
+                                value={newEventLocation}
+                                onChange={(e) => setNewEventLocation(e.target.value)}
+                                className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/20"
+                                placeholder="Online or on-site location"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-700">Type</label>
+                              <select
+                                value={newEventType}
+                                onChange={(e) => setNewEventType(e.target.value as 'Networking' | 'Workshop' | 'Webinar')}
+                                className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/20"
+                              >
+                                <option value="Networking">Networking</option>
+                                <option value="Workshop">Workshop</option>
+                                <option value="Webinar">Webinar</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-700">Upload image or file</label>
+                              <input
+                                type="file"
+                                onChange={(e) => setNewEventFile(e.target.files?.[0] || null)}
+                                className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-700 focus:outline-none"
+                              />
+                            </div>
+                          </div>
 
-                      <div className="mt-4">
-                        <label className="block text-sm font-medium text-slate-700">Description</label>
-                        <textarea
-                          value={newEventDescription}
-                          onChange={(e) => setNewEventDescription(e.target.value)}
-                          rows={4}
-                          className="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/20"
-                          placeholder="Add event details, speaker notes, or agenda items"
-                        />
-                      </div>
+                          <div className="mt-4">
+                            <label className="block text-sm font-medium text-slate-700">Description</label>
+                            <textarea
+                              value={newEventDescription}
+                              onChange={(e) => setNewEventDescription(e.target.value)}
+                              rows={4}
+                              className="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/20"
+                              placeholder="Add event details, speaker notes, or agenda items"
+                            />
+                          </div>
 
-                      <div className="grid gap-4 md:grid-cols-2 mt-4">
-                        <div>
-                          <label className="block text-sm font-medium text-slate-700">Event Link</label>
-                          <input
-                            type="url"
-                            value={newEventLink}
-                            onChange={(e) => setNewEventLink(e.target.value)}
-                            className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/20"
-                            placeholder="https://event-link.com"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-slate-700">Registration Link</label>
-                          <input
-                            type="url"
-                            value={newRegistrationLink}
-                            onChange={(e) => setNewRegistrationLink(e.target.value)}
-                            className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/20"
-                            placeholder="https://register-link.com"
-                          />
-                        </div>
-                      </div>
+                          <div className="grid gap-4 md:grid-cols-2 mt-4">
+                            <div>
+                              <label className="block text-sm font-medium text-slate-700">Event Link</label>
+                              <input
+                                type="url"
+                                value={newEventLink}
+                                onChange={(e) => setNewEventLink(e.target.value)}
+                                className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/20"
+                                placeholder="https://event-link.com"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-700">Registration Link</label>
+                              <input
+                                type="url"
+                                value={newRegistrationLink}
+                                onChange={(e) => setNewRegistrationLink(e.target.value)}
+                                className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/20"
+                                placeholder="https://register-link.com"
+                              />
+                            </div>
+                          </div>
 
-                      <div className="flex justify-end">
-                        <button
-                          type="button"
-                          onClick={handleSubmitCreateEvent}
-                          className="inline-flex items-center gap-2 rounded-full bg-yellow-500 px-5 py-3 text-sm font-semibold text-slate-900 hover:bg-yellow-400 transition-colors"
-                        >
-                          <Plus className="h-4 w-4" />
-                          Publish event
-                        </button>
-                      </div>
+                          <div className="flex justify-end gap-3">
+                            <button
+                              type="button"
+                              onClick={() => setShowCreateEventForm(false)}
+                              className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-200 transition-colors"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleSubmitCreateEvent}
+                              className="inline-flex items-center gap-2 rounded-full bg-yellow-500 px-5 py-3 text-sm font-semibold text-slate-900 hover:bg-yellow-400 transition-colors"
+                            >
+                              <Plus className="h-4 w-4" />
+                              Publish event
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     <div className="space-y-4">
