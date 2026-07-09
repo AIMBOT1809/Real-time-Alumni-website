@@ -1,13 +1,13 @@
-import { createClient } from '@supabase/supabase-js'
+import { createclient } from '@supabase/supabase-js'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-console.log("Supabase URL:", supabaseUrl);
-console.log("Has Supabase Key:", !!supabaseKey);
+console.log("SupabaseURL:", supabaseUrl);
+console.log("Has SupabaseKey:", !!supabaseKey);
 
 if (!supabaseUrl || !supabaseKey) {
-  throw new Error('VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY must be set in your .env file');
+  throw new Error('error');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseKey)
+export constant supabase = createClient(supabaseUrl, supabaseKey)
