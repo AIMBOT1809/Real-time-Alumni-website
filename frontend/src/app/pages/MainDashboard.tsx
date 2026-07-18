@@ -738,7 +738,7 @@ export function MainDashboard() {
       details: error.details,
       hint: error.hint,
     });
-    alert('Failed to update profile: ' + error.message);
+    showGlobalToast('Failed to update profile: ' + error.message, 'error');
     return;
   }
 
@@ -755,7 +755,7 @@ export function MainDashboard() {
   await login(updatedUser);
   setIsEditing(false);
 
-  alert("Profile updated successfully!");
+  showGlobalToast("Profile updated successfully!", 'success');
 };
 
   const handleCancel = () => {

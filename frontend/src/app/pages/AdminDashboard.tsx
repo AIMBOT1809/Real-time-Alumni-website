@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { PieChart, Pie, Cell, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { Link, useNavigate } from 'react-router';
 import { useAuth } from '../context/AuthContext';
+import { showGlobalToast } from '../components/Toast';
 import { supabase } from '../../supabaseClient';
 import {
   ShieldCheck,
@@ -408,7 +409,7 @@ useEffect(() => {
     const description = newPostDescription.trim();
 
     if (!title || !description) {
-      alert('Title and description are required.');
+      showGlobalToast('Title and description are required.', 'warning');
       return;
     }
 
@@ -442,7 +443,7 @@ useEffect(() => {
 
         if (uploadError) {
           console.error('Image upload error:', uploadError);
-          alert('Failed to upload image: ' + uploadError.message);
+          showGlobalToast('Failed to upload image: ' + uploadError.message, 'error');
           return;
         }
 
@@ -451,7 +452,7 @@ useEffect(() => {
         console.log('[AdminDashboard] Uploaded image URL:', fileUrl);
       } catch (uploadErr) {
         console.error('Upload exception:', uploadErr);
-        alert('Failed to upload image');
+        showGlobalToast('Failed to upload image', 'error');
         return;
       }
     }
@@ -476,12 +477,12 @@ useEffect(() => {
 
     if (error) {
       console.error(error);
-      alert(error.message);
+      showGlobalToast(error.message, 'error');
       return;
     }
 
     console.log('[AdminDashboard] Post created successfully with image URL:', fileUrl);
-    alert('Post published successfully');
+    showGlobalToast('Post published successfully', 'success');
     setNewPostTitle('');
     setNewPostDescription('');
     setNewPostFile(null);
@@ -495,7 +496,7 @@ useEffect(() => {
     const description = newEventDescription.trim();
 
     if (!title || !description || !newEventDate || !newEventTime || !newEventLocation.trim()) {
-      alert('Please complete the event title, description, date, time, and location.');
+      showGlobalToast('Please complete the event title, description, date, time, and location.', 'warning');
       return;
     }
 
@@ -568,11 +569,11 @@ useEffect(() => {
 
     if (error) {
       console.error(error);
-      alert(error.message);
+      showGlobalToast(error.message, 'error');
       return;
     }
 
-    alert('Event published successfully');
+    showGlobalToast('Event published successfully', 'success');
     setNewEventTitle('');
     setNewEventDescription('');
     setNewEventDate(new Date().toISOString().split('T')[0]);
@@ -592,7 +593,7 @@ useEffect(() => {
   const description = highlightDescription.trim();
 
   if (!title || !description) {
-    alert('Highlight title and description are required.');
+    showGlobalToast('Highlight title and description are required.', 'warning');
     return;
   }
 
@@ -612,7 +613,7 @@ useEffect(() => {
 
     if (uploadError) {
       console.error('Image upload error:', uploadError);
-      alert(uploadError.message);
+      showGlobalToast(uploadError.message, 'error');
       return;
     }
 
@@ -640,11 +641,11 @@ useEffect(() => {
 
   if (error) {
     console.error(error);
-    alert(error.message);
+    showGlobalToast(error.message, 'error');
     return;
   }
 
-  alert('Alumni highlight published successfully');
+  showGlobalToast('Alumni highlight published successfully', 'success');
 
   setHighlightTitle('');
   setHighlightDescription('');
@@ -661,7 +662,7 @@ useEffect(() => {
   const handleCreateAdmin = async () => {
     if (!user || role !== 'admin') return;
     if (!newAdminEmail || !newAdminPassword) {
-      alert('Please fill in all fields');
+      showGlobalToast('Please fill in all fields', 'warning');
       return;
     }
 
@@ -679,7 +680,7 @@ useEffect(() => {
     });
 
     if (error) {
-      alert(`Unable to create admin account: ${error.message}`);
+      showGlobalToast(`Unable to create admin account: ${error.message}`, 'error');
       return;
     }
 
@@ -695,8 +696,8 @@ useEffect(() => {
     setNewAdminPassword('');
     setShowAdminForm(false);
 
-    alert(
-      'Admin account request submitted successfully. The new admin will receive email instructions to verify and sign in.'
+    showGlobalToast(
+      'Admin account request submitted successfully. The new admin will receive email instructions to verify and sign in.', 'success'
     );
   };
 

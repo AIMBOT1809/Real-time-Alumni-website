@@ -8,6 +8,7 @@ import {
   MessageCircle,
   Search,
 } from "lucide-react";
+import { showGlobalToast } from '../components/Toast';
 import { supabase } from "../../supabaseClient";
 
 const normalizeUrl = (url?: string) => {
@@ -21,7 +22,7 @@ const normalizeUrl = (url?: string) => {
 const openPostLink = (url?: string) => {
   const finalUrl = normalizeUrl(url);
   if (!finalUrl) {
-    alert("Link not available for this post.");
+    showGlobalToast("Link not available for this post.", 'warning');
     return;
   }
   window.open(finalUrl, "_blank", "noopener,noreferrer");

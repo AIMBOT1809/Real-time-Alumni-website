@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router';
 
 import { useAuth } from '../context/AuthContext';
+import { showGlobalToast } from '../components/Toast';
 import { UserProfile } from '../data/types';
 
 import { GraduationCap, Eye, EyeOff } from 'lucide-react';
@@ -29,7 +30,7 @@ export function Login() {
 
   const handleForgotPassword = async () => {
     if (!email) {
-      alert('Please enter your email first');
+      showGlobalToast('Please enter your email first', 'warning');
       return;
     }
 
@@ -38,9 +39,9 @@ export function Login() {
     });
 
     if (error) {
-      alert(error.message);
+      showGlobalToast(error.message, 'error');
     } else {
-      alert('Password reset email sent!');
+      showGlobalToast('Password reset email sent!', 'success');
     }
   };
 

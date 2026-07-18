@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { BriefcaseBusiness, Building2, CalendarCheck, CheckCircle2, Clock3, GraduationCap, IndianRupee, Laptop2, LayoutDashboard, Menu, Rocket, Search, Send, Sparkles, UserCheck, Users, X } from 'lucide-react';
 import { useEffect } from "react";
+import { showGlobalToast } from '../components/Toast';
 import { supabase } from '../../supabaseClient';
 
 const normalizeUrl = (url?: string) => {
@@ -15,7 +16,7 @@ const normalizeUrl = (url?: string) => {
 const openPostLink = (url?: string) => {
   const finalUrl = normalizeUrl(url);
   if (!finalUrl) {
-    alert("Link not available for this post.");
+    showGlobalToast("Link not available for this post.", 'warning');
     return;
   }
   window.open(finalUrl, "_blank", "noopener,noreferrer");
@@ -53,7 +54,7 @@ export function Internships() {
 
   if (error) {
     console.log("FULL ERROR:", error);
-    alert(error.message);
+    showGlobalToast(error.message, 'error');
     return;
 }
 

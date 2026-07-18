@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { supabase } from '../../supabaseClient';
 import { useNavigate } from 'react-router';
+import { showGlobalToast } from '../components/Toast';
 
 export default function ResetPassword() {
   const [password, setPassword] = useState('');
@@ -12,9 +13,9 @@ export default function ResetPassword() {
     });
 
     if (error) {
-      alert(error.message);
+      showGlobalToast(error.message, 'error');
     } else {
-      alert('Password updated successfully!');
+      showGlobalToast('Password updated successfully!', 'success');
       navigate('/login');
     }
   };

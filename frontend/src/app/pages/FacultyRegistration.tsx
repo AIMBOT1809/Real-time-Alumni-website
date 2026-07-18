@@ -3,6 +3,7 @@ import { supabase } from '../../supabaseClient';
 import { Link, useNavigate } from 'react-router';
 import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { showGlobalToast } from '../components/Toast';
 import type { UserProfile } from '../data/types';
 
 interface FacultyRegistrationProps {
@@ -49,64 +50,64 @@ export function FacultyRegistration({ onBack }: FacultyRegistrationProps) {
 
     // Validation
     if (!firstName || !lastName) {
-      alert('Please enter both first and last name');
+      showGlobalToast('Please enter both first and last name', 'warning');
       return;
     }
 
     if (!email || !email.includes('@')) {
-      alert('Please enter a valid email address');
+      showGlobalToast('Please enter a valid email address', 'warning');
       return;
     }
 
     // Phone validation - exactly 10 digits only
     const phoneRegex = /^\d{10}$/;
     if (!phone || !phoneRegex.test(phone)) {
-      alert('Please enter a valid phone number (exactly 10 digits, numbers only)');
+      showGlobalToast('Please enter a valid phone number (exactly 10 digits, numbers only)', 'warning');
       return;
     }
 
     if (linkedin && linkedin.trim()) {
       const linkedinRegex = /^https?:\/\/(www\.)?linkedin\.com\/.+/i;
       if (!linkedinRegex.test(linkedin.trim())) {
-        alert('Please enter a valid LinkedIn profile URL (e.g., https://linkedin.com/in/yourprofile)');
+        showGlobalToast('Please enter a valid LinkedIn profile URL (e.g., https://linkedin.com/in/yourprofile)', 'warning');
         return;
       }
     }
       
     if (!password || password.length < 8) {
-      alert('Password must be at least 8 characters long');
+      showGlobalToast('Password must be at least 8 characters long', 'warning');
       return;
     }
 
     if (password !== confirmPassword) {
-      alert('Passwords do not match');
+      showGlobalToast('Passwords do not match', 'warning');
       return;
     }
 
     if (!department) {
-      alert('Please select your department');
+      showGlobalToast('Please select your department', 'warning');
       return;
     }
 
     if (!facultyId) {
-      alert('Please enter your Faculty ID');
+      showGlobalToast('Please enter your Faculty ID', 'warning');
       return;
     }
 
     if (!facultyType) {
-      alert('Please select your Faculty Type');
+      showGlobalToast('Please select your Faculty Type', 'warning');
       return;
     }
 
     if (!yearsOfExperience) {
-      alert('Please enter your Years of Experience');
+      showGlobalToast('Please enter your Years of Experience', 'warning');
       return;
     }
 
     // If "Other" is selected, validate custom faculty type
     const finalFacultyType = facultyType === 'Other' ? customFacultyType.trim() : facultyType;
     if (facultyType === 'Other' && !customFacultyType.trim()) {
-      alert('Please specify your faculty type');
+      showGlobalToast('Please specify your faculty type', 'warning');
       return;
     }
 
@@ -124,7 +125,7 @@ export function FacultyRegistration({ onBack }: FacultyRegistrationProps) {
       });
 
       if (authError) {
-        alert(authError.message);
+        showGlobalToast(authError.message, 'error');
         return;
       }
 
@@ -138,7 +139,7 @@ export function FacultyRegistration({ onBack }: FacultyRegistrationProps) {
 
         if (idError) {
           console.log(idError);
-          alert(idError.message);
+          showGlobalToast(idError.message, 'error');
           return;
         }
 
@@ -159,7 +160,7 @@ export function FacultyRegistration({ onBack }: FacultyRegistrationProps) {
 
         if (photoError) {
           console.log(photoError);
-          alert(photoError.message);
+          showGlobalToast(photoError.message, 'error');
           return;
         }
 
@@ -192,7 +193,7 @@ export function FacultyRegistration({ onBack }: FacultyRegistrationProps) {
 
       if (profileError) {
         console.log(profileError);
-        alert(profileError.message);
+        showGlobalToast(profileError.message, 'error');
         return;
       }
 
@@ -221,7 +222,7 @@ export function FacultyRegistration({ onBack }: FacultyRegistrationProps) {
       await login(newUser);
       navigate('/login');
     } catch (error) {
-      alert('Registration failed. Please try again.');
+      showGlobalToast('Registration failed. Please try again.', 'error');
       console.error('Registration error:', error);
     }
   };

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router';
 // @ts-ignore
 import { Search, Briefcase, GraduationCap, ChevronRight, Award, Upload, MapPin } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { showGlobalToast } from '../components/Toast';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../../supabaseClient';
 
@@ -111,7 +112,7 @@ export function AlumniNetwork() {
     : [];
 
   const handleUploadClick = () => {
-    alert('Admin Feature: Bulk Upload Alumni List functionality will open here.');
+    showGlobalToast('Admin Feature: Bulk Upload Alumni List functionality will open here.', 'info');
   };
 
   return (
@@ -291,8 +292,8 @@ function AlumniGrid({ alumniList }: { alumniList: any[] }) {
   const { user } = useAuth();
 
   const handleConnect = async (alumni: any) => {
-    if (!user?.id) { alert('Please log in to start a conversation'); return; }
-    if (alumni.user_id === user.id) { alert('You cannot start a conversation with yourself'); return; }
+    if (!user?.id) { showGlobalToast('Please log in to start a conversation', 'warning'); return; }
+    if (alumni.user_id === user.id) { showGlobalToast('You cannot start a conversation with yourself', 'warning'); return; }
 
     try {
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -307,14 +308,14 @@ function AlumniGrid({ alumniList }: { alumniList: any[] }) {
         const errorData = contentType?.includes('application/json')
           ? await response.json()
           : { error: `HTTP ${response.status}: ${response.statusText}` };
-        alert(`Failed to start conversation: ${errorData.error}`);
+        showGlobalToast(`Failed to start conversation: ${errorData.error}`, 'error');
         return;
       }
 
       const conversation = await response.json();
       navigate('/chat', { state: { conversationId: conversation.id } });
     } catch (error) {
-      alert(`Failed to start conversation: ${error instanceof Error ? error.message : String(error)}`);
+      showGlobalToast(`Failed to start conversation: ${error instanceof Error ? error.message : String(error)}`, 'error');
     }
   };
 

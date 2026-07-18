@@ -197,7 +197,7 @@ const { error: insertError } = await supabase
 
 if (insertError) {
   console.error(insertError);
-  alert(insertError.message);
+  showGlobalToast(insertError.message, 'error');
   return;
 }
 

@@ -2,6 +2,7 @@ import { FormEvent, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { BriefcaseBusiness, Building2, CalendarCheck, CheckCircle2, Clock3, GraduationCap, LayoutDashboard, Menu, Plus, Rocket, Search, Send, ShieldCheck, UserCheck, Users, X, XCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { showGlobalToast } from '../components/Toast';
 import { addActivityItem } from '../data/activityStore';
 import { useEffect } from "react";
 import { supabase } from "../../supabaseClient";
@@ -17,7 +18,7 @@ const normalizeUrl = (url?: string) => {
 const openPostLink = (url?: string) => {
   const finalUrl = normalizeUrl(url);
   if (!finalUrl) {
-    alert("Link not available for this post.");
+    showGlobalToast("Link not available for this post.", 'warning');
     return;
   }
   window.open(finalUrl, "_blank", "noopener,noreferrer");

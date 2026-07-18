@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../supabaseClient';
+import { showGlobalToast } from '../components/Toast';
 import { Plus, Eye, EyeOff, MapPin, X } from 'lucide-react';
 
 type HighlightCategory =
@@ -53,7 +54,7 @@ export function AlumniHighlights() {
 
     if (error) {
       console.error('Error fetching alumni highlights:', error);
-      alert('Failed to fetch alumni highlights');
+      showGlobalToast('Failed to fetch alumni highlights', 'error');
       return;
     }
 
@@ -92,7 +93,7 @@ export function AlumniHighlights() {
     e.preventDefault();
 
     if (!formData.title.trim() || !formData.description.trim()) {
-      alert('Title and description are required.');
+      showGlobalToast('Title and description are required.', 'warning');
       return;
     }
 
@@ -122,7 +123,7 @@ export function AlumniHighlights() {
 
         if (error) throw error;
 
-        alert('Alumni highlight updated successfully!');
+        showGlobalToast('Alumni highlight updated successfully!', 'success');
       } else {
         const { error } = await supabase
           .from('alumni_highlights')
@@ -130,14 +131,14 @@ export function AlumniHighlights() {
 
         if (error) throw error;
 
-        alert('Alumni highlight published successfully!');
+        showGlobalToast('Alumni highlight published successfully!', 'success');
       }
 
       await fetchHighlights();
       resetForm();
     } catch (error) {
       console.error('Error saving alumni highlight:', error);
-      alert('Failed to publish alumni highlight');
+      showGlobalToast('Failed to publish alumni highlight', 'error');
     } finally {
       setLoading(false);
     }
@@ -169,11 +170,11 @@ export function AlumniHighlights() {
 
     if (error) {
       console.error('Error deleting highlight:', error);
-      alert('Failed to delete highlight');
+      showGlobalToast('Failed to delete highlight', 'error');
       return;
     }
 
-    alert('Highlight deleted successfully!');
+    showGlobalToast('Highlight deleted successfully!', 'success');
     await fetchHighlights();
   };
 
@@ -185,11 +186,11 @@ export function AlumniHighlights() {
 
     if (error) {
       console.error('Error updating publish status:', error);
-      alert('Failed to update publish status');
+      showGlobalToast('Failed to update publish status', 'error');
       return;
     }
 
-    alert(published ? 'Highlight published!' : 'Highlight unpublished!');
+    showGlobalToast(published ? 'Highlight published!' : 'Highlight unpublished!', 'success');
     await fetchHighlights();
   };
 

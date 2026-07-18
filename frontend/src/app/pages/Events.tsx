@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Calendar, MapPin, Users, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { showGlobalToast } from '../components/Toast';
 import { motion } from 'motion/react';
 import { useEffect } from "react";
 import { supabase } from "../../supabaseClient";
@@ -16,7 +17,7 @@ const normalizeUrl = (url?: string) => {
 const openPostLink = (url?: string) => {
   const finalUrl = normalizeUrl(url);
   if (!finalUrl) {
-    alert("Link not available for this post.");
+    showGlobalToast("Link not available for this post.", 'warning');
     return;
   }
   window.open(finalUrl, "_blank", "noopener,noreferrer");

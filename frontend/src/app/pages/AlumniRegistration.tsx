@@ -3,6 +3,7 @@ import { supabase } from '../../supabaseClient';
 import { Link, useNavigate } from 'react-router';
 import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { showGlobalToast } from '../components/Toast';
 import type { UserProfile } from '../data/types';
 
 interface AlumniRegistrationProps {
@@ -54,19 +55,19 @@ export function AlumniRegistration({ onBack }: AlumniRegistrationProps) {
     const validationResult = await response.json();
 
       if (!validationResult.valid) {
-        alert(validationResult.reason || "Invalid document.");
+        showGlobalToast(validationResult.reason || "Please upload a valid college ID or memo.", 'error');
         setIsDocumentVerified(false);
         setVerifiedDocument(null);
         e.target.value = "";
         return;
       }
 // ✅ Document is valid
-alert("Validation Successful");
+showGlobalToast("Document verified successfully.", 'success');
       setIsDocumentVerified(true);
       setVerifiedDocument(file);
     } catch (error) {
       console.error(error);
-      alert("Unable to validate document");
+      showGlobalToast("Unable to verify the uploaded document.", 'error');
       setIsDocumentVerified(false);
       setVerifiedDocument(null);
       e.target.value = "";
@@ -88,39 +89,39 @@ alert("Validation Successful");
     const rollNumber = formData.get('rollNumber') as string;
 
     if (!firstName || !lastName) {
-      alert('Please enter both first and last name');
+      showGlobalToast('Please enter both first and last name', 'warning');
       return false;
     }
 
     if (!email || !email.includes('@')) {
-      alert('Please enter a valid email address');
+      showGlobalToast('Please enter a valid email address', 'warning');
       return false;
     }
 
     // Phone validation - exactly 10 digits only
     const phoneRegex = /^\d{10}$/;
     if (!phone || !phoneRegex.test(phone)) {
-      alert('Please enter a valid phone number (exactly 10 digits, numbers only)');
+      showGlobalToast('Please enter a valid phone number (exactly 10 digits, numbers only)', 'warning');
       return false;
     }
 
     if (linkedin && linkedin.trim()) {
       const linkedinRegex = /^https?:\/\/(www\.)?linkedin\.com\/.+/i;
       if (!linkedinRegex.test(linkedin.trim())) {
-        alert('Please enter a valid LinkedIn profile URL (e.g., https://linkedin.com/in/yourprofile)');
+        showGlobalToast('Please enter a valid LinkedIn profile URL (e.g., https://linkedin.com/in/yourprofile)', 'warning');
         return false;
       }
     }
 
     if (!memo || memo.size === 0) {
-      alert("Please upload valid proof");
+      showGlobalToast("Please upload a valid college ID or memo.", 'warning');
       return false;
     }
 
     if (memo) {
       const maxSize = 5 * 1024 * 1024;
       if (memo.size > maxSize) {
-        alert('Memo file size must be less than 5MB');
+        showGlobalToast('Memo file size must be less than 5MB', 'warning');
         return false;
       }
 
@@ -140,44 +141,44 @@ if (
   !allowedIdTypes.includes(memo.type) &&
   !allowedExtensions.includes(fileExtension)
 ) {
-  alert('Memo must be in JPG, JPEG, PNG, or PDF format');
+  showGlobalToast('Memo must be in JPG, JPEG, PNG, or PDF format', 'warning');
   return false;
 }
     }
 
     if (!password || password.length < 8) {
-      alert('Password must be at least 8 characters long');
+      showGlobalToast('Password must be at least 8 characters long', 'warning');
       return false;
     }
 
     if (password !== confirmPassword) {
-      alert('Passwords do not match');
+      showGlobalToast('Passwords do not match', 'warning');
       return false;
     }
 
     if (!department) {
-      alert('Please select your department');
+      showGlobalToast('Please select your department', 'warning');
       return false;
     }
 
     if (!yearOfJoining) {
-      alert('Please enter your year of joining');
+      showGlobalToast('Please enter your year of joining', 'warning');
       return false;
     }
 
     if (!passedOutYear) {
-      alert('Please enter your passed out year');
+      showGlobalToast('Please enter your passed out year', 'warning');
       return false;
     }
 
     if (!rollNumber) {
-      alert('Please enter your roll number');
+      showGlobalToast('Please enter your roll number', 'warning');
       return false;
     }
 
     const rollRegex = /^[0-9]{2}K9.*$/i;
     if (!rollRegex.test(rollNumber.trim())) {
-      alert('Please enter a valid roll number');
+      showGlobalToast('Please enter a valid roll number', 'warning');
       return false;
     }
 
@@ -186,22 +187,22 @@ if (
     const currentYear = new Date().getFullYear();
 
     if (joiningYear < 1950 || joiningYear > currentYear) {
-      alert('Please enter a valid year of joining');
+      showGlobalToast('Please enter a valid year of joining', 'warning');
       return false;
     }
 
     if (graduationYear < 1950 || graduationYear > currentYear + 10) {
-      alert('Please enter a valid passed out year');
+      showGlobalToast('Please enter a valid passed out year', 'warning');
       return false;
     }
 
     if (graduationYear > currentYear) {
-      alert('You are not eligible to register as Alumni. Please register as a Student.');
+      showGlobalToast('You are not eligible to register as Alumni. Please register as a Student.', 'warning');
       return false;
     }
 
     if (graduationYear <= joiningYear) {
-      alert('Passed out year must be after year of joining');
+      showGlobalToast('Passed out year must be after year of joining', 'warning');
       return false;
     }
 
@@ -231,7 +232,7 @@ const handleNext = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
 
     if (!step1Data) {
-  alert("Please complete Step 1 first");
+  showGlobalToast("Please complete Step 1 first", 'warning');
   setStep(1);
   return;
 }
@@ -286,51 +287,51 @@ step2Data.forEach((value, key) => {
     const businessVerification = formData.get('businessVerification') as File;
 
     if (!currentStatus) {
-      alert('Please select your current status');
+      showGlobalToast('Please select your current status', 'warning');
       return;
     }
 
     if (currentStatus === 'higher-education') {
       if (!university) {
-        alert('Please enter your university/college');
+        showGlobalToast('Please enter your university/college', 'warning');
         return;
       }
 
       if (!country) {
-        alert('Please enter your country');
+        showGlobalToast('Please enter your country', 'warning');
         return;
       }
 
       if (!city) {
-        alert('Please enter your city');
+        showGlobalToast('Please enter your city', 'warning');
         return;
       }
 
       if (!course) {
-        alert('Please enter your course');
+        showGlobalToast('Please enter your course', 'warning');
         return;
       }
 
       if (!branch) {
-        alert('Please enter your branch/specialization');
+        showGlobalToast('Please enter your branch/specialization', 'warning');
         return;
       }
     }
 
     if (currentStatus === 'career-aspirant') {
       if (!skills) {
-        alert('Please enter your skills');
+        showGlobalToast('Please enter your skills', 'warning');
         return;
       }
 
       if (!resumeUpload || resumeUpload.size === 0) {
-        alert('Please upload your resume');
+        showGlobalToast('Please upload your resume', 'warning');
         return;
       }
 
       const maxResumeSize = 5 * 1024 * 1024;
       if (resumeUpload.size > maxResumeSize) {
-        alert('Resume must be less than 5MB');
+        showGlobalToast('Resume must be less than 5MB', 'warning');
         return;
       }
 
@@ -340,52 +341,52 @@ step2Data.forEach((value, key) => {
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       ];
       if (!allowedResumeTypes.includes(resumeUpload.type)) {
-        alert('Resume must be PDF, DOC, or DOCX');
+        showGlobalToast('Resume must be PDF, DOC, or DOCX', 'warning');
         return;
       }
     }
 
     if (currentStatus === 'entrepreneur') {
       if (!startupName) {
-        alert('Please enter your startup name');
+        showGlobalToast('Please enter your startup name', 'warning');
         return;
       }
 
       if (!founderRole) {
-        alert('Please enter your founder role');
+        showGlobalToast('Please enter your founder role', 'warning');
         return;
       }
 
       if (!industry) {
-        alert('Please enter the industry');
+        showGlobalToast('Please enter the industry', 'warning');
         return;
       }
 
       if (!yearFounded) {
-        alert('Please enter the year founded');
+        showGlobalToast('Please enter the year founded', 'warning');
         return;
       }
 
       if (!location) {
-        alert('Please enter the location');
+        showGlobalToast('Please enter the location', 'warning');
         return;
       }
 
       if (!startupStage) {
-        alert('Please select the startup stage');
+        showGlobalToast('Please select the startup stage', 'warning');
         return;
       }
 
       if (businessVerification && businessVerification.size > 0) {
         const maxVerificationSize = 5 * 1024 * 1024;
         if (businessVerification.size > maxVerificationSize) {
-          alert('Business verification document must be less than 5MB');
+          showGlobalToast('Business verification document must be less than 5MB', 'warning');
           return;
         }
 
         const allowedVerificationTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
         if (!allowedVerificationTypes.includes(businessVerification.type)) {
-          alert('Business verification document must be in JPG, PNG, or PDF format');
+          showGlobalToast('Business verification document must be in JPG, PNG, or PDF format', 'warning');
           return;
         }
       }
@@ -393,7 +394,7 @@ step2Data.forEach((value, key) => {
       if (website && website.trim()) {
         const websiteRegex = /^https?:\/\/.+/i;
         if (!websiteRegex.test(website.trim())) {
-          alert('Please enter a valid website URL (e.g., https://yourstartup.com)');
+          showGlobalToast('Please enter a valid website URL (e.g., https://yourstartup.com)', 'warning');
           return;
         }
       }
@@ -401,7 +402,7 @@ step2Data.forEach((value, key) => {
 
     const name = `${firstName} ${lastName}`.trim();
     if (!firstName || !lastName || !email || !password || !memo || memo.size === 0) {
-  alert("Step 1 details are missing. Please go back and fill all required fields.");
+  showGlobalToast("Step 1 details are missing. Please go back and fill all required fields.", 'warning');
   setStep(1);
   return;
 }
@@ -418,7 +419,7 @@ step2Data.forEach((value, key) => {
       });
 
       if (authError) {
-        alert(authError.message);
+        showGlobalToast(authError.message, 'error');
         return;
       }
 
@@ -430,7 +431,7 @@ step2Data.forEach((value, key) => {
 
       if (memoError) {
         console.log(memoError);
-        alert(memoError.message);
+        showGlobalToast(memoError.message, 'error');
         return;
       }
 
@@ -450,7 +451,7 @@ step2Data.forEach((value, key) => {
 
         if (verificationError) {
           console.log(verificationError);
-          alert(verificationError.message);
+          showGlobalToast(verificationError.message, 'error');
           return;
         }
 
@@ -471,7 +472,7 @@ step2Data.forEach((value, key) => {
 
         if (photoError) {
           console.log(photoError);
-          alert(photoError.message);
+          showGlobalToast(photoError.message, 'error');
           return;
         }
 
@@ -615,7 +616,7 @@ step2Data.forEach((value, key) => {
 
       if (profileError) {
         console.log(profileError);
-        alert(profileError.message);
+        showGlobalToast(profileError.message, 'error');
         return;
       }
 
@@ -690,7 +691,7 @@ localStorage.setItem("allumini_role", "alumni");
 
 navigate("/login");
     } catch (error) {
-      alert('Registration failed. Please try again.');
+      showGlobalToast('Registration failed. Please try again.', 'error');
       console.error('Registration error:', error);
     }
   };

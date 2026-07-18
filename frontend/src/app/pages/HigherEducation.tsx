@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Search, GraduationCap, MapPin, BookOpen, Calendar, ExternalLink, FileText, Award, Users } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { showGlobalToast } from '../components/Toast';
 import { getApprovedHigherEducationPosts } from '../data/localStoragePosts';
 
 const normalizeUrl = (url?: string) => {
@@ -14,7 +15,7 @@ const normalizeUrl = (url?: string) => {
 const openPostLink = (url?: string) => {
   const finalUrl = normalizeUrl(url);
   if (!finalUrl) {
-    alert("Link not available for this post.");
+    showGlobalToast("Link not available for this post.", 'warning');
     return;
   }
   window.open(finalUrl, "_blank", "noopener,noreferrer");
