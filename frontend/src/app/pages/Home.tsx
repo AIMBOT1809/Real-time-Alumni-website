@@ -445,7 +445,7 @@ useEffect(() => {
         id="home" 
         className="relative bg-slate-900 text-white overflow-hidden w-full max-w-full scroll-mt-20"
       >
-        <div className="relative h-[70vh] md:h-[85vh]">
+        <div className="relative min-h-[70vh] md:min-h-[85vh] h-auto">
           {/* Banner Images */}
           {bannerImages.map((banner, index) => (
             <div
@@ -508,17 +508,17 @@ useEffect(() => {
               {bannerImages[currentBannerIndex].subtitle}
             </p>
             
-            {/* Call to Action Buttons */}
-            <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
+            {/* Call to Action Buttons - Mobile responsive, centered */}
+            <div className="cta-buttons-container flex items-center justify-center flex-wrap gap-3 w-full">
               <Link
                 to="/register"
-                className="min-h-[44px] w-full sm:w-auto px-8 py-3 bg-yellow-500 text-slate-900 rounded-lg font-semibold hover:bg-yellow-400 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105 transform text-center"
+                className="cta-btn min-h-[40px] px-6 py-2 text-sm bg-yellow-500 text-slate-900 rounded-lg font-semibold hover:bg-yellow-400 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105 transform text-center whitespace-nowrap"
               >
                 Get Started
               </Link>
               <Link
                 to="/login"
-                className="min-h-[44px] w-full sm:w-auto px-8 py-3 bg-white/10 backdrop-blur-md text-white rounded-lg font-semibold hover:bg-white/20 transition-all duration-300 border-2 border-white/40 shadow-xl hover:shadow-2xl hover:scale-105 transform text-center"
+                className="cta-btn min-h-[40px] px-6 py-2 text-sm bg-white/10 backdrop-blur-md text-white rounded-lg font-semibold hover:bg-white/20 transition-all duration-300 border-2 border-white/40 shadow-xl hover:shadow-2xl hover:scale-105 transform text-center whitespace-nowrap"
               >
                 Sign In
               </Link>

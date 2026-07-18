@@ -977,11 +977,11 @@ export function MainDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-white text-slate-900">
+    <div className="min-h-screen bg-white text-slate-900 w-full max-w-full overflow-x-hidden">
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="flex flex-col lg:flex-row gap-6">
+      <div className="w-full max-w-full px-4 sm:px-6 lg:px-8 py-6">
+        <div className="flex flex-col lg:flex-row gap-6 w-full max-w-full">
 
           {/* Main Content Area */}
           <main className="flex-1 min-w-0 space-y-6">
@@ -2568,7 +2568,7 @@ const author =
 
           {/* Alumni Insights Widget - Right Side on Desktop, Below on Mobile */}
           {role?.toLowerCase() !== 'admin' && activeMenu === 'home' && (
-            <aside className="w-full lg:w-[360px] shrink-0 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <aside className="w-full lg:w-[360px] max-w-full shrink-0 animate-in fade-in slide-in-from-bottom-4 duration-700">
               <div className="sticky top-[156px]">
                 <AlumniStatisticsWidget />
               </div>

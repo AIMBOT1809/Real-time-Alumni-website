@@ -226,14 +226,14 @@ export function Layout() {
 }
 
   return (
-    <div className="glass-page min-h-screen flex flex-col font-sans text-slate-900 dark:text-slate-100">
+    <div className="glass-page min-h-screen flex flex-col font-sans text-slate-900 dark:text-slate-100 w-full max-w-full overflow-x-hidden">
       {/* Header */}
            {!hideHeader && (
-      <header className="glass-panel sticky top-0 z-50 rounded-none border-b border-yellow-400/40">
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <Link to="/" className="flex items-center space-x-2 font-bold text-xl tracking-tight">
+      <header className="glass-panel sticky top-0 z-50 rounded-none border-b border-yellow-400/40 w-full">
+        <div className="w-full px-4 sm:px-6 py-3 flex items-center justify-between">
+          <Link to="/" className="flex items-center space-x-2 font-bold text-lg sm:text-xl tracking-tight shrink-0">
             <div className="bg-yellow-500 p-1.5 rounded-md text-slate-900">
-              <GraduationCap size={24} />
+              <GraduationCap size={22} />
             </div>
             <span className="text-slate-900 dark:text-slate-100">Alumni Connect</span>
           </Link>
@@ -251,7 +251,7 @@ export function Layout() {
                   onClick={(e) => scrollToSection(e, link.href)}
                   onMouseDown={(e) => e.currentTarget.blur()}
                   className={clsx(
-                    'nav-link-focus px-4 py-2 rounded-xl text-slate-700 dark:text-slate-300 hover:text-yellow-600 dark:hover:text-yellow-300 hover:bg-yellow-50/80 dark:hover:bg-yellow-400/10 font-medium transition-all duration-300',
+                    'nav-link-focus px-3 py-2 rounded-xl text-slate-700 dark:text-slate-300 hover:text-yellow-600 dark:hover:text-yellow-300 hover:bg-yellow-50/80 dark:hover:bg-yellow-400/10 font-medium transition-all duration-300 text-sm',
                     isActive
                       ? 'bg-slate-900 dark:bg-yellow-400 text-white dark:text-slate-950 border-b-2 border-yellow-400 font-semibold shadow-sm'
                       : ''
@@ -271,7 +271,7 @@ export function Layout() {
           </nav>
 
           {/* User Controls */}
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden md:flex items-center space-x-3">
             <ThemeToggle />
             {isLandingPage || isLoginPage || isRegisterPage || isAdminPage ? (
               // Hide buttons on landing, login, register, and admin dashboard pages
@@ -338,7 +338,7 @@ export function Layout() {
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              className="md:hidden bg-slate-800 border-t border-slate-700 overflow-hidden"
+              className="md:hidden bg-slate-800 border-t border-slate-700 overflow-hidden w-full"
             >
                <nav className="flex flex-col p-4 space-y-2" aria-label="Mobile navigation">
                  {navLinks.map((link) => {
@@ -413,13 +413,13 @@ export function Layout() {
       )}
 
       {/* Main Content */}
-      <main className={`flex-grow container mx-auto px-4 ${isLandingPage ? 'py-0' : 'py-8'}`}>
+      <main className={`flex-grow w-full max-w-full ${isLandingPage ? 'py-0' : 'py-8'}`}>
         <Outlet />
       </main>
 
       {/* Footer */}
-      <footer className="bg-slate-900 text-slate-400 py-10 mt-auto">
-        <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-8">
+      <footer className="bg-slate-900 text-slate-400 py-10 mt-auto w-full">
+        <div className="w-full max-w-full px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="col-span-1 md:col-span-1">
             <div className="flex items-center space-x-2 font-bold text-xl text-white mb-4">
               <div className="bg-yellow-500 p-1 rounded-md text-slate-900">
@@ -486,7 +486,7 @@ export function Layout() {
              </ul>
            </div>
         </div>
-        <div className="container mx-auto px-4 mt-8 pt-8 border-t border-slate-800 text-center text-xs">
+        <div className="w-full max-w-full px-4 sm:px-6 lg:px-8 mt-8 pt-8 border-t border-slate-800 text-center text-xs">
           &copy; {new Date().getFullYear()} Alumni University Network. All rights reserved.
         </div>
       </footer>
