@@ -643,6 +643,7 @@ if (
                     name="rollNumber"
                     type="text"
                     required
+                    placeholder="Ex: 23K91A6701"
                     className="w-full px-3 py-2 border rounded-md dark:bg-slate-700 dark:text-white dark:border-slate-500 dark:placeholder:text-slate-400"
                   />
                 </div>
