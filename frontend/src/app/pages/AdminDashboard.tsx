@@ -100,7 +100,7 @@ const handleLogout = async () => {
       attachmentUrl: r.file_url ?? undefined,
       attachmentName: r.file_name ?? undefined,
       event_link: r.event_link ?? '',
-      registration_link: r.registration_link ?? '',
+      //registration_link: r.registration_link ?? '',
       link: r.link ?? '',
     }));
 
@@ -159,7 +159,7 @@ const handleLogout = async () => {
   const [newEventType, setNewEventType] = useState<'Networking' | 'Workshop' | 'Webinar'>('Webinar');
   const [newEventFile, setNewEventFile] = useState<File | null>(null);
   const [newEventLink, setNewEventLink] = useState('');
-  const [newRegistrationLink, setNewRegistrationLink] = useState('');
+  //const [newRegistrationLink, setNewRegistrationLink] = useState('');
   const [hoveredSegment, setHoveredSegment] = useState<string | null>(null);
   const [reportAlumni, setReportAlumni] = useState<CommunityAlumniRecord[]>([]);
   const [showHighlightForm, setShowHighlightForm] = useState(false);
@@ -563,7 +563,7 @@ useEffect(() => {
           file_url: fileUrl,
           created_by: user.id,
           event_link: newEventLink.trim() || null,
-          registration_link: newRegistrationLink.trim() || null,
+          //registration_link: newRegistrationLink.trim() || null,
         }
       ]);
 
@@ -582,7 +582,7 @@ useEffect(() => {
     setNewEventType('Webinar');
     setNewEventFile(null);
     setNewEventLink('');
-    setNewRegistrationLink('');
+    //setNewRegistrationLink('');
     setShowCreateEventForm(false);
     await fetchAdminEvents();
   };
@@ -1243,7 +1243,7 @@ entrepreneurRatio: Math.round((entrepreneurCount / effectiveTotal) * 100),
                                 placeholder="https://event-link.com"
                               />
                             </div>
-                            <div>
+                            {/* <div>
                               <label className="block text-sm font-medium text-slate-700">Registration Link</label>
                               <input
                                 type="url"
@@ -1252,7 +1252,7 @@ entrepreneurRatio: Math.round((entrepreneurCount / effectiveTotal) * 100),
                                 className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/20"
                                 placeholder="https://register-link.com"
                               />
-                            </div>
+                            </div>*/}
                           </div>
 
                           <div className="flex justify-end gap-3">

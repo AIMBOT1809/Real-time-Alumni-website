@@ -30,26 +30,45 @@ const [events, setEvents] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<string>('all');
 
+  // Group events by type
+  const eventsByType = events.reduce((acc, event) => {
+    const type = event.type || 'Event';
+    if (!acc[type]) {
+      acc[type] = [];
+    }
+    acc[type].push(event);
+    return acc;
+  }, {} as Record<string, typeof events>);
 
-  const filteredEvents = events.filter((event) => {
-  const query = searchTerm.toLowerCase();
+  // Get unique event types
+  const eventTypes = Object.keys(eventsByType).sort();
 
-  const matchesSearch =
-    event.title?.toLowerCase().includes(query) ||
-    event.location?.toLowerCase().includes(query) ||
-    event.organizer?.toLowerCase().includes(query);
-
-  const matchesType =
-    selectedType === "all" || event.type === selectedType;
-
-  return matchesSearch && matchesType;
-});
+  // Filter events based on search and selected type
+  const getFilteredEvents = (type?: string) => {
+    let filtered = events;
+    
+    if (type && type !== 'all') {
+      filtered = events.filter(event => event.type === type);
+    }
+    
+    const query = searchTerm.toLowerCase();
+    if (query) {
+      filtered = filtered.filter((event) =>
+        event.title?.toLowerCase().includes(query) ||
+        event.location?.toLowerCase().includes(query) ||
+        event.organizer?.toLowerCase().includes(query)
+      );
+    }
+    
+    return filtered;
+  };
 
   const fetchEvents = async () => {
-  // Alumni events - fetch all posts and filter for those with event details
+  // Alumni events - fetch only event-type posts
   const { data: postEvents, error: postError } = await supabase
     .from("posts")
-    .select("*");
+    .select("*")
+    .eq("type", "event");
 
   // Admin events
   const { data: adminEvents, error: adminError } = await supabase
@@ -65,14 +84,8 @@ const [events, setEvents] = useState<any[]>([]);
     console.log(adminError);
   }
 
-  // Log all posts to see what we're working with
-  console.log("All posts count:", postEvents?.length);
-  console.log("Post types:", [...new Set(postEvents?.map(p => p.type))]);
-  
   const alumni = (postEvents || [])
   .map((item: any) => {
-    console.log("Processing post:", item.id, "type:", item.type, "has post_details:", !!item.post_details);
-    
     let details = item.post_details;
     let hasValidDetails = false;
 
@@ -87,7 +100,6 @@ const [events, setEvents] = useState<any[]>([]);
       // Invalid JSON
     }
 
-    // Include all posts for now to see what's available
     return {
       id: item.id,
       source: "post",
@@ -97,13 +109,13 @@ const [events, setEvents] = useState<any[]>([]);
       location: hasValidDetails ? (details.eventLocation || item.content || '') : (item.content || ''),
       image: item.image || item.file_url || '',
       organizer: hasValidDetails ? (details.organizer || item.author_name || "Alumni") : (item.author_name || "Alumni"),
-      type: hasValidDetails ? (details.eventType || "Event") : (item.type === 'event' ? 'Event' : "Event"),
+      type: hasValidDetails ? (details.eventType || "Event") : "Event",
       created_at: item.created_at,
       registrationLink: hasValidDetails ? (details.registrationLink || '') : '',
       alumniId: item.alumni_id || item.author_id || 'unknown',
     };
   })
-  .filter((event: any) => event !== null && event.title && event.title.trim() !== '');
+  .filter((event: any) => event.title && event.title.trim() !== '');
 
   const admin = (adminEvents || []).map((item: any) => ({
     id: item.id,
@@ -201,67 +213,116 @@ useEffect(() => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {filteredEvents.map((event, index) => (
-          <motion.div
-  key={event.id}
-  initial={{ opacity: 0, y: 20 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ delay: index * 0.1 }}
-  className="bg-white dark:bg-slate-900/70 rounded-xl shadow-sm border border-slate-200 dark:border-yellow-400/20 overflow-hidden hover:shadow-md transition-shadow group"
->
-  <div className="relative h-48 overflow-hidden">
-    <img
-      src={event.image}
-      alt={event.title}
-      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-    />
-
-    <div className="absolute top-4 right-4 bg-white/90 dark:bg-slate-900/90 px-3 py-1 rounded-full text-xs font-semibold text-slate-900 dark:text-slate-100 shadow-sm backdrop-blur-sm">
-      {event.type}
-    </div>
-  </div>
-
-  <div className="p-6">
-    <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-3 group-hover:text-yellow-600 dark:group-hover:text-yellow-400 transition-colors">
-      {event.title}
-    </h3>
-
-    <div className="space-y-2 text-sm text-slate-600 dark:text-slate-300 mb-6">
-      <div className="flex items-center">
-        <Calendar className="h-4 w-4 text-slate-400 dark:text-slate-500 mr-2" />
-        <span>
-          {event.date} at {event.time}
-        </span>
-      </div>
-
-      <div className="flex items-center">
-        <MapPin className="h-4 w-4 text-slate-400 dark:text-slate-500 mr-2" />
-        <span>{event.location}</span>
-      </div>
-
-      <div className="flex items-center">
-        <Users className="h-4 w-4 text-slate-400 dark:text-slate-500 mr-2" />
-        <span>
-          Organized by {event.organizer}
-        </span>
-      </div>
-    </div>
-
-     <button onClick={() => openPostLink(event.registrationLink)} className="w-full py-2 bg-slate-900 text-white font-medium rounded-md hover:bg-slate-800 dark:hover:bg-yellow-400 dark:hover:text-slate-950 transition-colors flex items-center justify-center">
-       Register Now
-       <ArrowRight className="ml-2 h-4 w-4" />
-     </button>
-  </div>
-</motion.div>
-        ))}
-        
-        {filteredEvents.length === 0 && (
-          <div className="col-span-full text-center py-12">
-            <p className="text-slate-500 dark:text-slate-400 text-lg">No events found matching your search.</p>
-          </div>
-        )}
-      </div>
+      {selectedType === 'all' ? (
+        // Show events grouped by type
+        <div className="space-y-12">
+          {eventTypes.map((type) => {
+            const typeEvents = getFilteredEvents(type);
+            if (typeEvents.length === 0) return null;
+            
+            return (
+              <section key={type} className="mb-12">
+                <div className="mb-6">
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">{type}</h2>
+                  <div className="h-1 w-20 bg-yellow-400 rounded"></div>
+                </div>
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {typeEvents.map((event, index) => (
+                    <motion.div
+                      key={event.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="bg-white dark:bg-slate-900/70 rounded-xl shadow-sm border border-slate-200 dark:border-yellow-400/20 overflow-hidden hover:shadow-md transition-shadow group"
+                    >
+                      <div className="relative h-48 overflow-hidden">
+                        <img
+                          src={event.image}
+                          alt={event.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                        <div className="absolute top-4 right-4 bg-white/90 dark:bg-slate-900/90 px-3 py-1 rounded-full text-xs font-semibold text-slate-900 dark:text-slate-100 shadow-sm backdrop-blur-sm">
+                          {event.type}
+                        </div>
+                      </div>
+                      <div className="p-6">
+                        <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-3 group-hover:text-yellow-600 dark:group-hover:text-yellow-400 transition-colors">
+                          {event.title}
+                        </h3>
+                        <div className="space-y-2 text-sm text-slate-600 dark:text-slate-300 mb-6">
+                          <div className="flex items-center">
+                            <Calendar className="h-4 w-4 text-slate-400 dark:text-slate-500 mr-2" />
+                            <span>{event.date} at {event.time}</span>
+                          </div>
+                          <div className="flex items-center">
+                            <MapPin className="h-4 w-4 text-slate-400 dark:text-slate-500 mr-2" />
+                            <span>{event.location}</span>
+                          </div>
+                          <div className="flex items-center">
+                            <Users className="h-4 w-4 text-slate-400 dark:text-slate-500 mr-2" />
+                            <span>Organized by {event.organizer}</span>
+                          </div>
+                        </div>
+                        <button onClick={() => openPostLink(event.registrationLink)} className="w-full py-2 bg-slate-900 text-white font-medium rounded-md hover:bg-slate-800 dark:hover:bg-yellow-400 dark:hover:text-slate-950 transition-colors flex items-center justify-center">
+                          Register Now
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </button>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </section>
+            );
+          })}
+        </div>
+      ) : (
+        // Show filtered events for selected type
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {getFilteredEvents(selectedType).map((event, index) => (
+            <motion.div
+              key={event.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className="bg-white dark:bg-slate-900/70 rounded-xl shadow-sm border border-slate-200 dark:border-yellow-400/20 overflow-hidden hover:shadow-md transition-shadow group"
+            >
+              <div className="relative h-48 overflow-hidden">
+                <img
+                  src={event.image}
+                  alt={event.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+                <div className="absolute top-4 right-4 bg-white/90 dark:bg-slate-900/90 px-3 py-1 rounded-full text-xs font-semibold text-slate-900 dark:text-slate-100 shadow-sm backdrop-blur-sm">
+                  {event.type}
+                </div>
+              </div>
+              <div className="p-6">
+                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-3 group-hover:text-yellow-600 dark:group-hover:text-yellow-400 transition-colors">
+                  {event.title}
+                </h3>
+                <div className="space-y-2 text-sm text-slate-600 dark:text-slate-300 mb-6">
+                  <div className="flex items-center">
+                    <Calendar className="h-4 w-4 text-slate-400 dark:text-slate-500 mr-2" />
+                    <span>{event.date} at {event.time}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <MapPin className="h-4 w-4 text-slate-400 dark:text-slate-500 mr-2" />
+                    <span>{event.location}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <Users className="h-4 w-4 text-slate-400 dark:text-slate-500 mr-2" />
+                    <span>Organized by {event.organizer}</span>
+                  </div>
+                </div>
+                <button onClick={() => openPostLink(event.registrationLink)} className="w-full py-2 bg-slate-900 text-white font-medium rounded-md hover:bg-slate-800 dark:hover:bg-yellow-400 dark:hover:text-slate-950 transition-colors flex items-center justify-center">
+                  Register Now
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </button>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
