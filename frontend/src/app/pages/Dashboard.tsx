@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Briefcase, CalendarDays, MessageCircle, User, Plus, Settings, FileText, Bell } from 'lucide-react';
+import { Briefcase, MessageCircle, User, Plus, Settings, FileText, Bell } from 'lucide-react';
 import { Link } from 'react-router';
 
 export function Dashboard() {
@@ -23,7 +23,7 @@ export function Dashboard() {
     );
   }
 
-  const isAlumni = role === 'alumni' || role === 'career-aspirant';
+  const isAlumni = role === 'alumni';
 
   // Filter data based on who the user follows plus admin-managed content
   const followedPosts = posts.filter(
@@ -32,8 +32,9 @@ export function Dashboard() {
   const followedJobs = jobs.filter(
     job => following.includes(job.alumniId) || job.alumniId === 'admin' || (role === 'admin' && user?.id === job.alumniId)
   );
+  // Events from alumni are universally visible to all users (student, alumni, faculty)
   const followedEvents = events.filter(
-    event => following.includes(event.alumniId) || event.alumniId === 'admin' || (role === 'admin' && user?.id === event.alumniId)
+    event => event.alumniId === 'admin' || (role === 'admin' && user?.id === event.alumniId) || event.alumniId !== 'admin'
   );
 
   return (
@@ -78,7 +79,7 @@ export function Dashboard() {
             <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
               <div className="flex items-center space-x-3 mb-2">
                 <div className="bg-green-100 p-2 rounded-lg text-green-600">
-                  <CalendarDays className="h-5 w-5" />
+                  <span className="text-lg">📅</span>
                 </div>
                 <h3 className="font-semibold text-slate-900">Events</h3>
               </div>

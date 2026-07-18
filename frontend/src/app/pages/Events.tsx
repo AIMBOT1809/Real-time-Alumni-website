@@ -46,12 +46,10 @@ const [events, setEvents] = useState<any[]>([]);
 });
 
   const fetchEvents = async () => {
-  // Alumni approved events
+  // Alumni events - fetch all posts and filter for those with event details
   const { data: postEvents, error: postError } = await supabase
     .from("posts")
-    .select("*")
-    .eq("status", "approved")
-    .eq("type", "event");
+    .select("*");
 
   // Admin events
   const { data: adminEvents, error: adminError } = await supabase
@@ -67,36 +65,45 @@ const [events, setEvents] = useState<any[]>([]);
     console.log(adminError);
   }
 
+  // Log all posts to see what we're working with
+  console.log("All posts count:", postEvents?.length);
+  console.log("Post types:", [...new Set(postEvents?.map(p => p.type))]);
+  
   const alumni = (postEvents || [])
-  .filter((item: any) => item.post_details)
   .map((item: any) => {
+    console.log("Processing post:", item.id, "type:", item.type, "has post_details:", !!item.post_details);
+    
     let details = item.post_details;
+    let hasValidDetails = false;
 
     try {
       if (typeof details === "string") {
         details = JSON.parse(details);
       }
+      if (details && typeof details === "object") {
+        hasValidDetails = true;
+      }
     } catch {
-      return null;
+      // Invalid JSON
     }
 
-    if (!details) return null;
-
+    // Include all posts for now to see what's available
     return {
       id: item.id,
       source: "post",
-      title: details.eventTitle,
-      date: details.eventDate,
-      time: details.eventTime,
-      location: details.eventLocation,
-      image: item.image || item.file_url,
-      organizer: item.author_name || "Alumni",
-      type: details.eventType || "Event",
+      title: hasValidDetails ? (details.eventTitle || item.title || 'Untitled Event') : (item.title || 'Untitled Event'),
+      date: hasValidDetails ? (details.eventDate || item.created_at) : (item.created_at || ''),
+      time: hasValidDetails ? (details.eventTime || '') : '',
+      location: hasValidDetails ? (details.eventLocation || item.content || '') : (item.content || ''),
+      image: item.image || item.file_url || '',
+      organizer: hasValidDetails ? (details.organizer || item.author_name || "Alumni") : (item.author_name || "Alumni"),
+      type: hasValidDetails ? (details.eventType || "Event") : (item.type === 'event' ? 'Event' : "Event"),
       created_at: item.created_at,
-      registrationLink: details.registrationLink,
+      registrationLink: hasValidDetails ? (details.registrationLink || '') : '',
+      alumniId: item.alumni_id || item.author_id || 'unknown',
     };
   })
-  .filter(Boolean);
+  .filter((event: any) => event !== null && event.title && event.title.trim() !== '');
 
   const admin = (adminEvents || []).map((item: any) => ({
     id: item.id,
