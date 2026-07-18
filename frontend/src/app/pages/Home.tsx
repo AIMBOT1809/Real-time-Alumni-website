@@ -443,120 +443,120 @@ useEffect(() => {
       {/* Hero Banner Carousel Section - Full Width */}
       <section 
         id="home" 
-        className="relative bg-slate-900 text-white overflow-hidden w-full max-w-full scroll-mt-20"
+        className="relative text-white overflow-hidden w-full max-w-full scroll-mt-20"
+        style={{
+          backgroundImage: `linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.35)), url(${bannerImages[currentBannerIndex]?.type === 'video' ? bannerImages[1]?.url || '' : bannerImages[currentBannerIndex]?.url || ''})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          backgroundColor: '#0f172a',
+        }}
       >
-        <div className="relative min-h-[70vh] md:min-h-[85vh] h-auto">
-          {/* Banner Images */}
-          {bannerImages.map((banner, index) => (
-            <div
+        {/* Video background (only for video slides) - covers entire section */}
+        {bannerImages[currentBannerIndex]?.type === 'video' && (
+          <div className="absolute inset-0 z-0 overflow-hidden">
+            <div className="absolute inset-0 bg-black/35"></div>
+            <video
+              ref={videoRef}
+              src={bannerImages[currentBannerIndex].url}
+              className="w-full h-full"
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="auto"
+              poster="/video-poster.png"
+              onError={(event) => {
+                const target = event.currentTarget as HTMLVideoElement;
+                target.poster = '/video-poster.png';
+              }}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+          </div>
+        )}
+
+        {/* Non-visible image elements for preloading (keeps carousel functionality) */}
+        {bannerImages.map((banner, index) => (
+          index !== currentBannerIndex && banner.type !== 'video' && (
+            <img
               key={index}
-              className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-                index === currentBannerIndex ? 'opacity-100' : 'opacity-0 pointer-events-none'
-              }`}
-            >
-              {/* Dark Overlay for better text readability */}
-              <div className="absolute inset-0 bg-black/35 z-10"></div>
-              
-              {/* Banner Image or Video */}
-              {banner.type === 'video' ? (
-                <video
-                  ref={videoRef}
-                  src={banner.url}
-                  className="w-full h-full object-cover"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  controls
-                  preload="auto"
-                  poster="/video-poster.png"
-                  onError={(event) => {
-                    const target = event.currentTarget as HTMLVideoElement;
-                    target.poster = '/video-poster.png';
-                  }}
-                />
-              ) : (
-                <img
-                  src={banner.url}
-                  alt={banner.alt}
-                  className="w-full h-full object-cover"
-                  loading={index === 0 ? 'eager' : 'lazy'}
-                  style={{ objectFit: 'cover', width: '100%', height: '100%' }}
-                />
-              )}
-            </div>
-          ))}
+              src={banner.url}
+              alt=""
+              className="hidden"
+              aria-hidden="true"
+            />
+          )
+        ))}
 
-          {/* Banner Content Overlay */}
-          <div className="relative z-20 h-full flex flex-col items-center justify-center max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                {/* College Logo */}
-                <div className="flex justify-center mb-6">
-                  <img
-                    src={collegeLogo}
-                    alt="College Logo"
-                    className="h-24 md:h-32 lg:h-40 w-auto max-w-full object-contain drop-shadow-2xl"
-                  />
-                </div>
-            
-            {/* Dynamic Title */}
-            <h1 className={`font-bold mb-4 drop-shadow-lg ${isCurrentVideoBanner ? 'text-2xl md:text-4xl lg:text-5xl' : currentBannerIndex === 1 ? 'text-2xl md:text-3xl lg:text-4xl' : 'text-3xl md:text-5xl lg:text-6xl'}`}>
-              {bannerImages[currentBannerIndex].title}
-            </h1>
-            
-            {/* Dynamic Subtitle */}
-            <p className="text-lg md:text-xl lg:text-2xl text-white/95 max-w-3xl mx-auto mb-8 drop-shadow-md">
-              {bannerImages[currentBannerIndex].subtitle}
-            </p>
-            
-            {/* Call to Action Buttons - Mobile responsive, centered */}
-            <div className="cta-buttons-container flex items-center justify-center flex-wrap gap-3 w-full">
-              <Link
-                to="/register"
-                className="cta-btn min-h-[40px] px-6 py-2 text-sm bg-yellow-500 text-slate-900 rounded-lg font-semibold hover:bg-yellow-400 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105 transform text-center whitespace-nowrap"
-              >
-                Get Started
-              </Link>
-              <Link
-                to="/login"
-                className="cta-btn min-h-[40px] px-6 py-2 text-sm bg-white/10 backdrop-blur-md text-white rounded-lg font-semibold hover:bg-white/20 transition-all duration-300 border-2 border-white/40 shadow-xl hover:shadow-2xl hover:scale-105 transform text-center whitespace-nowrap"
-              >
-                Sign In
-              </Link>
-            </div>
+        {/* Banner Content Overlay */}
+        <div className="relative z-20 flex flex-col items-center justify-center w-full px-4 sm:px-6 lg:px-8 py-12 sm:py-16 md:py-20 lg:py-24 text-center min-h-[100dvh] md:min-h-[85vh]">
+          {/* College Logo */}
+          <div className="flex justify-center mb-4 sm:mb-6">
+            <img
+              src={collegeLogo}
+              alt="College Logo"
+              className="h-20 sm:h-24 md:h-32 lg:h-40 w-auto max-w-full object-contain drop-shadow-2xl"
+            />
           </div>
-
-          {/* Navigation Arrows */}
-          <button
-            onClick={prevBanner}
-            className="absolute left-4 top-1/2 -translate-y-1/2 z-30 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white p-2 md:p-3 rounded-full transition-all duration-300 hover:scale-110 group"
-            aria-label="Previous banner"
-          >
-            <svg className="h-5 w-5 md:h-6 md:w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-          </button>
           
-          <button
-            onClick={nextBanner}
-            className="absolute right-4 top-1/2 -translate-y-1/2 z-30 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white p-2 md:p-3 rounded-full transition-all duration-300 hover:scale-110 group"
-            aria-label="Next banner"
-          >
-            <svg className="h-5 w-5 md:h-6 md:w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-          </button>
-
-          {/* Dot Indicators */}
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex gap-2">
-            {bannerImages.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => goToBanner(index)}
-                className={`h-2 rounded-full transition-all duration-300 ${
-                  index === currentBannerIndex 
-                    ? 'w-8 bg-yellow-500' 
-                    : 'w-2 bg-white/50 hover:bg-white/80'
-                }`}
-                aria-label={`Go to banner ${index + 1}`}
-              />
-            ))}
+          {/* Dynamic Title */}
+          <h1 className={`font-bold mb-3 sm:mb-4 drop-shadow-lg px-2 ${isCurrentVideoBanner ? 'text-xl sm:text-2xl md:text-4xl lg:text-5xl' : currentBannerIndex === 1 ? 'text-xl sm:text-2xl md:text-3xl lg:text-4xl' : 'text-2xl sm:text-3xl md:text-5xl lg:text-6xl'}`}>
+            {bannerImages[currentBannerIndex].title}
+          </h1>
+          
+          {/* Dynamic Subtitle */}
+          <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-white/95 max-w-3xl mx-auto mb-6 sm:mb-8 drop-shadow-md px-2">
+            {bannerImages[currentBannerIndex].subtitle}
+          </p>
+          
+          {/* Call to Action Buttons - Mobile responsive, centered */}
+          <div className="cta-buttons-container flex items-center justify-center flex-wrap gap-3 w-full max-w-md mx-auto">
+            <Link
+              to="/register"
+              className="cta-btn min-h-[40px] px-5 sm:px-6 py-2 text-sm bg-yellow-500 text-slate-900 rounded-lg font-semibold hover:bg-yellow-400 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105 transform text-center whitespace-nowrap"
+            >
+              Get Started
+            </Link>
+            <Link
+              to="/login"
+              className="cta-btn min-h-[40px] px-5 sm:px-6 py-2 text-sm bg-white/10 backdrop-blur-md text-white rounded-lg font-semibold hover:bg-white/20 transition-all duration-300 border-2 border-white/40 shadow-xl hover:shadow-2xl hover:scale-105 transform text-center whitespace-nowrap"
+            >
+              Sign In
+            </Link>
           </div>
+        </div>
+
+        {/* Navigation Arrows */}
+        <button
+          onClick={prevBanner}
+          className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-30 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white p-2 md:p-3 rounded-full transition-all duration-300 hover:scale-110 group"
+          aria-label="Previous banner"
+        >
+          <svg className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        
+        <button
+          onClick={nextBanner}
+          className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-30 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white p-2 md:p-3 rounded-full transition-all duration-300 hover:scale-110 group"
+          aria-label="Next banner"
+        >
+          <svg className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+
+        {/* Dot Indicators */}
+        <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-30 flex gap-2">
+          {bannerImages.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => goToBanner(index)}
+              className={`h-2 rounded-full transition-all duration-300 ${
+                index === currentBannerIndex 
+                  ? 'w-6 sm:w-8 bg-yellow-500' 
+                  : 'w-2 bg-white/50 hover:bg-white/80'
+              }`}
+              aria-label={`Go to banner ${index + 1}`}
+            />
+          ))}
         </div>
       </section>
 
@@ -579,10 +579,8 @@ useEffect(() => {
         <AlumniWallOfFame />
       </section>
 
-      {/* Statistics Circles Section - Small circles below banner */}
       {/* Statistics Section - Modern Cards */}
 <section className="relative overflow-hidden py-16 px-4 sm:px-6 lg:px-8 bg-slate-950 scroll-mt-20">
-  {/* Background glow */}
   <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.25),transparent_35%),radial-gradient(circle_at_top_right,rgba(245,158,11,0.22),transparent_35%)]"></div>
 
   <div className="relative max-w-6xl mx-auto">
