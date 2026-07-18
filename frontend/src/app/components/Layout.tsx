@@ -226,11 +226,11 @@ export function Layout() {
 }
 
   return (
-    <div className="glass-page min-h-screen flex flex-col font-sans text-slate-900 dark:text-slate-100 w-full max-w-full overflow-x-hidden">
+    <div className="glass-page min-h-screen flex flex-col font-sans text-slate-900 dark:text-slate-100 w-full overflow-x-hidden">
       {/* Header */}
            {!hideHeader && (
-      <header className="glass-panel sticky top-0 z-50 rounded-none border-b border-yellow-400/40 w-full">
-        <div className="w-full px-4 sm:px-6 py-3 flex items-center justify-between">
+      <header className="glass-panel fixed inset-x-0 top-0 z-[9999] flex-shrink-0 rounded-none border-b border-yellow-400/40 w-full bg-white/95 dark:bg-slate-950/95">
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
           <Link to="/" className="flex items-center space-x-2 font-bold text-lg sm:text-xl tracking-tight shrink-0">
             <div className="bg-yellow-500 p-1.5 rounded-md text-slate-900">
               <GraduationCap size={22} />
@@ -413,7 +413,7 @@ export function Layout() {
       )}
 
       {/* Main Content */}
-      <main className={`flex-grow w-full max-w-full ${isLandingPage ? 'py-0' : 'py-8'}`}>
+      <main className={`flex-grow w-full max-w-full ${isLandingPage ? 'pt-[88px] pb-0 sm:pt-[96px]' : 'py-8'}`}>
         <Outlet />
       </main>
 

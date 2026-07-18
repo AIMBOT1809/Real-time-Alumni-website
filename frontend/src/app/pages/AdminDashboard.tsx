@@ -1683,23 +1683,23 @@ entrepreneurRatio: Math.round((entrepreneurCount / effectiveTotal) * 100),
               ].map((card) => (
                 <div
                   key={card.title}
-                  className="group flex flex-col justify-between min-h-[220px] rounded-[28px] border border-white/10 bg-white/5 p-6 shadow-xl backdrop-blur-md transition-transform duration-300 hover:-translate-y-1 hover:shadow-2xl"
+                  className="group admin-analytics-card-mobile flex min-h-[220px] flex-col items-center justify-center rounded-[28px] border border-white/10 bg-white/5 p-6 text-center shadow-xl backdrop-blur-md transition-transform duration-300 hover:-translate-y-1 hover:shadow-2xl"
                 >
-                  <div className={`h-1.5 w-24 rounded-full bg-gradient-to-r ${card.accent} shadow-lg`} />
-                  <div className="flex flex-col justify-between h-full gap-4 pt-4">
-                    <div className="min-w-0">
-                      <p className="text-sm uppercase tracking-[0.22em] text-white/70 font-semibold truncate">{card.title}</p>
+                  <div className={`admin-analytics-line-mobile h-1.5 w-24 rounded-full bg-gradient-to-r ${card.accent} shadow-lg`} />
+                  <div className="flex h-full w-full flex-col items-center justify-center gap-4 pt-4">
+                    <div className="w-full">
+                      <p className="admin-analytics-title-mobile text-sm uppercase tracking-[0.22em] font-semibold text-white/70">{card.title}</p>
                     </div>
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="min-w-0">
-                        <p className="text-sm text-white/50 truncate">{card.subtitle}</p>
+                    <div className="flex w-full flex-col items-center justify-center gap-3">
+                      <div className="w-full">
+                        <p className="admin-analytics-subtitle-mobile text-sm text-white/50">{card.subtitle}</p>
                       </div>
-                      <div className="flex-shrink-0">
-                        <p className="text-4xl font-bold text-white leading-tight sm:text-3xl md:text-4xl truncate">{card.value}</p>
+                      <div className="w-full">
+                        <p className="admin-analytics-value-mobile text-4xl font-bold leading-tight text-white sm:text-3xl md:text-4xl">{card.value}</p>
                       </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-white/60 truncate">{card.detail}</p>
+                    <div className="w-full">
+                      <p className="admin-analytics-detail-mobile text-sm font-medium text-white/60">{card.detail}</p>
                     </div>
                   </div>
                 </div>

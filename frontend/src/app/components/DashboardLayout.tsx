@@ -121,7 +121,7 @@ export function DashboardLayout() {
   }, []);
 
   return (
-    <div className="dashboard-shell glass-page min-h-screen text-slate-900 dark:text-slate-100 w-full max-w-full overflow-x-hidden">
+    <div className="dashboard-shell glass-page min-h-screen text-slate-900 dark:text-slate-100 w-full overflow-x-hidden">
 
       {/* ─────────────────────────────────────────────────────────
           TOP HEADER  –  theme-aware glass panel
@@ -282,7 +282,7 @@ export function DashboardLayout() {
       {/* ─────────────────────────────────────────────────────────
           BODY  –  Sidebar (left)  +  Content (right)
       ───────────────────────────────────────────────────────── */}
-      <div className="flex w-full max-w-full">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-3 py-4 sm:px-4 lg:flex-row lg:px-6 lg:py-6">
         {/* Mobile overlay - closes sidebar when clicked */}
         {isSidebarOpen && role?.toLowerCase() !== 'faculty' && (
           <button
@@ -300,8 +300,8 @@ export function DashboardLayout() {
               glass-panel p-4
               transition-transform duration-300 ease-in-out
               lg:sticky lg:top-[180px] lg:h-[calc(100vh-200px)] lg:z-30
-              lg:shrink-0 lg:translate-x-0
-              ${desktopCollapsed ? 'lg:w-20' : 'lg:w-64'}
+              lg:shrink-0 lg:translate-x-0 lg:w-[280px] xl:w-[320px]
+              ${desktopCollapsed ? 'lg:w-20 xl:w-20' : 'lg:w-[280px] xl:w-[320px]'}
               ${isSidebarOpen ? 'w-72 translate-x-0' : 'w-72 -translate-x-full'}
             `}
           >
@@ -325,7 +325,7 @@ export function DashboardLayout() {
 
             {/* Profile / Introduction Card */}
             <section
-              className={`glass-card p-4 ${desktopCollapsed ? 'hidden lg:block lg:p-2' : ''}`}
+              className={`glass-card p-4 lg:max-w-[260px] ${desktopCollapsed ? 'hidden lg:block lg:p-2' : ''}`}
               aria-label="Profile introduction"
             >
               <div className={`flex items-center ${desktopCollapsed ? 'lg:justify-center' : 'gap-3'}`}>
@@ -379,7 +379,7 @@ export function DashboardLayout() {
         {/* ── FACULTY LEFT PROFILE CARD (no nav links) ── */}
         {role?.toLowerCase() === 'faculty' && (
           <aside
-            className="glass-panel p-4 border-r border-slate-900/10 dark:border-yellow-400/20 sticky top-[180px] h-[calc(100vh-200px)] z-30 w-64 shrink-0 overflow-y-auto max-lg:hidden"
+            className="glass-panel p-4 border-r border-slate-900/10 dark:border-yellow-400/20 sticky top-[180px] h-[calc(100vh-200px)] z-30 w-[280px] shrink-0 overflow-y-auto max-lg:hidden xl:w-[320px]"
           >
             <section
               className="glass-card p-4"
@@ -409,7 +409,7 @@ export function DashboardLayout() {
         )}
 
         {/* ── MAIN CONTENT ── */}
-        <div className={`dashboard-content min-w-0 w-full max-w-full pt-4 sm:pt-6 ${role?.toLowerCase() === 'faculty' ? 'flex-1' : 'flex-1'}`}>
+        <div className={`dashboard-content min-w-0 flex-1 pt-4 sm:pt-6 ${role?.toLowerCase() === 'faculty' ? 'flex-1' : 'flex-1'}`}>
           {/* Mobile Faculty Introduction Card - shown only for Faculty on mobile */}
           {role?.toLowerCase() === 'faculty' && (
             <div className="lg:hidden w-full max-w-full px-4 sm:px-6 pb-4">
