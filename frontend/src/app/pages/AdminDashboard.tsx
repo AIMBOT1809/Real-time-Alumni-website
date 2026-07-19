@@ -34,6 +34,7 @@ type CommunityAlumniRecord = {
   phone?: string;
   year?: string;
   graduationYear?: string;
+  passedOutYear?: string;
   currentStatus?: string;
   createdAt?: string;
 };
@@ -263,6 +264,7 @@ const fetchAllProfiles = async () => {
     console.error('Error fetching profiles:', alumniError);
     return;
   }
+  console.log('[AdminDashboard] Raw alumni_profiles response:', { alumniData, alumniError });
 
   const alumniRecords: CommunityAlumniRecord[] = (alumniData || []).map(
     (item, index) => {
@@ -274,23 +276,34 @@ const fetchAllProfiles = async () => {
         item.status ||
         item.role;
 
-      return {
+      const passedOut = String(item.passed_out_year || item.Passed_Out_Year || item.passedOutYear || item.graduationYear || '');
+
+      const mapped = {
         id: item.id || `a-${index}`,
         name: item.First_Name || item.name || '',
         email: item.Email_Address || item.email || '',
         phone: item.Phone_Number || item.phone || '',
-        graduationYear: String(item.Passed_Out_Year || item.graduationYear || ''),
+        graduationYear: passedOut,
+        passedOutYear: passedOut,
         year: String(item.Year_of_Joining || item.year || ''),
         role: normalizeCurrentStatus(currentStatusValue),
         department: String(item.Department || item.department || '').toUpperCase(),
         currentStatus: currentStatusValue,
         createdAt: item.created_at,
-      };
+      } as CommunityAlumniRecord;
+
+      return mapped;
     }
   );
 
+  console.log('[AdminDashboard] Mapped alumniRecords sample:', alumniRecords.slice(0, 8));
   setReportAlumni(alumniRecords);
+  console.log('[AdminDashboard] reportAlumni set, count =', (alumniRecords || []).length);
 };
+
+useEffect(() => {
+  console.log('[AdminDashboard] Final reportAlumni (before render) sample:', reportAlumni.slice(0, 8));
+}, [reportAlumni]);
   const fetchAdminHighlights = async () => {
   const { data, error } = await supabase
     .from('alumni_highlights')
@@ -716,7 +729,7 @@ useEffect(() => {
       const matchesSearch = searchText.includes(searchTerm.toLowerCase());
       const matchesStatus = filterStatus === 'all' || item.department === filterStatus;
       const joinYearValue = String(item.year || '').trim();
-      const passedOutYearValue = String(item.graduationYear || '').trim();
+      const passedOutYearValue = String(item.passedOutYear || item.graduationYear || '').trim();
       const matchesJoiningYear = !showJoiningYearFilter || !joiningYear || joinYearValue === joiningYear;
       const matchesPassedOutYear = !showPassedOutYearFilter || !passedOutYear || passedOutYearValue === passedOutYear;
 
@@ -1648,7 +1661,7 @@ entrepreneurRatio: Math.round((entrepreneurCount / effectiveTotal) * 100),
                             <td className="px-6 py-4 text-sm text-slate-600">{alumnus.email || '—'}</td>
                             <td className="px-6 py-4 text-sm text-slate-600">{alumnus.phone || '—'}</td>
                             <td className="px-6 py-4 text-sm text-slate-600">{alumnus.year || '—'}</td>
-                            <td className="px-6 py-4 text-sm text-slate-600">{alumnus.graduationYear || '—'}</td>
+                            <td className="px-6 py-4 text-sm text-slate-600">{alumnus.passedOutYear || alumnus.graduationYear || '—'}</td>
                           </tr>
                         );
                       })
