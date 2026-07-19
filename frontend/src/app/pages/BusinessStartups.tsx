@@ -168,13 +168,13 @@ id === "ideas"
             <label className="relative block w-full sm:w-72"><span className="sr-only">Search discussions</span><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search topics, people, or skills" className="w-full rounded-xl border border-slate-300 dark:border-yellow-400/20 bg-white/70 dark:bg-slate-900/70 py-2.5 pl-9 pr-3 text-sm outline-none transition text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-yellow-500 focus:ring-2 focus:ring-yellow-500/20" /></label>
           </div>
 
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+          <div className="columns-1 gap-5 space-y-5 md:columns-2 xl:columns-3">
             {filteredItems.map((item) => {
               const joined = joinedIds.includes(item.id);
               return (
                 <article
   key={item.id}
-  className="flex min-h-[24rem] flex-col rounded-2xl border border-slate-200 dark:border-yellow-400/20 bg-white dark:bg-slate-900/70 p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-yellow-300 hover:shadow-md"
+  className="mb-5 inline-block w-full break-inside-avoid rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-yellow-300 hover:shadow-md dark:border-yellow-400/20 dark:bg-slate-900/70"
 >
   <div className="flex items-start justify-between gap-3">
     <div
@@ -219,7 +219,7 @@ id === "ideas"
 
   <button
 onClick={() => openPostLink(item.contactLink)}
-className="mt-auto flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-yellow-400 hover:text-slate-950"
+className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-yellow-400 hover:text-slate-950"
 >
   <MessageCircle className="h-4 w-4" />
   Contact
