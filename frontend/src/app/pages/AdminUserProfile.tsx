@@ -30,7 +30,26 @@ export function AdminUserProfile() {
 
         if (profileData) {
           setProfile(profileData);
-          
+
+          // Resolve passed-out year with fallback for all column naming variants
+          const passedOutYear =
+            profileData.Passed_Out_Year ||
+            profileData.passed_out_year ||
+            profileData.passout_year ||
+            profileData.graduation_year ||
+            profileData.graduationYear ||
+            profileData.batch ||
+            '';
+
+          console.log('[AdminUserProfile] Profile loaded:', {
+            email: profileData.Email_Address,
+            name: profileData.First_Name,
+            joinedYear: profileData.Year_of_Joining,
+            passedOutYearRaw: profileData.Passed_Out_Year,
+            passedOutYearSnake: profileData.passed_out_year,
+            passedOutYearResolved: passedOutYear,
+          });
+
           // Fetch posts (the schema has user_id or alumni_id)
           const { data: postsData } = await supabase
             .from('posts')
@@ -130,10 +149,12 @@ export function AdminUserProfile() {
                     <p className="text-slate-900 font-medium">{profile.Year_of_Joining}</p>
                   </div>
                 )}
-                {profile.Passed_Out_Year && (
+                {(profile.Passed_Out_Year || profile.passed_out_year || profile.passout_year || profile.graduation_year || profile.graduationYear || profile.batch) && (
                   <div>
-                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Graduated</p>
-                    <p className="text-slate-900 font-medium">{profile.Passed_Out_Year}</p>
+                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Passed Out Year</p>
+                    <p className="text-slate-900 font-medium">
+                      {profile.Passed_Out_Year || profile.passed_out_year || profile.passout_year || profile.graduation_year || profile.graduationYear || profile.batch}
+                    </p>
                   </div>
                 )}
                 {profile.College_Name && (

@@ -274,13 +274,40 @@ const fetchAllProfiles = async () => {
         item.status ||
         item.role;
 
+      // Extract passed-out year with fallback for all column naming variants
+      const passedOutYearValue =
+        item.Passed_Out_Year ||
+        item.passed_out_year ||
+        item.passout_year ||
+        item.graduation_year ||
+        item.graduationYear ||
+        item.batch ||
+        '';
+
+      // Extract joining/year-of-joining with fallback for all column naming variants
+      const joiningYearValue =
+        item.Year_of_Joining ||
+        item.year_of_joining ||
+        item.year ||
+        '';
+
+      console.log('[AdminDashboard] Mapping alumni record:', {
+        id: item.id || `a-${index}`,
+        name: item.First_Name || item.name || item.Email_Address || 'Unknown',
+        rawPassedOutYear: item.Passed_Out_Year,
+        rawPassedOutYearSnake: item.passed_out_year,
+        resolvedPassedOutYear: passedOutYearValue,
+        rawJoiningYear: item.Year_of_Joining,
+        resolvedJoiningYear: joiningYearValue,
+      });
+
       return {
         id: item.id || `a-${index}`,
         name: item.First_Name || item.name || '',
         email: item.Email_Address || item.email || '',
         phone: item.Phone_Number || item.phone || '',
-        graduationYear: String(item.Passed_Out_Year || item.graduationYear || ''),
-        year: String(item.Year_of_Joining || item.year || ''),
+        graduationYear: String(passedOutYearValue),
+        year: String(joiningYearValue),
         role: normalizeCurrentStatus(currentStatusValue),
         department: String(item.Department || item.department || '').toUpperCase(),
         currentStatus: currentStatusValue,
@@ -288,6 +315,9 @@ const fetchAllProfiles = async () => {
       };
     }
   );
+
+  console.log('[AdminDashboard] fetchAllProfiles complete. Total records:', alumniRecords.length);
+  console.log('[AdminDashboard] Sample records with graduationYear:', alumniRecords.slice(0, 3).map(r => ({ name: r.name, graduationYear: r.graduationYear, year: r.year })));
 
   setReportAlumni(alumniRecords);
 };
