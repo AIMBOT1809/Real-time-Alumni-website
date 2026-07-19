@@ -13,18 +13,20 @@ export function PostImageViewer({ src, alt = 'Post content', className = '', con
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setIsOpen(true)}
-        className={`mt-4 block w-full text-left ${containerClassName}`}
-        aria-label={`View full image for ${alt}`}
-      >
-        <img
-          src={src}
-          alt={alt}
-          className={`w-full h-auto max-h-[28rem] object-contain cursor-zoom-in ${className}`}
-        />
-      </button>
+      <div className="post-image-container w-full max-w-full px-4 box-border">
+        <button
+          type="button"
+          onClick={() => setIsOpen(true)}
+          className={`block w-full max-w-full text-left ${containerClassName}`}
+          aria-label={`View full image for ${alt}`}
+        >
+          <img
+            src={src}
+            alt={alt}
+            className={`w-full max-w-full h-auto max-h-[28rem] object-contain cursor-zoom-in block mx-auto ${className}`}
+          />
+        </button>
+      </div>
 
       {isOpen && (
         <div

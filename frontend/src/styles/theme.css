@@ -351,7 +351,6 @@
 }
 
 /* ===== Dark Theme Form Input Styles ===== */
-/* Ensure text inputs are clearly visible in dark mode */
 .dark input[type="text"],
 .dark input[type="email"],
 .dark input[type="password"],
@@ -362,49 +361,41 @@
   color: #ffffff !important;
 }
 
-/* Ensure select dropdowns show selected value in white in dark mode */
 .dark select {
   color: #ffffff !important;
 }
 
-/* Ensure file input text is visible in dark mode */
 .dark input[type="file"] {
   color: #ffffff !important;
 }
 
-/* Ensure file input filename text is visible in dark mode (WebKit/Blink) */
 .dark input[type="file"]::-webkit-file-upload-button {
   background-color: #f3f4f6 !important;
   color: #030213 !important;
 }
 
-/* Ensure file input filename text is visible in dark mode (Firefox) */
 .dark input[type="file"]::file-selector-button,
 .dark input[type="file"]::-moz-file-upload {
   background-color: #f3f4f6 !important;
   color: #030213 !important;
 }
 
-/* Ensure placeholder text is light gray in dark mode */
 .dark input::placeholder,
 .dark textarea::placeholder {
   color: #9ca3af !important;
 }
 
-/* Ensure cursor is visible in dark mode inputs */
 .dark input,
 .dark select,
 .dark textarea {
   caret-color: #fde047 !important;
 }
 
-/* Style for select options in dark mode (for dropdown) */
 .dark option {
   background-color: #1e293b !important;
   color: #ffffff !important;
 }
 
-/* Ensure select dropdown styling in dark mode */
 .dark select option {
   background-color: #1e293b !important;
   color: #ffffff !important;
@@ -556,7 +547,6 @@
   color: #eab308;
 }
 
-/* Navigation links - prevent focus-based active styling */
 .nav-link-focus {
   outline: none;
 }
@@ -568,13 +558,11 @@
   box-shadow: none;
 }
 
-/* Prevent any focus ring on navigation links */
 nav a:focus {
   outline: none !important;
   box-shadow: none !important;
 }
 
-/* Remove focus styles from all anchor tags in navigation */
 nav a:focus:not(.active) {
   outline: none !important;
   box-shadow: none !important;
@@ -636,19 +624,16 @@ section {
   }
 }
 
-/* Ensure the header glass panel doesn't overflow */
 .dashboard-shell header.glass-panel {
   border-left: none;
   border-right: none;
   border-radius: 0;
 }
 
-/* Fix navbar overflow */
 nav {
   max-width: 100%;
 }
 
-/* Fix sidebar overflow on mobile */
 aside {
   max-width: 100%;
   overflow-x: hidden;
@@ -661,52 +646,10 @@ aside {
   }
 }
 
-/* Mobile responsive: Break long words */
+/* Break long words */
 p, h1, h2, h3, h4, h5, h6, span, div, a, button {
   word-wrap: break-word;
   overflow-wrap: break-word;
-  -webkit-hyphens: auto;
-  -ms-hyphens: auto;
-  hyphens: auto;
-}
-
-/* Fix for grid layouts on mobile */
-@media (max-width: 768px) {
-  .grid {
-    grid-template-columns: 1fr !important;
-  }
-  
-  /* But allow flex layouts to keep their natural flow */
-  .flex {
-    flex-wrap: wrap;
-  }
-  
-  /* Explicit overrides for non-wrapping flex */
-  .flex-nowrap {
-    flex-wrap: nowrap !important;
-  }
-}
-
-@media (min-width: 769px) and (max-width: 1024px) {
-  .grid.grid-cols-2 {
-    grid-template-columns: 1fr 1fr;
-  }
-  
-  .grid.grid-cols-3 {
-    grid-template-columns: 1fr;
-  }
-  
-  .grid.md\:grid-cols-2 {
-    grid-template-columns: 1fr 1fr;
-  }
-  
-  .grid.md\:grid-cols-3 {
-    grid-template-columns: 1fr 1fr;
-  }
-  
-  .grid.md\:grid-cols-4 {
-    grid-template-columns: 1fr 1fr;
-  }
 }
 
 /* Fix for hero banner on mobile */
@@ -729,7 +672,6 @@ p, h1, h2, h3, h4, h5, h6, span, div, a, button {
   }
 }
 
-/* Fix for video banner on mobile */
 @media (max-width: 768px) {
   video {
     max-width: 100%;
@@ -737,14 +679,12 @@ p, h1, h2, h3, h4, h5, h6, span, div, a, button {
   }
 }
 
-/* DashboardHeader search bar - fix mobile */
 @media (max-width: 768px) {
   .dashboard-shell header .max-w-xl {
     max-width: 100%;
   }
 }
 
-/* Top navigation pill - fix mobile overflow */
 @media (max-width: 768px) {
   .dashboard-shell nav[aria-label="Top dashboard navigation"] {
     flex-wrap: nowrap;
@@ -753,7 +693,7 @@ p, h1, h2, h3, h4, h5, h6, span, div, a, button {
     justify-content: flex-start;
     gap: 0.25rem;
   }
-  
+
   .dashboard-shell nav[aria-label="Top dashboard navigation"] a {
     white-space: nowrap;
     font-size: 0.75rem;
@@ -762,7 +702,6 @@ p, h1, h2, h3, h4, h5, h6, span, div, a, button {
   }
 }
 
-/* Fix for max-w-\[1440px\] used in some pages */
 .max-w-\[1440px\] {
   width: 100%;
   max-width: 100%;
@@ -781,14 +720,12 @@ p, h1, h2, h3, h4, h5, h6, span, div, a, button {
   }
 }
 
-/* Fix Alumni Wall of Fame cards on mobile */
 @media (max-width: 768px) {
   .w-\[85vw\] {
     width: calc(100vw - 32px) !important;
   }
 }
 
-/* Fix for content padding on mobile */
 @media (max-width: 768px) {
   .px-4 {
     padding-left: 16px;
@@ -800,18 +737,13 @@ p, h1, h2, h3, h4, h5, h6, span, div, a, button {
   }
 }
 
-/* Fix stacked layout issue where content shifted right */
-.flex-row {
-  max-width: 100%;
-}
-
 /* n8n chat positioning fix for mobile */
 @media (max-width: 768px) {
   .chat-window-wrapper {
     right: 12px !important;
     bottom: 12px !important;
   }
-  
+
   .chat-window-wrapper .chat-window-toggle {
     width: 60px !important;
     height: 60px !important;
@@ -822,9 +754,6 @@ p, h1, h2, h3, h4, h5, h6, span, div, a, button {
 /* HOME PAGE MOBILE RESPONSIVE - CTA Buttons */
 /* ===================== */
 
-/* CTA container: always centered, never shifted right.
-   The container itself uses inline Flexbox from Home.tsx (items-center justify-center flex-wrap),
-   these rules serve as a safety net against any parent override. */
 .cta-buttons-container {
   display: flex !important;
   justify-content: center !important;
@@ -834,7 +763,6 @@ p, h1, h2, h3, h4, h5, h6, span, div, a, button {
   width: 100% !important;
 }
 
-/* CTA buttons: identical sizing, stable */
 .cta-btn {
   display: inline-flex !important;
   align-items: center !important;
@@ -844,14 +772,12 @@ p, h1, h2, h3, h4, h5, h6, span, div, a, button {
   min-height: 44px !important;
 }
 
-/* 376px+ => side-by-side */
 @media (min-width: 376px) {
   .cta-btn {
     width: auto !important;
   }
 }
 
-/* 320px–375px => stack vertically */
 @media (max-width: 375px) {
   .cta-buttons-container {
     flex-direction: column !important;
@@ -860,5 +786,110 @@ p, h1, h2, h3, h4, h5, h6, span, div, a, button {
   .cta-btn {
     width: 90% !important;
     max-width: 320px !important;
+  }
+}
+
+/* ===================== */
+/* POST CARD MOBILE RESPONSIVE - NEW */
+/* ===================== */
+@media (max-width: 768px) {
+  /* Post card container - ensure full width and centered */
+  article.bg-slate-900.rounded-lg {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Post header - keep avatar and text on same row */
+  article.bg-slate-900.rounded-lg .p-4.flex.items-start {
+    flex-wrap: nowrap !important;
+    gap: 0.75rem;
+  }
+
+  /* Post avatar - don't get too small */
+  article.bg-slate-900.rounded-lg img.h-12.w-12 {
+    flex-shrink: 0;
+  }
+
+  /* Post content text - keep within card */
+  article.bg-slate-900.rounded-lg .px-4.pb-3 {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  /* Action buttons row - keep on a single line with equal spacing */
+  article.bg-slate-900.rounded-lg .flex.items-center.justify-around {
+    flex-wrap: nowrap !important;
+    gap: 0;
+    justify-content: space-around !important;
+  }
+
+  /* Each action button - don't wrap, use flex-shrink */
+  article.bg-slate-900.rounded-lg .flex.items-center.justify-around button {
+    flex: 1;
+    flex-wrap: nowrap !important;
+    justify-content: center;
+    white-space: nowrap;
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
+    min-width: 0;
+  }
+
+  /* Ensure all 3 action buttons are visible */
+  article.bg-slate-900.rounded-lg .flex.items-center.justify-around button:nth-child(3) {
+    display: flex !important;
+  }
+
+  /* Post image - ensure it fits within the card */
+  .post-image-container {
+    width: 100%;
+    max-width: 100%;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  .post-image-container img,
+  .post-image-container button {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* Like/comment/share icons and text - no wrapping */
+  article.bg-slate-900.rounded-lg .flex.items-center.justify-around button .text-lg {
+    flex-shrink: 0;
+  }
+
+  article.bg-slate-900.rounded-lg .flex.items-center.justify-around button span:last-child {
+    font-size: 0.75rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Profile section in post header */
+  article.bg-slate-900.rounded-lg .flex.items-start.space-x-3 > div.flex-1 > div.flex.items-center.justify-between {
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+
+  /* Timestamp line */
+  article.bg-slate-900.rounded-lg .text-xs.text-slate-500 {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* Fix for very narrow screens (320px-374px) */
+@media (max-width: 374px) {
+  article.bg-slate-900.rounded-lg .flex.items-center.justify-around button {
+    padding-left: 0.125rem;
+    padding-right: 0.125rem;
+    font-size: 0.7rem;
+  }
+
+  article.bg-slate-900.rounded-lg .flex.items-center.justify-around button .text-lg {
+    font-size: 1rem;
   }
 }
