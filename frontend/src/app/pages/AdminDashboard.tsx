@@ -818,73 +818,74 @@ entrepreneurRatio: Math.round((entrepreneurCount / effectiveTotal) * 100),
   }
 
   return (
-    //<div className="min-h-screen bg-slate-100">
-      <div className="sticky top-0 z-50 bg-white border-b border-slate-200 shadow-sm">
-        <div className="w-full px-4 py-6 sm:px-6 lg:px-8">
-          <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 md:flex-row md:flex-wrap md:items-center md:justify-between">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold text-slate-900">Admin Dashboard</h1>
-            </div>
-          <button
-            onClick={handleLogout}
-            className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 transition-colors"
-          >
-            <LogOut className="h-4 w-4" />
-            Logout
-          </button>
+    <div className="min-h-screen bg-slate-100">
+      {/* Sticky Header - Title Row + Nav Row */}
+      <div className="sticky top-0 z-[1000] w-full bg-white border-b border-slate-200 shadow-sm">
+        {/* Header Row 1: Title + Logout */}
+        <div className="w-full px-4 py-4 sm:px-6 lg:px-8">
+          <div className="mx-auto flex w-full max-w-7xl items-center justify-between">
+            <h1 className="text-xl md:text-2xl font-bold text-slate-900 whitespace-nowrap">Admin Dashboard</h1>
+            <button
+              onClick={handleLogout}
+              className="flex-shrink-0 inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 transition-colors"
+            >
+              <LogOut className="h-4 w-4" />
+              Logout
+            </button>
+          </div>
         </div>
-      </div>
+        {/* Header Row 2: Navigation */}
+        <div className="w-full border-t border-slate-100">
+          <div className="mx-auto w-full max-w-7xl">
+            <nav className="hide-scrollbar flex items-center gap-1 overflow-x-auto whitespace-nowrap px-4 sm:px-6 lg:px-8">
+              <button
+                onClick={() => setActiveTab('home')}
+                className={`flex items-center gap-1.5 px-3 py-2 border-b-4 text-sm font-semibold transition-all rounded-t-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 flex-shrink-0 ${
+                  activeTab === 'home'
+                    ? 'border-yellow-500 text-yellow-700 bg-white shadow-sm'
+                    : 'border-transparent text-slate-700 hover:text-slate-900 hover:bg-slate-50'
+                }`}
+              >
+                <Home className="h-4 w-4 flex-shrink-0" />
+                <span className="leading-none whitespace-nowrap">Home</span>
+              </button>
 
-      <div className="sticky top-[88px] z-40 w-full bg-slate-50 border-b border-slate-200 shadow-sm">
-        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 overflow-x-auto pb-2">
-          <div className="flex flex-wrap gap-2 justify-start">
-            <button
-              onClick={() => setActiveTab('home')}
-              className={`flex items-center gap-3 px-6 py-3 border-b-4 text-base md:text-lg font-semibold transition-all rounded-t-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 ${
-                activeTab === 'home'
-                  ? 'border-yellow-500 text-yellow-700 bg-white shadow-sm'
-                  : 'border-transparent text-slate-700 hover:text-slate-900 hover:bg-slate-50'
-              }`}
-            >
-              <Home className="h-5 w-5" />
-              <span className="leading-none">Home</span>
-            </button>
+              <button
+                onClick={() => setActiveTab('reports')}
+                className={`flex items-center gap-1.5 px-3 py-2 border-b-4 text-sm font-semibold transition-all rounded-t-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 flex-shrink-0 ${
+                  activeTab === 'reports'
+                    ? 'border-yellow-500 text-yellow-700 bg-white shadow-sm'
+                    : 'border-transparent text-slate-700 hover:text-slate-900 hover:bg-slate-50'
+                }`}
+              >
+                <FileText className="h-4 w-4 flex-shrink-0" />
+                <span className="leading-none whitespace-nowrap">Community Report</span>
+              </button>
 
-            <button
-              onClick={() => setActiveTab('reports')}
-              className={`flex items-center gap-3 px-6 py-3 border-b-4 text-base md:text-lg font-semibold transition-all rounded-t-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 ${
-                activeTab === 'reports'
-                  ? 'border-yellow-500 text-yellow-700 bg-white shadow-sm'
-                  : 'border-transparent text-slate-700 hover:text-slate-900 hover:bg-slate-50'
-              }`}
-            >
-              <FileText className="h-5 w-5" />
-              <span className="leading-none">Community Report</span>
-            </button>
+              <button
+                onClick={() => setActiveTab('analytics')}
+                className={`flex items-center gap-1.5 px-3 py-2 border-b-4 text-sm font-semibold transition-all rounded-t-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 flex-shrink-0 ${
+                  activeTab === 'analytics'
+                    ? 'border-yellow-500 text-yellow-700 bg-white shadow-sm'
+                    : 'border-transparent text-slate-700 hover:text-slate-900 hover:bg-slate-50'
+                }`}
+              >
+                <BarChart3 className="h-4 w-4 flex-shrink-0" />
+                <span className="leading-none whitespace-nowrap">Analytics Dashboard</span>
+              </button>
 
-            <button
-              onClick={() => setActiveTab('analytics')}
-              className={`flex items-center gap-3 px-6 py-3 border-b-4 text-base md:text-lg font-semibold transition-all rounded-t-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 ${
-                activeTab === 'analytics'
-                  ? 'border-yellow-500 text-yellow-700 bg-white shadow-sm'
-                  : 'border-transparent text-slate-700 hover:text-slate-900 hover:bg-slate-50'
-              }`}
-            >
-              <BarChart3 className="h-5 w-5" />
-              <span className="leading-none">Analytics Dashboard</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('admins')}
-              className={`flex items-center gap-3 px-6 py-3 border-b-4 text-base md:text-lg font-semibold transition-all rounded-t-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 ${
-                activeTab === 'admins'
-                  ? 'border-yellow-500 text-yellow-700 bg-white shadow-sm'
-                  : 'border-transparent text-slate-700 hover:text-slate-900 hover:bg-slate-50'
-              }`}
-            >
-              <Settings className="h-5 w-5" />
-              <span className="leading-none">Admin Management</span>
-            </button>
+              <button
+                onClick={() => setActiveTab('admins')}
+                className={`flex items-center gap-1.5 px-3 py-2 border-b-4 text-sm font-semibold transition-all rounded-t-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 flex-shrink-0 ${
+                  activeTab === 'admins'
+                    ? 'border-yellow-500 text-yellow-700 bg-white shadow-sm'
+                    : 'border-transparent text-slate-700 hover:text-slate-900 hover:bg-slate-50'
+                }`}
+              >
+                <Settings className="h-4 w-4 flex-shrink-0" />
+                <span className="leading-none whitespace-nowrap">Admin Management</span>
+              </button>
+            </nav>
           </div>
         </div>
       </div>
