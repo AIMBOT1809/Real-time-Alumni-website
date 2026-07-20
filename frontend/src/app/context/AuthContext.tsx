@@ -505,12 +505,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (payload: UserProfile | User) => {
     console.log('[AuthContext] login() payload received:', payload);
+    const userRole = 'role' in payload ? payload.role : (payload.user_metadata?.role || 'alumni');
+    const isFaculty = userRole.toLowerCase() === 'faculty';
+    
     if ('email' in payload && 'id' in payload && !('role' in payload)) {
       const savedProfile = getSavedUserProfile(payload.email, payload.id);
       if (savedProfile) {
         try {
-          const res = await supabase.from('alumni_profiles').select('*').eq('user_id', payload.id).maybeSingle();
-          const dbProfile = res.data || null;
+          // Fetch from appropriate table based on role
+          let dbProfile: any = null;
+          if (isFaculty) {
+            const res = await supabase.from('faculty_profiles').select('*').eq('user_id', payload.id).maybeSingle();
+            dbProfile = res.data || null;
+          } else {
+            const res = await supabase.from('alumni_profiles').select('*').eq('user_id', payload.id).maybeSingle();
+            dbProfile = res.data || null;
+          }
+          
           if (dbProfile) {
             const firstName = dbProfile.First_Name || dbProfile.first_name || '';
             const lastName = dbProfile.Last_name || dbProfile.last_name || '';
@@ -518,6 +529,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const merged: UserProfile = {
               ...savedProfile,
               name: fullName,
+              role: userRole,
               avatar: dbProfile.Photo_URL || dbProfile.photo_url || savedProfile.avatar,
               collegeName: dbProfile.College_Name || dbProfile.college_name || savedProfile.collegeName,
               rollNumber: dbProfile.Roll_Number || dbProfile.roll_number || savedProfile.rollNumber,
@@ -530,6 +542,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               resume: dbProfile.Resume_URL || dbProfile.resume || savedProfile.resume,
               skills: savedProfile.skills?.length ? savedProfile.skills : (dbProfile.Skills || []),
               links: savedProfile.links?.length ? savedProfile.links : (dbProfile.Links || []),
+              facultyId: dbProfile.Faculty_ID || savedProfile.facultyId,
+              facultyType: dbProfile.Faculty_Type || savedProfile.facultyType,
+              yearsOfExperience: dbProfile.Years_Of_Experience || savedProfile.yearsOfExperience,
             };
             setUser(merged);
             localStorage.setItem('allumini_user', JSON.stringify(merged));
@@ -553,11 +568,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         (async () => {
           if (!payload.email) return;
           try {
-            const { data: profileData, error: profileError } = await supabase
-              .from('alumni_profiles')
-              .select('*')
-              .ilike('Email_Address', payload.email)
-              .maybeSingle();
+            let profileData: any = null;
+            let profileError: any = null;
+            
+            if (isFaculty) {
+              const res = await supabase
+                .from('faculty_profiles')
+                .select('*')
+                .ilike('Email_Address', payload.email)
+                .maybeSingle();
+              profileData = res.data;
+              profileError = res.error;
+            } else {
+              const res = await supabase
+                .from('alumni_profiles')
+                .select('*')
+                .ilike('Email_Address', payload.email)
+                .maybeSingle();
+              profileData = res.data;
+              profileError = res.error;
+            }
 
             if (profileError) {
               console.warn('[AuthContext] Background profile refresh failed:', profileError.message, profileError.code, profileError);
@@ -573,6 +603,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const refreshed: UserProfile = {
               ...savedProfile,
               name: fullName,
+              role: userRole,
               avatar: profileData.Photo_URL || profileData.photo_url || savedProfile.avatar,
               collegeName: profileData.College_Name || profileData.college_name || savedProfile.collegeName,
               rollNumber: profileData.Roll_Number || profileData.roll_number || savedProfile.rollNumber,
@@ -584,6 +615,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               about: profileData.About || profileData.about || savedProfile.about,
               linkedin: profileData.LinkedIn_Profile_URL || profileData.linkedin || savedProfile.linkedin,
               resume: profileData.Resume_URL || profileData.resume || savedProfile.resume,
+              facultyId: profileData.Faculty_ID || savedProfile.facultyId,
+              facultyType: profileData.Faculty_Type || savedProfile.facultyType,
+              yearsOfExperience: profileData.Years_Of_Experience || savedProfile.yearsOfExperience,
             };
 
             setUser(refreshed);

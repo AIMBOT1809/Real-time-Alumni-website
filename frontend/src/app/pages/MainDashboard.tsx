@@ -197,6 +197,94 @@ export function MainDashboard() {
   const [deleteConfirmPost, setDeleteConfirmPost] = useState<string | null>(null);
   const [isDeletingPost, setIsDeletingPost] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [facultyProfile, setFacultyProfile] = useState<any>(null);
+  const [loadingFacultyProfile, setLoadingFacultyProfile] = useState(false);
+
+  // Fetch faculty profile data
+  useEffect(() => {
+    const fetchFacultyProfile = async () => {
+      if (!user?.id || role !== 'faculty') return;
+      
+      try {
+        setLoadingFacultyProfile(true);
+        console.log('[MainDashboard] Fetching faculty profile for user:', user.id);
+        console.log('[MainDashboard] User email:', user.email);
+        
+        // First, let's check ALL faculty profiles to see what's there
+        const { data: allProfiles, error: allError } = await supabase
+          .from('faculty_profiles')
+          .select('user_id, First_Name, Last_name, Email_Address')
+          .limit(10);
+
+        console.log('[MainDashboard] All faculty profiles in database:', allProfiles);
+        console.log('[MainDashboard] Total faculty profiles found:', allProfiles?.length || 0);
+        
+        if (allError) {
+          console.error('[MainDashboard] Error fetching all profiles:', allError);
+        }
+
+        // Now try to fetch the specific user's profile with .single() instead of .maybeSingle()
+        const { data, error } = await supabase
+          .from('faculty_profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+
+        if (error) {
+          console.error('[MainDashboard] Error fetching faculty profile:', error);
+          console.error('[MainDashboard] Error code:', error.code);
+          console.error('[MainDashboard] Error message:', error.message);
+          console.error('[MainDashboard] Error details:', error.details);
+          console.error('[MainDashboard] Error hint:', error.hint);
+          
+          // If RLS error, try without RLS by using service role (if available)
+          if (error.code === 'PGRST301' || error.message?.includes('row-level security')) {
+            console.warn('[MainDashboard] RLS policy may be blocking the query');
+            console.warn('[MainDashboard] Check if RLS policies allow faculty to read their own profile');
+          }
+          
+          // Try alternative: fetch by email instead
+          if (user.email) {
+            console.log('[MainDashboard] Trying alternative query by email:', user.email);
+            const { data: emailData, error: emailError } = await supabase
+              .from('faculty_profiles')
+              .select('*')
+              .eq('Email_Address', user.email)
+              .maybeSingle();
+            
+            console.log('[MainDashboard] Email query result:', emailData);
+            
+            if (emailData && !emailError) {
+              setFacultyProfile(emailData);
+              console.log('[MainDashboard] Found profile by email!');
+              return;
+            }
+          }
+          
+          return;
+        }
+
+        console.log('[MainDashboard] Faculty profile data for current user:', data);
+        console.log('[MainDashboard] Faculty profile keys:', data ? Object.keys(data) : 'No data');
+        
+        if (data) {
+          setFacultyProfile(data);
+        } else {
+          console.warn('[MainDashboard] No faculty profile found for user:', user.id);
+          console.warn('[MainDashboard] This means the faculty_profiles record either:');
+          console.warn('  1. Does not exist');
+          console.warn('  2. Has a different user_id than expected');
+          console.warn('  3. user_id column name is different');
+        }
+      } catch (err) {
+        console.error('[MainDashboard] Unexpected error fetching faculty profile:', err);
+      } finally {
+        setLoadingFacultyProfile(false);
+      }
+    };
+
+    fetchFacultyProfile();
+  }, [user?.id, role]);
 
   // Helper to route post interactions based on post source
   const getPostActions = (post: any) => {
@@ -344,6 +432,10 @@ export function MainDashboard() {
     linkedin: user?.linkedin || '',
     resume: user?.resume || '',
     avatar: user?.avatar || '',
+    facultyId: (user as any)?.facultyId || '',
+    facultyType: (user as any)?.facultyType || '',
+    yearsOfExperience: (user as any)?.yearsOfExperience || undefined,
+    officeEmail: (user as any)?.officeEmail || '',
   });
   const [skills, setSkills] = useState(
   Array.isArray(user?.skills)
@@ -369,6 +461,10 @@ export function MainDashboard() {
       linkedin: user?.linkedin || '',
       resume: user?.resume || '',
       avatar: user?.avatar || '',
+      facultyId: (user as any)?.facultyId || '',
+      facultyType: (user as any)?.facultyType || '',
+      yearsOfExperience: (user as any)?.yearsOfExperience || undefined,
+      officeEmail: (user as any)?.officeEmail || '',
     });
     setSkills(Array.isArray(user?.skills) ? user.skills : []);
     setLinks(user?.links || []);
@@ -707,55 +803,106 @@ export function MainDashboard() {
   }
 
   console.log('[Profile Save] Starting profile update...');
-  console.log('[Profile Save] Table: alumni_profiles');
-  console.log('[Profile Save] Updating row with user_id:', user.id);
-  console.log('[Profile Save] User email:', user.email);
+  console.log('[Profile Save] User role:', role);
+  console.log('[Profile Save] User id:', user.id);
 
-  const updatePayload = {
-    College_Name: formData.collegeName,
-    Roll_Number: formData.rollNumber,
-    Department: formData.department,
-    Year_of_Joining: formData.yearOfJoining,
-    Passed_Out_Year: formData.passedOutYear,
-    study_year: formData.studyYear,
-    about: formData.about,
-    Skills: skills.join(","),
-    links,
-  };
+  try {
+    if (role === 'faculty') {
+      // Save to faculty_profiles table
+      console.log('[Profile Save] Saving to faculty_profiles table');
+      
+      const facultyPayload = {
+        user_id: user.id,
+        Faculty_ID: formData.facultyId,
+        Faculty_Type: formData.facultyType,
+        Department: formData.department,
+        Years_Of_Experience: formData.yearsOfExperience,
+        Email_Address: user.email,
+        LinkedIn_Profile_URL: formData.linkedin,
+        About: formData.about,
+      };
 
-  console.log('[Profile Save] Update payload:', JSON.stringify(updatePayload, null, 2));
+      console.log('[Profile Save] Faculty payload:', JSON.stringify(facultyPayload, null, 2));
 
-  const { data, error } = await supabase
-    .from("alumni_profiles")
-    .update(updatePayload)
-    .eq("user_id", user.id)
-    .select();
+      // Try to update first
+      const { data: updateData, error: updateError } = await supabase
+        .from('faculty_profiles')
+        .update(facultyPayload)
+        .eq('user_id', user.id)
+        .select();
 
-  if (error) {
-    console.error('[Profile Save] Supabase update error:', {
-      code: error.code,
-      message: error.message,
-      details: error.details,
-      hint: error.hint,
-    });
-    showGlobalToast('Failed to update profile: ' + error.message, 'error');
-    return;
+      if (updateError) {
+        console.error('[Profile Save] Faculty update error:', updateError);
+        // If update fails, try to insert
+        const { data: insertData, error: insertError } = await supabase
+          .from('faculty_profiles')
+          .insert(facultyPayload)
+          .select();
+
+        if (insertError) {
+          console.error('[Profile Save] Faculty insert error:', insertError);
+          showGlobalToast('Failed to update faculty profile: ' + insertError.message, 'error');
+          return;
+        }
+
+        console.log('[Profile Save] Faculty profile inserted:', insertData);
+      } else {
+        console.log('[Profile Save] Faculty profile updated:', updateData);
+      }
+    } else {
+      // Save to alumni_profiles table for alumni/students
+      console.log('[Profile Save] Saving to alumni_profiles table');
+      
+      const updatePayload = {
+        College_Name: formData.collegeName,
+        Roll_Number: formData.rollNumber,
+        Department: formData.department,
+        Year_of_Joining: formData.yearOfJoining,
+        Passed_Out_Year: formData.passedOutYear,
+        study_year: formData.year,
+        about: formData.about,
+        Skills: skills.join(","),
+        links,
+      };
+
+      console.log('[Profile Save] Alumni payload:', JSON.stringify(updatePayload, null, 2));
+
+      const { data, error } = await supabase
+        .from("alumni_profiles")
+        .update(updatePayload)
+        .eq("user_id", user.id)
+        .select();
+
+      if (error) {
+        console.error('[Profile Save] Supabase update error:', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+        });
+        showGlobalToast('Failed to update profile: ' + error.message, 'error');
+        return;
+      }
+
+      console.log('[Profile Save] Update successful!');
+      console.log('[Profile Save] Updated row:', data);
+    }
+
+    const updatedUser = {
+      ...user,
+      ...formData,
+      skills,
+      links,
+    };
+
+    await login(updatedUser);
+    setIsEditing(false);
+
+    showGlobalToast("Profile updated successfully!", 'success');
+  } catch (err) {
+    console.error('[Profile Save] Unexpected error:', err);
+    showGlobalToast('Failed to update profile', 'error');
   }
-
-  console.log('[Profile Save] Update successful!');
-  console.log('[Profile Save] Updated row:', data);
-
-  const updatedUser = {
-    ...user,
-    ...formData,
-    skills,
-    links,
-  };
-
-  await login(updatedUser);
-  setIsEditing(false);
-
-  showGlobalToast("Profile updated successfully!", 'success');
 };
 
   const handleCancel = () => {
@@ -770,6 +917,10 @@ export function MainDashboard() {
       linkedin: user?.linkedin || '',
       resume: user?.resume || '',
       avatar: user?.avatar || '',
+      facultyId: (user as any)?.facultyId || '',
+      facultyType: (user as any)?.facultyType || '',
+      yearsOfExperience: (user as any)?.yearsOfExperience || undefined,
+      officeEmail: (user as any)?.officeEmail || '',
     });
     setSkills(Array.isArray(user?.skills) ? user.skills : []);
     setLinks(user?.links || []);
@@ -2125,76 +2276,154 @@ const author =
 
                     {/* Form Fields */}
                     <div className="space-y-3">
-                      <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1">College Name *</label>
-                        <input
-                          type="text"
-                          placeholder="Your college name"
-                          value={formData.collegeName}
-                          onChange={(e) => setFormData(prev => ({ ...prev, collegeName: e.target.value }))}
-                          className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
-                        />
-                      </div>
+                      {role === 'faculty' ? (
+                        /* Faculty-specific fields */
+                        <>
+                          <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-1">Faculty ID *</label>
+                            <input
+                              type="text"
+                              placeholder="Your Faculty ID"
+                              value={formData.facultyId || ''}
+                              onChange={(e) => setFormData(prev => ({ ...prev, facultyId: e.target.value }))}
+                              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
+                            />
+                          </div>
 
-                      <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1">Roll Number *</label>
-                        <input
-                          type="text"
-                          placeholder="Your roll number"
-                          value={formData.rollNumber}
-                          onChange={(e) => setFormData(prev => ({ ...prev, rollNumber: e.target.value }))}
-                          className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
-                        />
-                      </div>
+                          <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-1">Faculty Type *</label>
+                            <select
+                              value={formData.facultyType || ''}
+                              onChange={(e) => setFormData(prev => ({ ...prev, facultyType: e.target.value }))}
+                              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
+                            >
+                              <option value="">Select Faculty Type</option>
+                              <option value="Full-Time">Professor</option>
+                              <option value="Part-Time">Associate Professor</option>
+                              <option value="Visiting">Assistant Professor</option>
+                              <option value="Contract">HoD</option>
+                              <option value="Lecturer">Lecturer</option>
+                              <option value="Other">Other</option>
+                            </select>
+                          </div>
 
-                      <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1">Department *</label>
-                        <input
-                          type="text"
-                          placeholder="Your department"
-                          value={formData.department}
-                          onChange={(e) => setFormData(prev => ({ ...prev, department: e.target.value }))}
-                          className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
-                        />
-                      </div>
+                          <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-1">Department *</label>
+                            <select
+                              value={formData.department}
+                              onChange={(e) => setFormData(prev => ({ ...prev, department: e.target.value }))}
+                              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
+                            >
+                              <option value="">Select Department</option>
+                              <option value="CSE">CSE</option>
+                              <option value="CSD">CSD</option>
+                              <option value="CSM">CSM</option>
+                              <option value="ECE">ECE</option>
+                              <option value="EEE">EEE</option>
+                              <option value="IT">IT</option>
+                              <option value="MECH">MECH</option>
+                              <option value="CIVIL">CIVIL</option>
+                            </select>
+                          </div>
 
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-sm font-medium text-slate-300 mb-1">Year of Joining</label>
-                          <input
-                            type="number"
-                            min="1950"
-                            max={new Date().getFullYear()}
-                            placeholder="e.g., 2020"
-                            value={user?.yearOfJoining || ''}
-                            onChange={(e) => setFormData(prev => ({ ...prev, yearOfJoining: parseInt(e.target.value) }))}
-                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-slate-300 mb-1">Year of Passing Out</label>
-                          <input
-                            type="number"
-                            min="1950"
-                            max={new Date().getFullYear() + 10}
-                            placeholder="e.g., 2024"
-                            value={user?.passedOutYear || ''}
-                            onChange={(e) => setFormData(prev => ({ ...prev, passedOutYear: parseInt(e.target.value) }))}
-                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
-                          />
-                        </div>
-                      </div>
+                          <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-1">Years of Experience *</label>
+                            <input
+                              type="number"
+                              min="0"
+                              placeholder="e.g., 5"
+                              value={formData.yearsOfExperience || ''}
+                              onChange={(e) => setFormData(prev => ({ ...prev, yearsOfExperience: parseInt(e.target.value) }))}
+                              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
+                            />
+                          </div>
 
-                      <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1">Study Year *</label>
-                        <input
-                          type="text"
-                          placeholder="Your year (e.g., 2nd Year)"
-                          value={formData.year}
-                          onChange={(e) => setFormData(prev => ({ ...prev, year: e.target.value }))}
-                          className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
-                        />
-                      </div>
+                          <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-1">Office Email</label>
+                            <input
+                              type="email"
+                              placeholder="e.g., faculty@college.edu"
+                              value={formData.officeEmail || ''}
+                              onChange={(e) => setFormData(prev => ({ ...prev, officeEmail: e.target.value }))}
+                              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
+                            />
+                          </div>
+                        </>
+                      ) : (
+                        /* Alumni/Student fields */
+                        <>
+                          <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-1">College Name *</label>
+                            <input
+                              type="text"
+                              placeholder="Your college name"
+                              value={formData.collegeName}
+                              onChange={(e) => setFormData(prev => ({ ...prev, collegeName: e.target.value }))}
+                              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-1">Roll Number *</label>
+                            <input
+                              type="text"
+                              placeholder="Your roll number"
+                              value={formData.rollNumber}
+                              onChange={(e) => setFormData(prev => ({ ...prev, rollNumber: e.target.value }))}
+                              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-1">Department *</label>
+                            <input
+                              type="text"
+                              placeholder="Your department"
+                              value={formData.department}
+                              onChange={(e) => setFormData(prev => ({ ...prev, department: e.target.value }))}
+                              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Year of Joining</label>
+                              <input
+                                type="number"
+                                min="1950"
+                                max={new Date().getFullYear()}
+                                placeholder="e.g., 2020"
+                                value={user?.yearOfJoining || ''}
+                                onChange={(e) => setFormData(prev => ({ ...prev, yearOfJoining: parseInt(e.target.value) }))}
+                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Year of Passing Out</label>
+                              <input
+                                type="number"
+                                min="1950"
+                                max={new Date().getFullYear() + 10}
+                                placeholder="e.g., 2024"
+                                value={user?.passedOutYear || ''}
+                                onChange={(e) => setFormData(prev => ({ ...prev, passedOutYear: parseInt(e.target.value) }))}
+                                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-1">Study Year *</label>
+                            <input
+                              type="text"
+                              placeholder="Your year (e.g., 2nd Year)"
+                              value={formData.year}
+                              onChange={(e) => setFormData(prev => ({ ...prev, year: e.target.value }))}
+                              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
+                            />
+                          </div>
+                        </>
+                      )}
 
                       <div>
                         <label className="block text-sm font-medium text-slate-300 mb-1">About</label>
@@ -2340,9 +2569,14 @@ const author =
                           {user?.collegeName && <p className="text-slate-300">{user.collegeName}</p>}
                           {user?.about && <p className="text-slate-200 mt-2 whitespace-pre-wrap">{user.about}</p>}
                           {user?.email && <p className="text-slate-400 mt-1">{user.email}</p>}
-                          {user?.linkedin && (
-                            <a href={user.linkedin.startsWith('http') ? user.linkedin : `https://${user.linkedin}`} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 hover:underline mt-1 block">
-                              {user.linkedin.replace(/^https?:\/\/(www\.)?/, '')}
+                          {(facultyProfile?.LinkedIn_Profile_URL || user?.linkedin) && (
+                            <a 
+                              href={(facultyProfile?.LinkedIn_Profile_URL || user?.linkedin)?.startsWith('http') ? (facultyProfile?.LinkedIn_Profile_URL || user?.linkedin) : `https://${facultyProfile?.LinkedIn_Profile_URL || user?.linkedin}`} 
+                              target="_blank" 
+                              rel="noopener noreferrer" 
+                              className="text-[#FFD700] hover:underline mt-1 block"
+                            >
+                              {facultyProfile?.LinkedIn_Profile_URL || user?.linkedin}
                             </a>
                           )}
                         </div>
@@ -2353,30 +2587,57 @@ const author =
 
                     {/* Profile Grid */}
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                      {user?.rollNumber && (
+                      {/* Student: Roll Number, Study Year */}
+                      {role === 'student' && user?.rollNumber && (
                         <div className="rounded-lg bg-slate-800 p-4">
                           <p className="text-sm text-slate-400">Roll Number</p>
                           <p className="text-white">{user.rollNumber}</p>
                         </div>
                       )}
-                      {user?.year && (
+                      {role === 'student' && user?.year && (
                         <div className="rounded-lg bg-slate-800 p-4">
                           <p className="text-sm text-slate-400">Study Year</p>
                           <p className="text-white">{user.year}</p>
                         </div>
                       )}
-                      {user?.yearOfJoining && (
+
+                      {/* Alumni: Roll Number, Passed Out Year */}
+                      {role === 'alumni' && user?.rollNumber && (
                         <div className="rounded-lg bg-slate-800 p-4">
-                          <p className="text-sm text-slate-400">Year of Joining</p>
-                          <p className="text-white">{user.yearOfJoining}</p>
+                          <p className="text-sm text-slate-400">Roll Number</p>
+                          <p className="text-white">{user.rollNumber}</p>
                         </div>
                       )}
-                      {user?.passedOutYear && (
+                      {role === 'alumni' && user?.passedOutYear && (
                         <div className="rounded-lg bg-slate-800 p-4">
-                          <p className="text-sm text-slate-400">Year of Passing Out</p>
+                          <p className="text-sm text-slate-400">Passed Out Year</p>
                           <p className="text-white">{user.passedOutYear}</p>
                         </div>
                       )}
+
+                      {/* Faculty: Faculty ID, Faculty Type, Department, Years of Experience */}
+                      {role === 'faculty' && (
+                        <>
+                          <div className="rounded-lg bg-slate-800 p-4">
+                            <p className="text-sm text-slate-400">Faculty ID</p>
+                            <p className="text-white">{facultyProfile?.Faculty_ID || facultyProfile?.faculty_id || 'Not Provided'}</p>
+                          </div>
+                          <div className="rounded-lg bg-slate-800 p-4">
+                            <p className="text-sm text-slate-400">Faculty Type</p>
+                            <p className="text-white">{facultyProfile?.Faculty_Type || facultyProfile?.faculty_type || 'Not Provided'}</p>
+                          </div>
+                          <div className="rounded-lg bg-slate-800 p-4">
+                            <p className="text-sm text-slate-400">Department</p>
+                            <p className="text-white">{facultyProfile?.Department || facultyProfile?.department || user?.department || 'Not Provided'}</p>
+                          </div>
+                          <div className="rounded-lg bg-slate-800 p-4">
+                            <p className="text-sm text-slate-400">Years of Experience</p>
+                            <p className="text-white">{facultyProfile?.Years_Of_Experience || facultyProfile?.years_of_experience || facultyProfile?.experience_years || 'Not Provided'}</p>
+                          </div>
+                        </>
+                      )}
+
+                      {/* Common fields for all roles */}
                       {user?.linkedin && (
                         <div className="rounded-lg bg-slate-800 p-4">
                           <p className="text-sm text-slate-400">LinkedIn</p>

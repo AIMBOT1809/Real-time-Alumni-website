@@ -22,6 +22,7 @@ import X from 'lucide-react/dist/esm/icons/x';
 import ChevronLeft from 'lucide-react/dist/esm/icons/chevron-left';
 import ChevronRight from 'lucide-react/dist/esm/icons/chevron-right';
 import { useAuth } from '../context/AuthContext';
+import { supabase } from '../../supabaseClient';
 import ThemeToggle from './ThemeToggle';
 
 // Temporary localStorage approval flow for demo
@@ -52,6 +53,8 @@ export function DashboardLayout() {
   const { user, role, logout, unreadNotificationCount } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [facultyProfile, setFacultyProfile] = useState<any>(null);
+  const [loadingFacultyProfile, setLoadingFacultyProfile] = useState(false);
 
   // Close sidebar on Escape key
   useEffect(() => {
@@ -98,13 +101,51 @@ export function DashboardLayout() {
       : role === 'alumni'
       ? [user?.position, user?.company, user?.department, user?.collegeName, user?.year].filter(Boolean)
       : role === 'faculty'
-      ? [user?.department, user?.designation || (user as any)?.facultyType].filter(Boolean)
+      ? [
+          facultyProfile?.Faculty_ID || (user as any)?.facultyId,
+          facultyProfile?.Faculty_Type || (user as any)?.facultyType,
+          facultyProfile?.Department || user?.department,
+          facultyProfile?.Years_Of_Experience || (user as any)?.yearsOfExperience ? `${facultyProfile?.Years_Of_Experience || (user as any)?.yearsOfExperience} years` : null,
+        ].filter(Boolean)
       : [user?.department].filter(Boolean);
 
   const handleLogout = () => {
     logout();
     navigate('/');
   };
+
+  // Fetch faculty profile data
+  useEffect(() => {
+    const fetchFacultyProfile = async () => {
+      if (!user?.id || role !== 'faculty') {
+        setFacultyProfile(null);
+        return;
+      }
+      
+      try {
+        setLoadingFacultyProfile(true);
+        const { data, error } = await supabase
+          .from('faculty_profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (error) {
+          console.error('[DashboardLayout] Error fetching faculty profile:', error);
+          setFacultyProfile(null);
+        } else {
+          setFacultyProfile(data);
+        }
+      } catch (err) {
+        console.error('[DashboardLayout] Unexpected error fetching faculty profile:', err);
+        setFacultyProfile(null);
+      } finally {
+        setLoadingFacultyProfile(false);
+      }
+    };
+
+    fetchFacultyProfile();
+  }, [user?.id, role]);
 
   // Temporary localStorage approval flow for demo
   // Filter top nav links based on role
