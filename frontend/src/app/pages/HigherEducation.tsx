@@ -1,8 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Search, GraduationCap, MapPin, BookOpen, Calendar, ExternalLink, FileText, Award, Users } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { showGlobalToast } from '../components/Toast';
-import { getApprovedHigherEducationPosts } from '../data/localStoragePosts';
+import { supabase } from '../../supabaseClient';
 
 const normalizeUrl = (url?: string) => {
   if (!url || !url.trim()) return "";
@@ -24,33 +24,52 @@ const openPostLink = (url?: string) => {
 export function HigherEducation() {
   const { getAlumniById } = useAuth();
   const [search, setSearch] = useState('');
+  const [posts, setPosts] = useState<any[]>([]);
 
-  const posts = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    const localPosts = getApprovedHigherEducationPosts();
+  useEffect(() => {
+  const fetchPosts = async () => {
+    const { data, error } = await supabase
+      .from("posts")
+      .select("*")
+      .eq("status", "approved")
+      .eq("type", "higher-education")
+      .order("created_at", { ascending: false });
 
-    return localPosts.filter((post) => {
-      const author = getAlumniById(post.alumniId)?.name || '';
-      const details = post.post_details || {};
-      const searchableText = [
-        post.title,
-        post.content,
-        author,
-        details.country,
-        details.university,
-        details.course,
-        details.branch,
-        details.eligibility,
-        details.exams,
-        details.scholarship,
-      ]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase();
+    if (error) {
+      console.error(error);
+      return;
+    }
 
-      return !query || searchableText.includes(query);
-    });
-  }, [search, getAlumniById]);
+    setPosts(data || []);
+  };
+
+  fetchPosts();
+}, []);
+
+const filteredPosts = useMemo(() => {
+  const query = search.trim().toLowerCase();
+
+  return posts.filter((post) => {
+    const details = post.post_details || {};
+
+    const searchableText = [
+      post.title,
+      post.content,
+      details.country,
+      details.university,
+      details.course,
+      details.branch,
+      details.eligibility,
+      details.exams,
+      details.scholarship,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+
+    return !query || searchableText.includes(query);
+  });
+}, [posts, search]);
 
   const formatDate = (timestamp?: string) => {
     if (!timestamp) return 'N/A';
@@ -93,15 +112,15 @@ export function HigherEducation() {
       {/* Posts Count */}
       <div className="mb-4">
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          {posts.length} {posts.length === 1 ? 'program' : 'programs'} available
+          {filteredPosts.length} {filteredPosts.length === 1 ? 'program' : 'programs'} available
         </p>
       </div>
 
       {/* Posts List */}
-      {posts.length > 0 ? (
+      {filteredPosts.length > 0 ? (
         <div className="space-y-6">
-          {posts.map((post) => {
-            const author = getAlumniById(post.alumniId);
+          {filteredPosts.map((post) => {
+            const author = getAlumniById(post.alumni_id);
             const details = post.post_details || {};
             const hasDetails =
               details.country ||
