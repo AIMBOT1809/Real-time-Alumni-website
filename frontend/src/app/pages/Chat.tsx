@@ -41,6 +41,7 @@ interface Message {
   text: string;
   created_at: string;
   read_at?: string;
+  is_deleted?: boolean;
 }
 
 interface Conversation {
@@ -387,6 +388,38 @@ export function Chat({ theme = 'dark' }: ChatProps) {
     }
   };
 
+  const handleUnsendMessage = async (messageId: string) => {
+  try {
+    const { error } = await supabase
+      .from("messages")
+      .update({
+        is_deleted: true,
+        deleted_at: new Date().toISOString(),
+        text: "This message was unsent"
+      })
+      .eq("id", messageId);
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    setMessages(prev =>
+      prev.map(msg =>
+        msg.id === messageId
+          ? {
+              ...msg,
+              text: "This message was unsent",
+              is_deleted: true
+            }
+          : msg
+      )
+    );
+  } catch (err) {
+    console.error(err);
+  }
+};
+
   // Report user
   const handleReport = () => {
     if (!selectedConversation || !reportReason) {
@@ -634,7 +667,24 @@ export function Chat({ theme = 'dark' }: ChatProps) {
                             : 'bg-slate-700 text-white rounded-bl-md'
                         }`}
                       >
-                        <p className="break-words">{msg.text}</p>
+                        <div className="flex flex-col gap-2">
+  <p
+    className={`break-words ${
+      msg.is_deleted ? "italic text-gray-400" : ""
+    }`}
+  >
+    {msg.is_deleted ? "This message was unsent" : msg.text}
+  </p>
+
+  {msg.sender_id === user?.id && !msg.is_deleted && (
+    <button
+      onClick={() => handleUnsendMessage(msg.id)}
+      className="self-end text-xs text-red-400 hover:text-red-600"
+    >
+      Unsend
+    </button>
+  )}
+</div>
                         <div className="flex items-center justify-end gap-1 mt-2 text-xs opacity-70">
                           <span>{formatTime(msg.created_at)}</span>
                           {msg.sender_id === user?.id && (
