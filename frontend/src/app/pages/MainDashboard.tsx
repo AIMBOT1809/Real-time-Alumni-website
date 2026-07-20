@@ -990,6 +990,13 @@ export function MainDashboard() {
                 {/* Recent Alumni Highlights */}
                 <RecentAlumniHighlights userId={user?.id} />
 
+                {/* Alumni Insights - Mobile only (rendered before Create Post) */}
+                {role?.toLowerCase() !== 'admin' && (
+                  <div className="lg:hidden w-full">
+                    <AlumniStatisticsWidget />
+                  </div>
+                )}
+
                 {/* Create Post (for Faculty and Alumni) */}
                 {canPost && (
                   <div className="bg-slate-900 rounded-lg border border-slate-800 p-4">
@@ -2566,9 +2573,9 @@ const author =
             )}
           </main>
 
-          {/* Alumni Insights Widget - Right Side on Desktop, Below on Mobile */}
+          {/* Alumni Insights Widget - Right Side on Desktop only */}
           {role?.toLowerCase() !== 'admin' && activeMenu === 'home' && (
-            <aside className="w-full max-w-full shrink-0 self-start animate-in fade-in slide-in-from-bottom-4 duration-700 lg:w-[360px]">
+            <aside className="hidden lg:block w-full max-w-full shrink-0 self-start animate-in fade-in slide-in-from-bottom-4 duration-700 lg:w-[360px]">
               <div className="sticky top-[24px]">
                 <AlumniStatisticsWidget />
               </div>
