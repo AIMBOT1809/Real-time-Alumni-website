@@ -997,26 +997,6 @@ export function MainDashboard() {
                   </div>
                 )}
 
-                {/* Create Post (for Faculty and Alumni) */}
-                {canPost && (
-                  <div className="bg-slate-900 rounded-lg border border-slate-800 p-4">
-                    <div className="flex items-start space-x-3">
-                      <img 
-                        src={user?.avatar || 'https://ui-avatars.com/api/?name=User&background=FDE68A&color=111827&size=256'} 
-                        alt={user?.name || 'User'}
-                        className="h-10 w-10 rounded-full object-cover"
-                      />
-                      <div className="flex-1">
-                        <input
-                          type="text"
-                          placeholder="Share something with the community..."
-                          className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
                 {/* Posts Feed */}
                 <div className="space-y-4">
                   {focusedPostId && (

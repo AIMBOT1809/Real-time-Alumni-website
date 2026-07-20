@@ -126,7 +126,7 @@ export function DashboardLayout() {
       {/* ─────────────────────────────────────────────────────────
           TOP HEADER  –  theme-aware glass panel
       ───────────────────────────────────────────────────────── */}
-      <header className="glass-panel sticky top-0 z-50 flex flex-col w-full border-l-0 border-r-0 border-t-0 rounded-none bg-white/90 dark:bg-slate-950/90 border-b border-slate-900/10 dark:border-yellow-400/20 shadow-lg">
+      <header className="glass-panel fixed top-0 left-0 right-0 z-50 flex flex-col w-full border-l-0 border-r-0 border-t-0 rounded-none bg-white/90 dark:bg-slate-950/90 border-b border-slate-900/10 dark:border-yellow-400/20 shadow-lg">
         {/* Single row : Logo + Action icons (no search bar row) */}
         <div className="flex items-center justify-between w-full px-4 sm:px-6 py-3 sm:py-4">
           {/* Logo / Brand */}
@@ -222,7 +222,7 @@ export function DashboardLayout() {
       {/* ─────────────────────────────────────────────────────────
           GLASS TOP NAV PILL  –  sits just below the header
       ───────────────────────────────────────────────────────── */}
-      <div className="sticky top-[64px] sm:top-[72px] z-40 w-full px-2 sm:px-4 py-2">
+      <div className="fixed top-[64px] sm:top-[72px] left-0 right-0 z-40 w-full px-2 sm:px-4 py-2">
         <nav
           aria-label="Top dashboard navigation"
           className="bg-white/95 dark:bg-slate-950/95 backdrop-blur-2xl border border-slate-900/10 dark:border-yellow-400/20 shadow-lg w-full mx-auto flex max-w-3xl items-center gap-1
@@ -409,7 +409,7 @@ export function DashboardLayout() {
         )}
 
         {/* ── MAIN CONTENT ── */}
-        <div className={`dashboard-content min-w-0 flex-1 pt-4 sm:pt-6 ${role?.toLowerCase() === 'faculty' ? 'flex-1' : 'flex-1'}`}>
+        <div className={`dashboard-content min-w-0 flex-1 pt-[104px] sm:pt-[112px] ${role?.toLowerCase() === 'faculty' ? 'flex-1' : 'flex-1'}`}>
           {/* Mobile Faculty Introduction Card - shown only for Faculty on mobile */}
           {role?.toLowerCase() === 'faculty' && (
             <div className="lg:hidden w-full max-w-full px-4 sm:px-6 pb-4">
