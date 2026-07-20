@@ -274,7 +274,7 @@ export function Chat({ theme = 'dark' }: ChatProps) {
 
     loadMessages();
 
-    // Subscribe to new messages
+    // Subscribe to new messa
     const subscription = supabase
       .channel(`messages:${selectedConversation.id}`)
       .on(
@@ -321,13 +321,13 @@ export function Chat({ theme = 'dark' }: ChatProps) {
     };
   }, [user?.id]);
 
-  // Initial data load
+  // Initial data load using this block of code
   useEffect(() => {
     if (!user?.id) return;
     fetchConversations();
   }, [user?.id]);
 
-  // Handle navigation from Alumni Directory
+  // Handle navigation from Alumni dir
   useEffect(() => {
     if (!location.state?.conversationId || !conversations.length) return;
     
