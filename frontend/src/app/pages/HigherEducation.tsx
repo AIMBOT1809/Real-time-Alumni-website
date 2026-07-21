@@ -140,11 +140,11 @@ const filteredPosts = useMemo(() => {
               >
                 {/* Post Image */}
                 {post.image && (
-                  <div className="w-full h-56 sm:h-64">
+                  <div className="w-full aspect-video bg-slate-100 dark:bg-slate-800">
                     <img
                       src={post.image}
                       alt={post.title || 'Higher Education Post'}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain"
                     />
                   </div>
                 )}

@@ -1818,11 +1818,13 @@ const author =
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {(eventView === 'upcoming' ? upcomingEvents : currentEvents).map((event) => (
                     <div key={event.id} className="bg-slate-900 rounded-lg border border-slate-800 overflow-hidden hover:border-[#FFD700] transition-colors">
-                      <img 
-                        src={event.image} 
-                        alt={event.title}
-                        className="w-full h-48 object-cover"
-                      />
+                      <div className="relative aspect-video bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                        <img 
+                          src={event.image} 
+                          alt={event.title}
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
                       <div className="p-6">
                         <h3 className="text-xl font-bold text-white mb-2">{event.title}</h3>
                         <p className="text-slate-300 mb-4">{event.date} at {event.time}</p>

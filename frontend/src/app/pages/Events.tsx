@@ -5,6 +5,7 @@ import { showGlobalToast } from '../components/Toast';
 import { motion } from 'motion/react';
 import { useEffect } from "react";
 import { supabase } from "../../supabaseClient";
+import { PostImageViewer } from '../components/PostImageViewer';
 
 const normalizeUrl = (url?: string) => {
   if (!url || !url.trim()) return "";
@@ -235,11 +236,11 @@ useEffect(() => {
                       transition={{ delay: index * 0.1 }}
                       className="bg-white dark:bg-slate-900/70 rounded-xl shadow-sm border border-slate-200 dark:border-yellow-400/20 overflow-hidden hover:shadow-md transition-shadow group"
                     >
-                      <div className="relative h-48 overflow-hidden">
-                        <img
+                      <div className="relative aspect-video bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                        <PostImageViewer
                           src={event.image}
                           alt={event.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
                         />
                         <div className="absolute top-4 right-4 bg-white/90 dark:bg-slate-900/90 px-3 py-1 rounded-full text-xs font-semibold text-slate-900 dark:text-slate-100 shadow-sm backdrop-blur-sm">
                           {event.type}
@@ -286,11 +287,11 @@ useEffect(() => {
               transition={{ delay: index * 0.1 }}
               className="bg-white dark:bg-slate-900/70 rounded-xl shadow-sm border border-slate-200 dark:border-yellow-400/20 overflow-hidden hover:shadow-md transition-shadow group"
             >
-              <div className="relative h-48 overflow-hidden">
-                <img
+              <div className="relative aspect-video bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                <PostImageViewer
                   src={event.image}
                   alt={event.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
                 />
                 <div className="absolute top-4 right-4 bg-white/90 dark:bg-slate-900/90 px-3 py-1 rounded-full text-xs font-semibold text-slate-900 dark:text-slate-100 shadow-sm backdrop-blur-sm">
                   {event.type}

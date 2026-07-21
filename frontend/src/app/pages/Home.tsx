@@ -741,11 +741,11 @@ useEffect(() => {
               homeEvents.slice(0, 3).map((event) => (
                 <div key={event.id} className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
                   {event.image && (
-                    <div className="relative h-48 w-full overflow-hidden bg-slate-100">
+                    <div className="relative aspect-video w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
                       <img
                         src={event.image}
                         alt={event.title}
-                        className="h-full w-full object-cover"
+                        className="h-full w-full object-contain"
                       />
                     </div>
                   )}
