@@ -1646,49 +1646,42 @@ const author =
                         <div className="space-y-4 p-4 bg-slate-800 rounded-lg">
                           <h3 className="text-lg font-semibold text-white">Higher Education Details</h3>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            
                             <div>
-                              <label className="block text-sm font-medium text-slate-300 mb-1">Title *</label>
-                              <input type="text" required value={postDetails.heTitle || postTitle || ''} onChange={(e) => { setPostTitle(e.target.value); setPostDetails({...postDetails, heTitle: e.target.value}); }} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
-                            </div>
-                            <div className="md:col-span-2">
-                              <label className="block text-sm font-medium text-slate-300 mb-1">Description *</label>
-                              <textarea required value={postDetails.description || ''} onChange={(e) => setPostDetails({...postDetails, description: e.target.value})} rows={3} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Country </label>
+                              <input type="text" value={postDetails.country || ''} onChange={(e) => setPostDetails({...postDetails, country: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
                             </div>
                             <div>
-                              <label className="block text-sm font-medium text-slate-300 mb-1">Country *</label>
-                              <input type="text" required value={postDetails.country || ''} onChange={(e) => setPostDetails({...postDetails, country: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                              <label className="block text-sm font-medium text-slate-300 mb-1">University/College Name </label>
+                              <input type="text" value={postDetails.university || ''} onChange={(e) => setPostDetails({...postDetails, university: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
                             </div>
                             <div>
-                              <label className="block text-sm font-medium text-slate-300 mb-1">University/College Name *</label>
-                              <input type="text" required value={postDetails.university || ''} onChange={(e) => setPostDetails({...postDetails, university: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Course/Program Name </label>
+                              <input type="text" value={postDetails.course || ''} onChange={(e) => setPostDetails({...postDetails, course: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
                             </div>
                             <div>
-                              <label className="block text-sm font-medium text-slate-300 mb-1">Course/Program Name *</label>
-                              <input type="text" required value={postDetails.course || ''} onChange={(e) => setPostDetails({...postDetails, course: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Branch/Specialization </label>
+                              <input type="text" value={postDetails.branch || ''} onChange={(e) => setPostDetails({...postDetails, branch: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
                             </div>
                             <div>
-                              <label className="block text-sm font-medium text-slate-300 mb-1">Branch/Specialization *</label>
-                              <input type="text" required value={postDetails.branch || ''} onChange={(e) => setPostDetails({...postDetails, branch: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Eligibility </label>
+                              <input type="text" value={postDetails.eligibility || ''} onChange={(e) => setPostDetails({...postDetails, eligibility: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
                             </div>
                             <div>
-                              <label className="block text-sm font-medium text-slate-300 mb-1">Eligibility *</label>
-                              <input type="text" required value={postDetails.eligibility || ''} onChange={(e) => setPostDetails({...postDetails, eligibility: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium text-slate-300 mb-1">Exams Required *</label>
-                              <input type="text" required value={postDetails.examsRequired || ''} onChange={(e) => setPostDetails({...postDetails, examsRequired: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Exams Required </label>
+                              <input type="text" value={postDetails.examsRequired || ''} onChange={(e) => setPostDetails({...postDetails, examsRequired: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
                             </div>
                             <div>
                               <label className="block text-sm font-medium text-slate-300 mb-1">Scholarship Information</label>
                               <input type="text" value={postDetails.scholarship || ''} onChange={(e) => setPostDetails({...postDetails, scholarship: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
                             </div>
                             <div>
-                              <label className="block text-sm font-medium text-slate-300 mb-1">Application Deadline *</label>
-                              <input type="date" required value={postDetails.applicationDeadline || ''} onChange={(e) => setPostDetails({...postDetails, applicationDeadline: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Application Deadline </label>
+                              <input type="date"  value={postDetails.applicationDeadline || ''} onChange={(e) => setPostDetails({...postDetails, applicationDeadline: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
                             </div>
                             <div className="md:col-span-2">
-                              <label className="block text-sm font-medium text-slate-300 mb-1">Application/Info Link *</label>
-                              <input type="url" required value={postDetails.applicationLink || ''} onChange={(e) => setPostDetails({...postDetails, applicationLink: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
+                              <label className="block text-sm font-medium text-slate-300 mb-1">Application/Info Link </label>
+                              <input type="url" value={postDetails.applicationLink || ''} onChange={(e) => setPostDetails({...postDetails, applicationLink: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white" />
                             </div>
                           </div>
                         </div>
