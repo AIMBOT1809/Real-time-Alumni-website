@@ -3,7 +3,10 @@ const express = require("express");
 const cors = require("cors");
 const http = require("http");
 const { Server } = require("socket.io");
-const { supabase } = require("./authMiddleware");
+const { authMiddleware, supabase } = require("./authMiddleware");
+const { createClient } = require('@supabase/supabase-js');
+
+const supabaseAdmin = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
 const PORT = process.env.PORT || 5000;
 const CORS_ORIGIN = process.env.CORS_ORIGIN
@@ -38,11 +41,28 @@ app.use("/", validateRoutes);
 // Chat API routes
 app.use("/api", chatRoutes);
 
+// Profile update proxy to bypass RLS issues for authenticated users
+app.patch("/api/profiles/:role/:id", authMiddleware, async (req, res) => {
+  if (!supabaseAdmin) return res.status(503).json({ error: "Database not configured" });
+  const { role, id } = req.params;
+  const updates = req.body;
+  if (req.userId !== id) return res.status(403).json({ error: "Unauthorized" });
+
+  const tableName = role === 'student' ? 'student_profiles' : role === 'faculty' ? 'faculty_profiles' : 'alumni_profiles';
+  const { data, error } = await supabaseAdmin.from(tableName).update(updates).eq("user_id", id).select();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+// Protected API routes
+app.use("/api/posts", authMiddleware);
+app.use("/api/events", authMiddleware);
+
 // Delete post
 app.delete("/api/posts/:id", async (req, res) => {
   if (!supabase) return res.status(503).json({ error: "Database not configured" });
   const { id } = req.params;
-  const { error } = await supabase.from("posts").delete().eq("id", id);
+  const { error } = await supabase.from("posts").delete().eq("id", id).eq("user_id", req.userId);
   if (error) return res.status(500).json({ error: error.message });
   if (req.app.get("io")) req.app.get("io").emit("delete_post", { id });
   res.status(204).end();
@@ -101,7 +121,7 @@ app.patch("/api/posts/:id", async (req, res) => {
   if (!supabase) return res.status(503).json({ error: "Database not configured" });
   const { id } = req.params;
   const updates = req.body;
-  const { data, error } = await supabase.from("posts").update(updates).eq("id", id).select().single();
+  const { data, error } = await supabase.from("posts").update(updates).eq("id", id).eq("user_id", req.userId).select().single();
   if (error) return res.status(500).json({ error: error.message });
   if (req.app.get("io")) req.app.get("io").emit("update_post", data);
   res.json(data);
@@ -111,7 +131,7 @@ app.patch("/api/posts/:id", async (req, res) => {
 app.delete("/api/events/:id", async (req, res) => {
   if (!supabase) return res.status(503).json({ error: "Database not configured" });
   const { id } = req.params;
-  const { error } = await supabase.from("events").delete().eq("id", id);
+  const { error } = await supabase.from("events").delete().eq("id", id).eq("user_id", req.userId);
   if (error) return res.status(500).json({ error: error.message });
   if (req.app.get("io")) req.app.get("io").emit("delete_event", { id });
   res.status(204).end();
@@ -137,7 +157,7 @@ app.patch("/api/events/:id", async (req, res) => {
   if (!supabase) return res.status(503).json({ error: "Database not configured" });
   const { id } = req.params;
   const updates = req.body;
-  const { data, error } = await supabase.from("events").update(updates).eq("id", id).select().single();
+  const { data, error } = await supabase.from("events").update(updates).eq("id", id).eq("user_id", req.userId).select().single();
   if (error) return res.status(500).json({ error: error.message });
   if (req.app.get("io")) req.app.get("io").emit("update_event", data);
   res.json(data);
@@ -185,27 +205,37 @@ const onlineUsers = new Map();
 io.on("connection", (socket) => {
   console.log(`[Socket] Client connected: ${socket.id}`);
 
-  // Authenticate: client sends userId after connecting
-  socket.on("authenticate", (userId) => {
-    if (!userId) return;
-    socket.userId = userId;
+  // Authenticate: client sends token after connecting
+  socket.on("authenticate", async (token) => {
+    if (!token) return;
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser(token);
+      if (error || !user) {
+        socket.emit("auth_error", { error: "Invalid token" });
+        return;
+      }
+      const userId = user.id;
+      socket.userId = userId;
 
-    // Join personal room for notifications
-    socket.join(`user:${userId}`);
+      // Join personal room for notifications
+      socket.join(`user:${userId}`);
 
-    // Track online status
-    if (!onlineUsers.has(userId)) {
-      onlineUsers.set(userId, new Set());
+      // Track online status
+      if (!onlineUsers.has(userId)) {
+        onlineUsers.set(userId, new Set());
+      }
+      onlineUsers.get(userId).add(socket.id);
+
+      // Broadcast online status
+      io.emit("user_online", { userId });
+      console.log(`[Socket] User ${userId} authenticated (socket ${socket.id})`);
+
+      // Send list of currently online users to this socket
+      const onlineList = Array.from(onlineUsers.keys());
+      socket.emit("online_users", onlineList);
+    } catch (err) {
+      console.error("[Socket] Auth error:", err);
     }
-    onlineUsers.get(userId).add(socket.id);
-
-    // Broadcast online status
-    io.emit("user_online", { userId });
-    console.log(`[Socket] User ${userId} authenticated (socket ${socket.id})`);
-
-    // Send list of currently online users to this socket
-    const onlineList = Array.from(onlineUsers.keys());
-    socket.emit("online_users", onlineList);
   });
 
   // Join a conversation room

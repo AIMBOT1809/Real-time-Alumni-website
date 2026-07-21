@@ -45,7 +45,7 @@ export default function IntroVideo({ onFinish }: IntroVideoProps) {
   const handleEnd = () => {
     clearAndFinish();
     try {
-      sessionStorage.setItem('introPlayed', '1');
+      localStorage.setItem('introPlayed', '1');
     } catch (e) {
       /* ignore */
     }
@@ -55,7 +55,7 @@ export default function IntroVideo({ onFinish }: IntroVideoProps) {
     const v = videoRef.current;
     clearAndFinish();
     try {
-      sessionStorage.setItem('introPlayed', '1');
+      localStorage.setItem('introPlayed', '1');
     } catch (e) {
       /* ignore */
     }

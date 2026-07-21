@@ -296,10 +296,16 @@ function AlumniGrid({ alumniList }: { alumniList: any[] }) {
     if (alumni.user_id === user.id) { showGlobalToast('You cannot start a conversation with yourself', 'warning'); return; }
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token || '';
+
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       const response = await fetch(`${API_URL}/api/conversations`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-user-id': user.id },
+        headers: { 
+          'Content-Type': 'application/json', 
+          'Authorization': `Bearer ${token}` 
+        },
         body: JSON.stringify({ otherUserId: alumni.user_id }),
       });
 

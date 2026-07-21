@@ -88,8 +88,11 @@ export function Chat({ theme = 'dark' }: ChatProps) {
 
     try {
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token || '';
+
       const response = await fetch(`${API_URL}/api/conversations`, {
-        headers: { 'x-user-id': user.id },
+        headers: { 'Authorization': `Bearer ${token}` },
       });
       
       if (!response.ok) {
@@ -152,11 +155,14 @@ export function Chat({ theme = 'dark' }: ChatProps) {
 
       // If not, create a new conversation
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token || '';
+
       const createResponse = await fetch(`${API_URL}/api/conversations`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': user.id,
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({ otherUserId }),
       });
@@ -246,8 +252,11 @@ export function Chat({ theme = 'dark' }: ChatProps) {
     const loadMessages = async () => {
       try {
         const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token || '';
+
         const response = await fetch(`${API_URL}/api/conversations/${selectedConversation.id}/messages`, {
-          headers: { 'x-user-id': user?.id || '' },
+          headers: { 'Authorization': `Bearer ${token}` },
         });
         
         if (!response.ok) {
@@ -352,11 +361,14 @@ export function Chat({ theme = 'dark' }: ChatProps) {
 
     try {
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token || '';
+
       const response = await fetch(`${API_URL}/api/conversations/${selectedConversation.id}/messages`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': user.id,
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({ text: messageText.trim() }),
       });

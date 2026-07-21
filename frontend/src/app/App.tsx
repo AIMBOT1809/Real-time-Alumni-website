@@ -13,24 +13,11 @@ export default function App() {
   useEffect(() => {
     let played = false;
     try {
-      played = sessionStorage.getItem('introPlayed') === '1';
+      played = localStorage.getItem('introPlayed') === '1';
     } catch (e) {
       played = true;
     }
     if (!played) setShowIntro(true);
-  }, []);
-
-  // Ensure the intro replays on full page reloads but not on client-side SPA navigation.
-  useEffect(() => {
-    const onBeforeUnload = () => {
-      try {
-        sessionStorage.removeItem('introPlayed');
-      } catch (e) {
-        /* ignore */
-      }
-    };
-    window.addEventListener('beforeunload', onBeforeUnload);
-    return () => window.removeEventListener('beforeunload', onBeforeUnload);
   }, []);
 
   return (

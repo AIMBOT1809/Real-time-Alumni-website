@@ -30,22 +30,13 @@ async function authMiddleware(req, res, next) {
     const token = authHeader.slice(7);
     try {
       const { data: { user }, error } = await supabase.auth.getUser(token);
-      if (error || !user) {
-        // Fall through to x-user-id check
-      } else {
+      if (!error && user) {
         req.userId = user.id;
         return next();
       }
     } catch (err) {
-      // Fall through
+      console.error('Auth error:', err);
     }
-  }
-
-  // Dev fallback: x-user-id header
-  const userId = req.headers['x-user-id'];
-  if (userId) {
-    req.userId = userId;
-    return next();
   }
 
   return res.status(401).json({ error: 'Authentication required' });

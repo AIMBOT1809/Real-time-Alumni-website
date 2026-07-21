@@ -7,6 +7,7 @@ import { showGlobalToast } from '../components/Toast';
 
 interface AuthContextType {
   user: UserProfile | null;
+  updateUser: (user: UserProfile) => void;
   login: (payload: UserProfile | User) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
@@ -79,8 +80,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               let profileError: any = null;
 
               if (parsed.id) {
+                const role = parsed.role || 'alumni';
+                const tableName = role === 'student' ? 'student_profiles' : role === 'faculty' ? 'faculty_profiles' : 'alumni_profiles';
                 const res = await supabase
-                  .from('alumni_profiles')
+                  .from(tableName)
                   .select('*')
                   .eq('user_id', parsed.id)
                   .maybeSingle();
@@ -90,8 +93,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               }
 
               if (!profileData && parsed.email) {
+                const role = parsed.role || 'alumni';
+                const tableName = role === 'student' ? 'student_profiles' : role === 'faculty' ? 'faculty_profiles' : 'alumni_profiles';
                 const res2 = await supabase
-                  .from('alumni_profiles')
+                  .from(tableName)
                   .select('*')
                   .ilike('Email_Address', parsed.email)
                   .maybeSingle();
@@ -502,26 +507,92 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return null;
   };
+  const updateUser = (updatedProfile: UserProfile) => {
+    setUser(updatedProfile);
+    localStorage.setItem('allumini_user', JSON.stringify(updatedProfile));
+  };
 
   const login = async (payload: UserProfile | User) => {
     console.log('[AuthContext] login() payload received:', payload);
     const userRole = 'role' in payload ? payload.role : (payload.user_metadata?.role || 'alumni');
     const isFaculty = userRole.toLowerCase() === 'faculty';
-    
+
+    if ('role' in payload && typeof payload.role === 'string') {
+      console.log('[AuthContext] login() detected UserProfile payload; attempting to enrich from DB by user_id/email.', {
+        id: payload.id,
+        email: payload.email,
+        role: payload.role,
+      });
+      (async () => {
+        try {
+          let dbProfile: any = null;
+          if (payload.id) {
+            const role = payload.role || 'alumni';
+            const tableName = role === 'student' ? 'student_profiles' : role === 'faculty' ? 'faculty_profiles' : 'alumni_profiles';
+            const res = await supabase.from(tableName).select('*').eq('user_id', payload.id).maybeSingle();
+            if (res.error) console.warn('[AuthContext] DB profile fetch by user_id error:', res.error.message);
+            dbProfile = res.data || null;
+          }
+          if (!dbProfile && payload.email) {
+            const role = payload.role || 'alumni';
+            const tableName = role === 'student' ? 'student_profiles' : role === 'faculty' ? 'faculty_profiles' : 'alumni_profiles';
+            const res2 = await supabase.from(tableName).select('*').ilike('Email_Address', payload.email).maybeSingle();
+            if (res2.error) console.warn('[AuthContext] DB profile fetch by email error:', res2.error.message);
+            dbProfile = res2.data || null;
+          }
+
+          const toStore: UserProfile = {
+            ...(payload as UserProfile),
+          } as UserProfile;
+
+          if (dbProfile) {
+            const firstName = dbProfile.First_Name || dbProfile.first_name || '';
+            const lastName = dbProfile.Last_name || dbProfile.last_name || '';
+            const fullName = `${firstName} ${lastName}`.trim() || toStore.name;
+
+            toStore.name = fullName;
+            toStore.avatar = dbProfile.Photo_URL || dbProfile.photo_url || toStore.avatar;
+            toStore.collegeName = dbProfile.College_Name || dbProfile.college_name || toStore.collegeName;
+            toStore.rollNumber = dbProfile.Roll_Number || dbProfile.roll_number || toStore.rollNumber;
+            toStore.department = dbProfile.Department || dbProfile.department || toStore.department;
+            toStore.year = dbProfile.Passed_Out_Year || dbProfile.passed_out_year || dbProfile.Year_of_Joining || toStore.year || '';
+            toStore.email = toStore.email || dbProfile.Email_Address || dbProfile.email;
+            toStore.phone = dbProfile.Phone_Number || dbProfile.phone || toStore.phone;
+            toStore.about = dbProfile.About || dbProfile.about || toStore.about;
+            toStore.linkedin = dbProfile.LinkedIn_Profile_URL || dbProfile.linkedin || toStore.linkedin;
+            toStore.resume = dbProfile.Resume_URL || dbProfile.resume || toStore.resume;
+            toStore.skills = toStore.skills?.length ? toStore.skills : (dbProfile.Skills ? dbProfile.Skills : toStore.skills || []);
+            toStore.links = toStore.links?.length ? toStore.links : (dbProfile.Links ? dbProfile.Links : toStore.links || []);
+            toStore.profileComplete = Boolean(toStore.collegeName || toStore.rollNumber || toStore.department || toStore.about);
+          } else {
+            toStore.id = toStore.id || (toStore.email ? toStore.email.split('@')[0] : `u-${Date.now()}`);
+            toStore.profileComplete = false;
+          }
+
+          setUser(toStore);
+          localStorage.setItem('allumini_user', JSON.stringify(toStore));
+          localStorage.setItem('allumini_role', toStore.role);
+          console.log('[AuthContext] Stored user after enrichment:', toStore);
+        } catch (err) {
+          console.error('[AuthContext] Error enriching/storing UserProfile payload:', err);
+          const toStore = payload as UserProfile;
+          toStore.id = toStore.id || (toStore.email ? toStore.email.split('@')[0] : `u-${Date.now()}`);
+          setUser(toStore);
+          localStorage.setItem('allumini_user', JSON.stringify(toStore));
+          localStorage.setItem('allumini_role', toStore.role);
+        }
+      })();
+      return;
+    }
+
     if ('email' in payload && 'id' in payload && !('role' in payload)) {
       const savedProfile = getSavedUserProfile(payload.email, payload.id);
       if (savedProfile) {
         try {
-          // Fetch from appropriate table based on role
-          let dbProfile: any = null;
-          if (isFaculty) {
-            const res = await supabase.from('faculty_profiles').select('*').eq('user_id', payload.id).maybeSingle();
-            dbProfile = res.data || null;
-          } else {
-            const res = await supabase.from('alumni_profiles').select('*').eq('user_id', payload.id).maybeSingle();
-            dbProfile = res.data || null;
-          }
-          
+          const role = savedProfile.role || 'alumni';
+          const tableName = role === 'student' ? 'student_profiles' : role === 'faculty' ? 'faculty_profiles' : 'alumni_profiles';
+          const res = await supabase.from(tableName).select('*').eq('user_id', payload.id).maybeSingle();
+          const dbProfile = res.data || null;
           if (dbProfile) {
             const firstName = dbProfile.First_Name || dbProfile.first_name || '';
             const lastName = dbProfile.Last_name || dbProfile.last_name || '';
@@ -568,26 +639,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         (async () => {
           if (!payload.email) return;
           try {
-            let profileData: any = null;
-            let profileError: any = null;
-            
-            if (isFaculty) {
-              const res = await supabase
-                .from('faculty_profiles')
-                .select('*')
-                .ilike('Email_Address', payload.email)
-                .maybeSingle();
-              profileData = res.data;
-              profileError = res.error;
-            } else {
-              const res = await supabase
-                .from('alumni_profiles')
-                .select('*')
-                .ilike('Email_Address', payload.email)
-                .maybeSingle();
-              profileData = res.data;
-              profileError = res.error;
-            }
+            const role = savedProfile.role || 'alumni';
+            const tableName = role === 'student' ? 'student_profiles' : role === 'faculty' ? 'faculty_profiles' : 'alumni_profiles';
+            const { data: profileData, error: profileError } = await supabase
+              .from(tableName)
+              .select('*')
+              .ilike('Email_Address', payload.email)
+              .maybeSingle();
 
             if (profileError) {
               console.warn('[AuthContext] Background profile refresh failed:', profileError.message, profileError.code, profileError);
@@ -631,7 +689,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       try {
-        const res = await supabase.from('alumni_profiles').select('*').eq('user_id', payload.id).maybeSingle();
+        const role = (payload as any).user_metadata?.role || 'alumni';
+        const tableName = role === 'student' ? 'student_profiles' : role === 'faculty' ? 'faculty_profiles' : 'alumni_profiles';
+        const res = await supabase.from(tableName).select('*').eq('user_id', payload.id).maybeSingle();
         if (res.error) console.warn('[AuthContext] profile fetch by user_id error:', res.error.message);
         if (res.data) {
           const profileData = res.data;
@@ -691,13 +751,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           let profileData: any = null;
           let profileError: any = null;
           if (payload.id) {
-            const res = await supabase.from('alumni_profiles').select('*').eq('user_id', payload.id).maybeSingle();
+            const role = (payload as any).user_metadata?.role || 'alumni';
+            const tableName = role === 'student' ? 'student_profiles' : role === 'faculty' ? 'faculty_profiles' : 'alumni_profiles';
+            const res = await supabase.from(tableName).select('*').eq('user_id', payload.id).maybeSingle();
             profileData = res.data;
             profileError = res.error;
             if (profileError) console.warn('[AuthContext] Background refresh (fallback) by user_id error:', profileError.message, profileError);
           }
           if (!profileData && payload.email) {
-            const res2 = await supabase.from('alumni_profiles').select('*').ilike('Email_Address', payload.email).maybeSingle();
+            const role = (payload as any).user_metadata?.role || 'alumni';
+            const tableName = role === 'student' ? 'student_profiles' : role === 'faculty' ? 'faculty_profiles' : 'alumni_profiles';
+            const res2 = await supabase.from(tableName).select('*').ilike('Email_Address', payload.email).maybeSingle();
             profileData = res2.data;
             profileError = res2.error;
             if (profileError) console.warn('[AuthContext] Background refresh (fallback) by email error:', profileError.message, profileError);
@@ -736,76 +800,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    if ('role' in payload && typeof payload.role === 'string') {
-      console.log('[AuthContext] login() detected UserProfile payload; attempting to enrich from DB by user_id/email.', {
-        id: payload.id,
-        email: payload.email,
-        role: payload.role,
-      });
-      (async () => {
-        try {
-          let dbProfile: any = null;
-          if (payload.id) {
-            const res = await supabase.from('alumni_profiles').select('*').eq('user_id', payload.id).maybeSingle();
-            if (res.error) console.warn('[AuthContext] DB profile fetch by user_id error:', res.error.message);
-            dbProfile = res.data || null;
-          }
-          if (!dbProfile && payload.email) {
-            const res2 = await supabase.from('alumni_profiles').select('*').ilike('Email_Address', payload.email).maybeSingle();
-            if (res2.error) console.warn('[AuthContext] DB profile fetch by email error:', res2.error.message);
-            dbProfile = res2.data || null;
-          }
-
-          const toStore: UserProfile = {
-            ...(payload as UserProfile),
-          } as UserProfile;
-
-          if (dbProfile) {
-            const firstName = dbProfile.First_Name || dbProfile.first_name || '';
-            const lastName = dbProfile.Last_name || dbProfile.last_name || '';
-            const fullName = `${firstName} ${lastName}`.trim() || toStore.name;
-
-            toStore.name = fullName;
-            toStore.avatar = dbProfile.Photo_URL || dbProfile.photo_url || toStore.avatar;
-            toStore.collegeName = dbProfile.College_Name || dbProfile.college_name || toStore.collegeName;
-            toStore.rollNumber = dbProfile.Roll_Number || dbProfile.roll_number || toStore.rollNumber;
-            toStore.department = dbProfile.Department || dbProfile.department || toStore.department;
-            toStore.year = dbProfile.Passed_Out_Year || dbProfile.passed_out_year || dbProfile.Year_of_Joining || toStore.year || '';
-            toStore.email = toStore.email || dbProfile.Email_Address || dbProfile.email;
-            toStore.phone = dbProfile.Phone_Number || dbProfile.phone || toStore.phone;
-            toStore.about = dbProfile.About || dbProfile.about || toStore.about;
-            toStore.linkedin = dbProfile.LinkedIn_Profile_URL || dbProfile.linkedin || toStore.linkedin;
-            toStore.resume = dbProfile.Resume_URL || dbProfile.resume || toStore.resume;
-            toStore.skills = toStore.skills?.length ? toStore.skills : (dbProfile.Skills ? dbProfile.Skills : toStore.skills || []);
-            toStore.links = toStore.links?.length ? toStore.links : (dbProfile.Links ? dbProfile.Links : toStore.links || []);
-            toStore.profileComplete = Boolean(toStore.collegeName || toStore.rollNumber || toStore.department || toStore.about);
-          } else {
-            toStore.id = toStore.id || (toStore.email ? toStore.email.split('@')[0] : `u-${Date.now()}`);
-            toStore.profileComplete = false;
-          }
-
-          setUser(toStore);
-          localStorage.setItem('allumini_user', JSON.stringify(toStore));
-          localStorage.setItem('allumini_role', toStore.role);
-          console.log('[AuthContext] Stored user after enrichment:', toStore);
-        } catch (err) {
-          console.error('[AuthContext] Error enriching/storing UserProfile payload:', err);
-          const toStore = payload as UserProfile;
-          toStore.id = toStore.id || (toStore.email ? toStore.email.split('@')[0] : `u-${Date.now()}`);
-          setUser(toStore);
-          localStorage.setItem('allumini_user', JSON.stringify(toStore));
-          localStorage.setItem('allumini_role', toStore.role);
-        }
-      })();
-      return;
-    }
-
     if ('email' in payload && 'id' in payload) {
       const userProfile: UserProfile = {
         id: payload.id,
-        name: payload.user_metadata?.name || payload.email?.split('@')[0] || 'User',
-        role: 'alumni',
-        avatar: payload.user_metadata?.avatar_url || 'https://ui-avatars.com/api/?name=User&background=FDE68A&color=111827&size=256',
+        name: (payload as any).user_metadata?.name || payload.email?.split('@')[0] || 'User',
+        role: (payload as any).user_metadata?.role || 'alumni',
+        avatar: (payload as any).user_metadata?.avatar_url || 'https://ui-avatars.com/api/?name=User&background=FDE68A&color=111827&size=256',
         graduationYear: new Date().getFullYear(),
         degree: '',
         skills: [],
@@ -2031,6 +2031,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = () => {
+    supabase.auth.signOut();
     setUser(null);
     setFollowing([]);
     setPosts([]);
@@ -2050,6 +2051,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   return (
     <AuthContext.Provider value={{
       user,
+      updateUser,
       login,
       logout,
       isAuthenticated: !!user,
