@@ -107,8 +107,11 @@ export function Login() {
       console.log('[LOGIN] Attempting to fetch profile for signedInUser:', { id: signedInUser.id, email: signedInUser.email });
 
       // First, check by user_id which is authoritative
+      const loginRole = metadata.role || 'alumni';
+      const tableName = loginRole === 'student' ? 'student_profiles' : loginRole === 'faculty' ? 'faculty_profiles' : 'alumni_profiles';
+      
       let profileResp = await supabase
-        .from('alumni_profiles')
+        .from(tableName)
         .select('*')
         .eq('user_id', signedInUser.id)
         .maybeSingle();
@@ -122,8 +125,11 @@ export function Login() {
         profile = profileResp.data;
       } else if (signedInUser.email) {
         // Fallback to email match (case-insensitive)
+        const loginRole = metadata.role || 'alumni';
+        const tableName = loginRole === 'student' ? 'student_profiles' : loginRole === 'faculty' ? 'faculty_profiles' : 'alumni_profiles';
+        
         const profileByEmail = await supabase
-          .from('alumni_profiles')
+          .from(tableName)
           .select('*')
           .ilike('Email_Address', signedInUser.email || '')
           .maybeSingle();

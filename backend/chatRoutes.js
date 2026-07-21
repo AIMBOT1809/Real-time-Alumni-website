@@ -17,12 +17,22 @@ router.post('/requests', async (req, res) => {
     const { receiverId } = req.body;
     if (!receiverId) return res.status(400).json({ error: 'receiverId is required' });
 
-    // Check for existing request in either direction
-    const { data: existing } = await supabase
+    // Check for existing request in either direction safely without string interpolation
+    const { data: existing1 } = await supabase
       .from('connection_requests')
       .select('*')
-      .or(`and(sender_id.eq."${req.userId}",receiver_id.eq."${receiverId}"),and(sender_id.eq."${receiverId}",receiver_id.eq."${req.userId}")`)
+      .eq('sender_id', req.userId)
+      .eq('receiver_id', receiverId)
       .in('status', ['pending', 'accepted']);
+
+    const { data: existing2 } = await supabase
+      .from('connection_requests')
+      .select('*')
+      .eq('sender_id', receiverId)
+      .eq('receiver_id', req.userId)
+      .in('status', ['pending', 'accepted']);
+
+    const existing = [...(existing1 || []), ...(existing2 || [])];
 
     if (existing && existing.length > 0) {
       return res.status(409).json({ error: 'Connection request already exists', existing: existing[0] });

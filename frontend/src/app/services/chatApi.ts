@@ -1,18 +1,21 @@
 const API_BASE = '/api';
 
-function getHeaders(userId: string): Record<string, string> {
+import { supabase } from '../../supabaseClient';
+
+async function getHeaders(): Promise<Record<string, string>> {
+  const { data: { session } } = await supabase.auth.getSession();
   return {
     'Content-Type': 'application/json',
-    'x-user-id': userId,
+    'Authorization': session?.access_token ? `Bearer ${session.access_token}` : '',
   };
 }
 
 // ── Connection Requests ──
 
-export async function sendConnectionRequest(userId: string, receiverId: string) {
+export async function sendConnectionRequest(receiverId: string) {
   const res = await fetch(`${API_BASE}/requests`, {
     method: 'POST',
-    headers: getHeaders(userId),
+    headers: await getHeaders(),
     body: JSON.stringify({ receiverId }),
   });
   if (!res.ok) {
@@ -22,24 +25,24 @@ export async function sendConnectionRequest(userId: string, receiverId: string) 
   return res.json();
 }
 
-export async function getIncomingRequests(userId: string) {
+export async function getIncomingRequests() {
   const res = await fetch(`${API_BASE}/requests/incoming`, {
-    headers: getHeaders(userId),
+    headers: await getHeaders(),
   });
   return res.json();
 }
 
-export async function getOutgoingRequests(userId: string) {
+export async function getOutgoingRequests() {
   const res = await fetch(`${API_BASE}/requests/outgoing`, {
-    headers: getHeaders(userId),
+    headers: await getHeaders(),
   });
   return res.json();
 }
 
-export async function respondToRequest(userId: string, requestId: string, action: 'accept' | 'decline') {
+export async function respondToRequest(requestId: string, action: 'accept' | 'decline') {
   const res = await fetch(`${API_BASE}/requests/${requestId}`, {
     method: 'PATCH',
-    headers: getHeaders(userId),
+    headers: await getHeaders(),
     body: JSON.stringify({ action }),
   });
   return res.json();
@@ -47,36 +50,36 @@ export async function respondToRequest(userId: string, requestId: string, action
 
 // ── Conversations ──
 
-export async function getConversations(userId: string) {
+export async function getConversations() {
   const res = await fetch(`${API_BASE}/conversations`, {
-    headers: getHeaders(userId),
+    headers: await getHeaders(),
   });
   return res.json();
 }
 
-export async function getMessages(userId: string, conversationId: string, before?: string) {
+export async function getMessages(conversationId: string, before?: string) {
   const params = new URLSearchParams({ limit: '50' });
   if (before) params.set('before', before);
 
   const res = await fetch(`${API_BASE}/conversations/${conversationId}/messages?${params}`, {
-    headers: getHeaders(userId),
+    headers: await getHeaders(),
   });
   return res.json();
 }
 
-export async function sendMessageRest(userId: string, conversationId: string, text: string) {
+export async function sendMessageRest(conversationId: string, text: string) {
   const res = await fetch(`${API_BASE}/conversations/${conversationId}/messages`, {
     method: 'POST',
-    headers: getHeaders(userId),
+    headers: await getHeaders(),
     body: JSON.stringify({ text }),
   });
   return res.json();
 }
 
-export async function markConversationRead(userId: string, conversationId: string) {
+export async function markConversationRead(conversationId: string) {
   const res = await fetch(`${API_BASE}/conversations/${conversationId}/read`, {
     method: 'PATCH',
-    headers: getHeaders(userId),
+    headers: await getHeaders(),
   });
   return res.json();
 }

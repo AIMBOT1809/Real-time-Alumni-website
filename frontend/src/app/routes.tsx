@@ -63,21 +63,4 @@ export const router = createBrowserRouter([
     path: "/chat",
     Component: Chat,
   },
-  {
-    Component: DashboardLayout,
-    children: [
-      { path: "dashboard", Component: MainDashboard },
-      { path: "dashboard/activity", Component: ActivityHistory },
-      { path: "dashboard/contributions", Component: MyContributions },
-      { path: "dashboard/:section", Component: MainDashboard },
-      { path: "network", Component: AlumniNetwork },
-      { path: "mentorship", Component: MentorshipSessions },
-      { path: "jobs", Component: Jobs },
-      { path: "referrals", Component: Referrals },
-      { path: "internships", Component: Internships },
-      { path: "higher-education", Component: HigherEducation },
-      { path: "business-startups", Component: BusinessStartups },
-      { path: "events", Component: Events },
-    ],
-  },
 ]);
