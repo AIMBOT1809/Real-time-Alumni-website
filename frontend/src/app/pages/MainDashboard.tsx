@@ -817,6 +817,10 @@ export function MainDashboard() {
       updatePayload = {
         Department: formData.department,
         LinkedIn_Profile_URL: formData.linkedin,
+        Faculty_Type: formData.facultyType,
+        Years_Of_Experience: formData.yearsOfExperience,
+        Office_Email: formData.officeEmail,
+        Faculty_ID: formData.facultyId,
       };
     } else {
       updatePayload = {
@@ -851,6 +855,16 @@ export function MainDashboard() {
         body: JSON.stringify(updatePayload)
       });
       const resData = await response.json();
+      
+      // Save fields that don't exist in all profile tables to user_metadata
+      await supabase.auth.updateUser({
+        data: {
+          about: formData.about,
+          skills: skills,
+          links: links,
+          resume: photoUrl || user?.resume || formData.resume
+        }
+      });
       if (!response.ok) throw new Error(resData.error || 'Failed to update profile');
       data = resData;
     } catch (err: any) {
@@ -2399,10 +2413,10 @@ const author =
                               className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
                             >
                               <option value="">Select Type</option>
-                              <option value="Full-Time">Professor</option>
-                              <option value="Part-Time">Associate Professor</option>
-                              <option value="Visiting">Assistant Professor</option>
-                              <option value="Contract">HoD</option>
+                              <option value="Professor">Professor</option>
+                              <option value="Associate Professor">Associate Professor</option>
+                              <option value="Assistant Professor">Assistant Professor</option>
+                              <option value="HoD">HoD</option>
                               <option value="Lecturer">Lecturer</option>
                               <option value="Other">Other</option>
                             </select>
@@ -2599,16 +2613,6 @@ const author =
                           {user?.collegeName && <p className="text-slate-300">{user.collegeName}</p>}
                           {user?.about && <p className="text-slate-200 mt-2 whitespace-pre-wrap">{user.about}</p>}
                           {user?.email && <p className="text-slate-400 mt-1">{user.email}</p>}
-                          {(facultyProfile?.LinkedIn_Profile_URL || user?.linkedin) && (
-                            <a 
-                              href={(facultyProfile?.LinkedIn_Profile_URL || user?.linkedin)?.startsWith('http') ? (facultyProfile?.LinkedIn_Profile_URL || user?.linkedin) : `https://${facultyProfile?.LinkedIn_Profile_URL || user?.linkedin}`} 
-                              target="_blank" 
-                              rel="noopener noreferrer" 
-                              className="text-[#FFD700] hover:underline mt-1 block"
-                            >
-                              {facultyProfile?.LinkedIn_Profile_URL || user?.linkedin}
-                            </a>
-                          )}
                         </div>
                       </div>
                     </div>
@@ -2669,6 +2673,10 @@ const author =
 
                       {role === 'faculty' && (
                         <>
+                          <div className="rounded-lg bg-slate-800 p-4">
+                            <p className="text-sm text-slate-400">Faculty ID</p>
+                            <p className="text-white">{facultyProfile?.Faculty_ID || (user as any)?.facultyId || 'Not Provided'}</p>
+                          </div>
                           <div className="rounded-lg bg-slate-800 p-4">
                             <p className="text-sm text-slate-400">Faculty Type</p>
                             <p className="text-white">{facultyProfile?.Faculty_Type || facultyProfile?.faculty_type || 'Not Provided'}</p>

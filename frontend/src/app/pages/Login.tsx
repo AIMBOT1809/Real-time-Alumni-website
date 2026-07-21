@@ -186,9 +186,9 @@ export function Login() {
       rollNumber: profile?.Roll_Number || profile?.roll_number || metadata.rollNumber || '',
       department: profile?.Department || profile?.department || metadata.department || '',
       year: profile?.passed_out_year || profile?.Passed_Out_Year || profile?.Year_of_Joining || profile?.year || metadata.year || '',
-      about: profile?.about || profile?.About || '',
+      about: profile?.about || profile?.About || (metadata.about as string) || '',
       linkedin: profile?.LinkedIn_Profile_URL || profile?.linkedin || (metadata.linkedin as string) || '',
-      resume: profile?.Resume_File_Name || profile?.Resume_URL || profile?.resume || '',
+      resume: profile?.Resume_File_Name || profile?.Resume_URL || profile?.resume || (metadata.resume as string) || '',
       links: (metadata.links as { title: string; url: string }[]) || [],
     };
 
