@@ -228,7 +228,7 @@ export function FacultyRegistration({ onBack }: FacultyRegistrationProps) {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-slate-900 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-slate-900 dark:bg-slate-950 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl w-full">
         <div className="text-center mb-8">
           <button
@@ -238,190 +238,92 @@ export function FacultyRegistration({ onBack }: FacultyRegistrationProps) {
             ← Back to role selection
           </button>
           <h2 className="text-3xl font-bold text-white mb-4">Faculty Registration</h2>
-          <p className="text-slate-300">
+          <p className="text-slate-300 dark:text-slate-400">
             Already have an account? <Link to="/login" className="text-yellow-400 hover:text-yellow-300 font-medium transition-colors cursor-pointer">Login</Link>
           </p>
         </div>
 
-        <div className="bg-white py-8 px-6 shadow-xl rounded-xl">
+        <div className="bg-white dark:bg-slate-800 py-8 px-6 shadow-xl rounded-xl">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Personal Details Section */}
-            <div className="bg-slate-50 border border-slate-200 rounded-lg p-6 mb-6">
+            <div className="bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-lg p-6 mb-6">
               <div className="flex items-center mb-4">
                 <div className="w-1 h-6 bg-yellow-500 rounded-full mr-3"></div>
-                <h3 className="text-lg font-semibold text-slate-900">Personal Details</h3>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Personal Details</h3>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
-                  <label htmlFor="firstName" className="block text-sm font-medium text-slate-700 mb-1">
-                    First Name *
-                  </label>
-                  <input
-                    id="firstName"
-                    name="firstName"
-                    type="text"
-                    required
-                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                  />
+                  <label htmlFor="firstName" className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">First Name *</label>
+                  <input id="firstName" name="firstName" type="text" required
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 dark:bg-slate-700 dark:text-white dark:border-slate-500 dark:placeholder:text-slate-400" />
                 </div>
                 <div>
-                  <label htmlFor="lastName" className="block text-sm font-medium text-slate-700 mb-1">
-                    Last Name *
-                  </label>
-                  <input
-                    id="lastName"
-                    name="lastName"
-                    type="text"
-                    required
-                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                  />
+                  <label htmlFor="lastName" className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Last Name *</label>
+                  <input id="lastName" name="lastName" type="text" required
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 dark:bg-slate-700 dark:text-white dark:border-slate-500 dark:placeholder:text-slate-400" />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1">
-                    Email Address *
-                  </label>
-                  <input
-                    id="email"
-                    name="email"
-                    type="email"
-                    required
-                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                  />
+                  <label htmlFor="email" className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Email Address *</label>
+                  <input id="email" name="email" type="email" required
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 dark:bg-slate-700 dark:text-white dark:border-slate-500 dark:placeholder:text-slate-400" />
                 </div>
-                  <div>
-                    <label htmlFor="phone" className="block text-sm font-medium text-slate-700 mb-1">
-                      Phone Number *
-                    </label>
-                    <input
-                      id="phone"
-                      name="phone"
-                      type="tel"
-                      required
-                      maxLength={10}
-                      onInput={(e) => {
-                        const target = e.target as HTMLInputElement;
-                        target.value = target.value.replace(/\D/g, '').slice(0, 10);
-                      }}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                    />
-                  </div>
+                <div>
+                  <label htmlFor="phone" className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Phone Number *</label>
+                  <input id="phone" name="phone" type="tel" required maxLength={10}
+                    onInput={(e) => { const target = e.target as HTMLInputElement; target.value = target.value.replace(/\D/g, '').slice(0, 10); }}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 dark:bg-slate-700 dark:text-white dark:border-slate-500 dark:placeholder:text-slate-400" />
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
-                  <label htmlFor="officeEmail" className="block text-sm font-medium text-slate-700 mb-1">
-                    College Email Address (Optional)
-                  </label>
-                  <input
-                    id="officeEmail"
-                    name="officeEmail"
-                    type="email"
-                    placeholder="e.g., faculty@college.edu"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                  />
+                  <label htmlFor="officeEmail" className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">College Email Address (Optional)</label>
+                  <input id="officeEmail" name="officeEmail" type="email" placeholder="e.g., faculty@college.edu"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 dark:bg-slate-700 dark:text-white dark:border-slate-500 dark:placeholder:text-slate-400" />
                 </div>
                 <div>
-                  <label htmlFor="linkedin" className="block text-sm font-medium text-slate-700 mb-1">
-                    LinkedIn Profile URL
-                  </label>
-                  <input
-                    id="linkedin"
-                    name="linkedin"
-                    type="url"
-                    placeholder="https://linkedin.com/in/yourprofile"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                  />
+                  <label htmlFor="linkedin" className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">LinkedIn Profile URL</label>
+                  <input id="linkedin" name="linkedin" type="url" placeholder="https://linkedin.com/in/yourprofile"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 dark:bg-slate-700 dark:text-white dark:border-slate-500 dark:placeholder:text-slate-400" />
                 </div>
               </div>
 
               <div className="mb-4">
-                <label htmlFor="id" className="block text-sm font-medium text-slate-700 mb-1">
-                  ID Proof (Faculty ID)
-                </label>
-                <input
-                  id="id"
-                  name="id"
-                  type="file"
-                  accept=".jpg,.jpeg,.png,.pdf"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 file:mr-3 file:py-2 file:border-0 file:text-sm file:font-medium file:bg-yellow-50 file:text-yellow-700 hover:file:bg-yellow-100"   
-                />
-                <p className="mt-1 text-xs text-slate-500">
-                  Accepted formats: JPG, JPEG, PNG, PDF
-                </p>
+                <label htmlFor="id" className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">ID Proof (Faculty ID)</label>
+                <input id="id" name="id" type="file" accept=".jpg,.jpeg,.png,.pdf"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 file:mr-3 file:py-2 file:border-0 file:text-sm file:font-medium file:bg-yellow-50 file:text-yellow-700 hover:file:bg-yellow-100 dark:bg-slate-700 dark:text-white dark:border-slate-500 dark:file:bg-yellow-900/30 dark:file:text-yellow-300" />
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Accepted formats: JPG, JPEG, PNG, PDF</p>
               </div>
 
               <div className="mb-4">
-                <label htmlFor="photo" className="block text-sm font-medium text-slate-700 mb-1">
-                  Upload Photo / Profile Picture
-                </label>
-                <input
-                  id="photo"
-                  name="photo"
-                  type="file"
-                  accept="image/jpeg,image/jpg,image/png"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 file:mr-3 file:py-2 file:border-0 file:text-sm file:font-medium file:bg-yellow-50 file:text-yellow-700 hover:file:bg-yellow-100"
-                />
-                <p className="mt-1 text-xs text-slate-500">
-                  Accepted formats: JPG, JPEG, PNG (Max size: 5MB)
-                </p>
+                <label htmlFor="photo" className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Upload Photo / Profile Picture</label>
+                <input id="photo" name="photo" type="file" accept="image/jpeg,image/jpg,image/png"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 file:mr-3 file:py-2 file:border-0 file:text-sm file:font-medium file:bg-yellow-50 file:text-yellow-700 hover:file:bg-yellow-100 dark:bg-slate-700 dark:text-white dark:border-slate-500 dark:file:bg-yellow-900/30 dark:file:text-yellow-300" />
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Accepted formats: JPG, JPEG, PNG (Max size: 5MB)</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-1">
-                    Password *
-                  </label>
+                  <label htmlFor="password" className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Password *</label>
                   <div className="relative">
-                    <input
-                      id="password"
-                      name="password"
-                      type={showPassword ? 'text' : 'password'}
-                      minLength={8}
-                      required
-                      placeholder="Create a strong password"
-                      className="w-full pr-11 px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                    />
-                    <button
-                      type="button"
-                      onClick={togglePassword}
-                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-5 w-5 text-slate-400" />
-                      ) : (
-                        <Eye className="h-5 w-5 text-slate-400" />
-                      )}
+                    <input id="password" name="password" type={showPassword ? 'text' : 'password'} minLength={8} required placeholder="Create a strong password"
+                      className="w-full pr-11 px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 dark:bg-slate-700 dark:text-white dark:border-slate-500 dark:placeholder:text-slate-400" />
+                    <button type="button" onClick={togglePassword} className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                      {showPassword ? <EyeOff className="h-5 w-5 text-slate-400" /> : <Eye className="h-5 w-5 text-slate-400" />}
                     </button>
                   </div>
                 </div>
                 <div>
-                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-700 mb-1">
-                    Confirm Password *
-                  </label>
+                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Confirm Password *</label>
                   <div className="relative">
-                    <input
-                      id="confirmPassword"
-                      name="confirmPassword"
-                      type={showConfirmPassword ? 'text' : 'password'}
-                      minLength={8}
-                      required
-                      placeholder="Confirm your password"
-                      className="w-full pr-11 px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                    />
-                    <button
-                      type="button"
-                      onClick={toggleConfirmPassword}
-                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                    >
-                      {showConfirmPassword ? (
-                        <EyeOff className="h-5 w-5 text-slate-400" />
-                      ) : (
-                        <Eye className="h-5 w-5 text-slate-400" />
-                      )}
+                    <input id="confirmPassword" name="confirmPassword" type={showConfirmPassword ? 'text' : 'password'} minLength={8} required placeholder="Confirm your password"
+                      className="w-full pr-11 px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 dark:bg-slate-700 dark:text-white dark:border-slate-500 dark:placeholder:text-slate-400" />
+                    <button type="button" onClick={toggleConfirmPassword} className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                      {showConfirmPassword ? <EyeOff className="h-5 w-5 text-slate-400" /> : <Eye className="h-5 w-5 text-slate-400" />}
                     </button>
                   </div>
                 </div>
@@ -429,36 +331,23 @@ export function FacultyRegistration({ onBack }: FacultyRegistrationProps) {
             </div>
 
             {/* Faculty Details Section */}
-            <div className="bg-slate-50 border border-slate-200 rounded-lg p-6 mb-6">
+            <div className="bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-lg p-6 mb-6">
               <div className="flex items-center mb-4">
                 <div className="w-1 h-6 bg-yellow-500 rounded-full mr-3"></div>
-                <h3 className="text-lg font-semibold text-slate-900">Faculty Details</h3>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Faculty Details</h3>
               </div>
               
               <div className="mb-4">
-                <label htmlFor="facultyId" className="block text-sm font-medium text-slate-700 mb-1">
-                  Faculty ID *
-                </label>
-                <input
-                  id="facultyId"
-                  name="facultyId"
-                  type="text"
-                  required
-                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                />
+                <label htmlFor="facultyId" className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Faculty ID *</label>
+                <input id="facultyId" name="facultyId" type="text" required
+                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 dark:bg-slate-700 dark:text-white dark:border-slate-500 dark:placeholder:text-slate-400" />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
-                  <label htmlFor="department" className="block text-sm font-medium text-slate-700 mb-1">
-                    Department *
-                  </label>
-                  <select
-                    id="department"
-                    name="department"
-                    required
-                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                  >
+                  <label htmlFor="department" className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Department *</label>
+                  <select id="department" name="department" required
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 dark:bg-slate-700 dark:text-white dark:border-slate-500">
                     <option value="">Select Department</option>
                     <option value="CSE">CSE</option>
                     <option value="CSD">CSD</option>
@@ -471,22 +360,9 @@ export function FacultyRegistration({ onBack }: FacultyRegistrationProps) {
                   </select>
                 </div>
                 <div>
-                  <label htmlFor="facultyType" className="block text-sm font-medium text-slate-700 mb-1">
-                    Faculty Type *
-                  </label>
-                  <select
-                    id="facultyType"
-                    name="facultyType"
-                    required
-                    value={facultyType}
-                    onChange={(e) => {
-                      setFacultyType(e.target.value);
-                      if (e.target.value !== 'Other') {
-                        setCustomFacultyType("");
-                      }
-                    }}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                  >
+                  <label htmlFor="facultyType" className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Faculty Type *</label>
+                  <select id="facultyType" name="facultyType" required value={facultyType} onChange={(e) => { setFacultyType(e.target.value); if (e.target.value !== 'Other') { setCustomFacultyType(""); } }}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 dark:bg-slate-700 dark:text-white dark:border-slate-500">
                     <option value="">Select Faculty Type</option>
                     <option value="Professor">Professor</option>
                     <option value="Associate Professor">Associate Professor</option>
@@ -500,43 +376,22 @@ export function FacultyRegistration({ onBack }: FacultyRegistrationProps) {
 
               {facultyType === 'Other' && (
                 <div className="mb-4">
-                  <label htmlFor="customFacultyType" className="block text-sm font-medium text-slate-700 mb-1">
-                    Specify Faculty Type *
-                  </label>
-                  <input
-                    id="customFacultyType"
-                    name="customFacultyType"
-                    type="text"
-                    required
-                    value={customFacultyType}
-                    onChange={(e) => setCustomFacultyType(e.target.value)}
-                    placeholder="e.g., Adjunct Faculty, Research Scholar"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                  />
+                  <label htmlFor="customFacultyType" className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Specify Faculty Type *</label>
+                  <input id="customFacultyType" name="customFacultyType" type="text" required value={customFacultyType} onChange={(e) => setCustomFacultyType(e.target.value)} placeholder="e.g., Adjunct Faculty, Research Scholar"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 dark:bg-slate-700 dark:text-white dark:border-slate-500 dark:placeholder:text-slate-400" />
                 </div>
               )}
 
               <div className="mb-4">
-                <label htmlFor="yearsOfExperience" className="block text-sm font-medium text-slate-700 mb-1">
-                  Years of Experience *
-                </label>
-                <input
-                  id="yearsOfExperience"
-                  name="yearsOfExperience"
-                  type="number"
-                  min="0"
-                  required
-                  placeholder="e.g., 5"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                />
+                <label htmlFor="yearsOfExperience" className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Years of Experience *</label>
+                <input id="yearsOfExperience" name="yearsOfExperience" type="number" min="0" required placeholder="e.g., 5"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 dark:bg-slate-700 dark:text-white dark:border-slate-500 dark:placeholder:text-slate-400" />
               </div>
             </div>
 
             <div className="flex justify-center">
-              <button
-                type="submit"
-                className="w-full py-3 px-4 bg-yellow-500 text-slate-900 rounded-md font-semibold hover:bg-yellow-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-colors"
-              >
+              <button type="submit"
+                className="w-full py-3 px-4 bg-yellow-500 text-slate-900 rounded-md font-semibold hover:bg-yellow-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-colors">
                 Register as Faculty
               </button>
             </div>
