@@ -2288,28 +2288,6 @@ const author =
                             />
                           </div>
 
-                          <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-1">Department *</label>
-                            <input
-                              type="text"
-                              placeholder="Your department"
-                              value={formData.department}
-                              onChange={(e) => setFormData(prev => ({ ...prev, department: e.target.value }))}
-                              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-1">Study Year</label>
-                            <input
-                              type="text"
-                              placeholder="Your year (e.g., 2nd Year)"
-                              value={formData.year}
-                              onChange={(e) => setFormData(prev => ({ ...prev, year: e.target.value }))}
-                              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
-                            />
-                          </div>
-
                           <div className="grid grid-cols-2 gap-3">
                             <div>
                               <label className="block text-sm font-medium text-slate-300 mb-1">Year of Joining *</label>
@@ -2458,17 +2436,6 @@ const author =
                         </>
                       )}
 
-                      <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1">About</label>
-                        <textarea
-                          placeholder="Tell us about yourself (optional)"
-                          value={formData.about}
-                          onChange={(e) => setFormData(prev => ({ ...prev, about: e.target.value }))}
-                          className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
-                          rows={4}
-                        />
-                      </div>
-
                       {/* Skills */}
                       <div>
                         <label className="block text-sm font-medium text-slate-300 mb-2">Skills *</label>
@@ -2611,7 +2578,6 @@ const author =
                         <div className="text-sm">
                           {user?.department && <p className="text-white font-medium text-base">{user.department} {user?.year ? `- ${user.year}` : ''}</p>}
                           {user?.collegeName && <p className="text-slate-300">{user.collegeName}</p>}
-                          {user?.about && <p className="text-slate-200 mt-2 whitespace-pre-wrap">{user.about}</p>}
                           {user?.email && <p className="text-slate-400 mt-1">{user.email}</p>}
                         </div>
                       </div>
@@ -2635,14 +2601,10 @@ const author =
                             <p className="text-sm text-slate-400">Roll Number</p>
                             <p className="text-white">{user?.rollNumber || 'Not Provided'}</p>
                           </div>
-                          <div className="rounded-lg bg-slate-800 p-4">
-                            <p className="text-sm text-slate-400">Study Year</p>
-                            <p className="text-white">{user?.year || 'Not Provided'}</p>
-                          </div>
-                          <div className="rounded-lg bg-slate-800 p-4">
-                            <p className="text-sm text-slate-400">Year of Joining</p>
-                            <p className="text-white">{user?.yearOfJoining || 'Not Provided'}</p>
-                          </div>
+                      <div className="rounded-lg bg-slate-800 p-4">
+                        <p className="text-sm text-slate-400">Year of Joining</p>
+                        <p className="text-white">{user?.yearOfJoining || 'Not Provided'}</p>
+                      </div>
                           <div className="rounded-lg bg-slate-800 p-4">
                             <p className="text-sm text-slate-400">Passed Out Year</p>
                             <p className="text-white">{user?.passedOutYear || 'Not Provided'}</p>
@@ -2710,17 +2672,6 @@ const author =
                         </div>
                       )}
                     </div>
-
-                    {/* About Section */}
-                    {user?.about && (
-                      <>
-                        <hr className="border-slate-700" />
-                        <div>
-                          <p className="text-sm text-slate-400 mb-2">About</p>
-                          <p className="text-white">{user.about}</p>
-                        </div>
-                      </>
-                    )}
 
                     {/* Skills Section */}
 {(() => {

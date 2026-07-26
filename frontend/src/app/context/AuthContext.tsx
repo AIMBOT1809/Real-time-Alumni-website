@@ -123,6 +123,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                   year:
                     profileData.Passed_Out_Year || profileData.passed_out_year ||
                     profileData.Year_of_Joining || parsed.year || '',
+                  yearOfJoining: profileData.Year_of_Joining || profileData.year_of_joining || parsed.yearOfJoining,
+                  passedOutYear: profileData.Passed_Out_Year || profileData.passed_out_year || parsed.passedOutYear,
                   email: parsed.email,
                   phone: profileData.Phone_Number || profileData.phone || parsed.phone,
                   about: profileData.About || profileData.about || parsed.about,
@@ -556,6 +558,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             toStore.rollNumber = dbProfile.Roll_Number || dbProfile.roll_number || toStore.rollNumber;
             toStore.department = dbProfile.Department || dbProfile.department || toStore.department;
             toStore.year = dbProfile.Passed_Out_Year || dbProfile.passed_out_year || dbProfile.Year_of_Joining || toStore.year || '';
+            toStore.yearOfJoining = dbProfile.Year_of_Joining || dbProfile.year_of_joining || toStore.yearOfJoining;
+            toStore.passedOutYear = dbProfile.Passed_Out_Year || dbProfile.passed_out_year || toStore.passedOutYear;
             toStore.email = toStore.email || dbProfile.Email_Address || dbProfile.email;
             toStore.phone = dbProfile.Phone_Number || dbProfile.phone || toStore.phone;
             toStore.about = dbProfile.About || dbProfile.about || toStore.about;
